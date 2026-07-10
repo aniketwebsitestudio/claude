@@ -1,0 +1,59 @@
+{
+  "sections": {
+    "product": {
+      "type": "t-product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "subtitle": {
+          "type": "subtitle",
+          "settings": {}
+        },
+        "vendor": {
+          "type": "vendor",
+          "settings": {}
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {}
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {}
+        }
+      },
+      "settings": {
+        "media_width": 50,
+        "media_position": "left",
+        "pin_section": "none"
+      }
+    },
+    "tagline": {
+      "type": "gs-hero-text",
+      "settings": {
+        "heading": "Bhoomija, born from the earth. Made by hand."
+      }
+    },
+    "recommendations": {
+      "type": "product-recommendations",
+      "settings": {
+        "product_limit": 3
+      }
+    }
+  },
+  "order": [
+    "product",
+    "tagline",
+    "recommendations"
+  ]
+}

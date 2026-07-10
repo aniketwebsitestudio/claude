@@ -1,0 +1,27 @@
+{%- if include.img != blank -%}
+	<picture>
+		{%- if include.sizes -%}
+			<img
+				src="{{ include.img | image_url: width: include.width }}"
+				alt="{{ include.img.alt | escape }}"
+				width="{{ include.img.width }}"
+				height="{{ include.img.height }}"
+				srcset="{% for width in include.widths | split: ',' %}{{ include.img | image_url: width: width }} {{ width | remove: 'px' }}w{% unless forloop.last %},{% endunless %}{% endfor %}"
+				sizes="{{ include.sizes }}"
+				loading="lazy"
+				decoding="async"
+			>
+		{%- else -%}
+			<img
+				src="{{ include.img | image_url: width: include.width }}"
+				alt="{{ include.img.alt | escape }}"
+				width="{{ include.img.width }}"
+				height="{{ include.img.height }}"
+				loading="lazy"
+				decoding="async"
+			>
+		{%- endif -%}
+	</picture>
+{%- elsif include.fallback -%}
+	<div style="background: #f5f5f5; aspect-ratio: 1; width: 100%;"></div>
+{%- endif -%}

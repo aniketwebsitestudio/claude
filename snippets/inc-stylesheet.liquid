@@ -1,0 +1,6 @@
+{%- if include.src -%}
+	<link rel="stylesheet" href="{{ include.src | asset_url }}" media="print" onload="this.media='all'">
+	<noscript>
+		<link rel="stylesheet" href="{{ include.src | asset_url }}">
+	</noscript>
+{%- endif -%}

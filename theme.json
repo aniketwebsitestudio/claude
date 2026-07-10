@@ -1,0 +1,11 @@
+{
+  "theme": {
+    "name": "Bhoomija Store Theme",
+    "id": 158421385263
+  },
+  "roles": [
+    "theme:admin",
+    "theme:observer",
+    "theme:developer"
+  ]
+}

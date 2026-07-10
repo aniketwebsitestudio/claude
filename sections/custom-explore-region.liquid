@@ -1,0 +1,226 @@
+<section class="explore-region" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+	{%- if section.settings.eyebrow != blank -%}
+	<div class="explore-region__eyebrow">
+		{{ section.settings.eyebrow | escape }}
+	</div>
+	{%- endif -%}
+
+	<div class="explore-region__tabs">
+		{%- for block in section.blocks -%}
+		{%- case block.type -%}
+		{%- when 'region' -%}
+		<button class="explore-region__tab {% if forloop.first %}active{% endif %}" data-reveal-trigger="region-{{ forloop.index0 }}" type="button">
+			{{ block.settings.region_name | escape }}
+		</button>
+		{%- endcase -%}
+		{%- endfor -%}
+	</div>
+
+	<div class="explore-region__content">
+		{%- for block in section.blocks -%}
+		{%- case block.type -%}
+		{%- when 'region' -%}
+		<div class="explore-region__grid" data-reveal-panel="region-{{ forloop.index0 }}" {% if forloop.index != 1 %}hidden{% endif %}>
+			{%- for i in (1..3) -%}
+			{%- capture collection_key %}collection_{{ i }}{%- endcapture -%}
+			{%- capture image_key %}image_override_{{ i }}{%- endcapture -%}
+			{%- capture label_key %}label_override_{{ i }}{%- endcapture -%}
+
+			{%- assign collection = block.settings[collection_key] -%}
+			{%- assign image_override = block.settings[image_key] -%}
+			{%- assign label_override = block.settings[label_key] -%}
+
+			{%- if collection != blank -%}
+			<div class="explore-region__card" data-collection-id="{{ collection.id }}">
+				{%- if image_override != blank -%}
+					<img src="{{ image_override | image_url: width: 500 }}" alt="{{ image_override.alt }}" class="explore-region__card-image" loading="lazy">
+				{%- elsif collection.featured_image -%}
+					<img src="{{ collection.featured_image | image_url: width: 500 }}" alt="{{ collection.featured_image.alt }}" class="explore-region__card-image" loading="lazy">
+				{%- else -%}
+					<div class="explore-region__card-image" style="background: #f5f5f5;"></div>
+				{%- endif -%}
+
+				<div class="explore-region__card-label">
+					{%- if label_override != blank -%}
+						{{ label_override | escape }}
+					{%- else -%}
+						{{ collection.title | escape }}
+					{%- endif -%}
+				</div>
+			</div>
+			{%- endif -%}
+			{%- endfor -%}
+		</div>
+		{%- endcase -%}
+		{%- endfor -%}
+	</div>
+</section>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const tabs = document.querySelectorAll('[data-reveal-trigger]');
+		const panels = document.querySelectorAll('[data-reveal-panel]');
+
+		tabs.forEach(tab => {
+			tab.addEventListener('click', function() {
+				const targetPanel = this.getAttribute('data-reveal-trigger');
+
+				// Remove active class from all tabs
+				tabs.forEach(t => t.classList.remove('active'));
+
+				// Hide all panels
+				panels.forEach(p => p.hidden = true);
+
+				// Add active class to clicked tab
+				this.classList.add('active');
+
+				// Show corresponding panel
+				const panel = document.querySelector(`[data-reveal-panel="${targetPanel}"]`);
+				if (panel) {
+					panel.hidden = false;
+				}
+			});
+		});
+	});
+</script>
+
+{% schema %}
+{
+	"name": "Explore by Region",
+	"disabled_on": { "groups": ["header", "footer", "aside"] },
+	"settings": [
+		{
+			"type": "text",
+			"id": "eyebrow",
+			"label": "Eyebrow label",
+			"default": "Explore by Region"
+		},
+		{
+			"type": "header",
+			"content": "Appearance"
+		},
+		{
+			"type": "checkbox",
+			"id": "global_color_scheme",
+			"label": "Use global color scheme",
+			"default": true
+		},
+		{
+			"type": "color_scheme",
+			"id": "color_scheme",
+			"label": "Color scheme",
+			"default": "coretex-1",
+			"visible_if": "{{ section.settings.global_color_scheme == false }}"
+		}
+	],
+	"blocks": [
+		{
+			"type": "region",
+			"name": "Region",
+			"settings": [
+				{
+					"type": "text",
+					"id": "region_name",
+					"label": "Region Name",
+					"default": "West Bengal"
+				},
+				{
+					"type": "header",
+					"content": "Card 1"
+				},
+				{
+					"type": "collection",
+					"id": "collection_1",
+					"label": "Collection"
+				},
+				{
+					"type": "image_picker",
+					"id": "image_override_1",
+					"label": "Image Override"
+				},
+				{
+					"type": "text",
+					"id": "label_override_1",
+					"label": "Label Override"
+				},
+				{
+					"type": "header",
+					"content": "Card 2"
+				},
+				{
+					"type": "collection",
+					"id": "collection_2",
+					"label": "Collection"
+				},
+				{
+					"type": "image_picker",
+					"id": "image_override_2",
+					"label": "Image Override"
+				},
+				{
+					"type": "text",
+					"id": "label_override_2",
+					"label": "Label Override"
+				},
+				{
+					"type": "header",
+					"content": "Card 3"
+				},
+				{
+					"type": "collection",
+					"id": "collection_3",
+					"label": "Collection"
+				},
+				{
+					"type": "image_picker",
+					"id": "image_override_3",
+					"label": "Image Override"
+				},
+				{
+					"type": "text",
+					"id": "label_override_3",
+					"label": "Label Override"
+				}
+			]
+		}
+	],
+	"presets": [
+		{
+			"name": "Explore by Region",
+			"category": "Content",
+			"blocks": [
+				{
+					"type": "region",
+					"settings": {
+						"region_name": "West Bengal"
+					}
+				},
+				{
+					"type": "region",
+					"settings": {
+						"region_name": "Himachal Pradesh"
+					}
+				},
+				{
+					"type": "region",
+					"settings": {
+						"region_name": "Northeast India"
+					}
+				},
+				{
+					"type": "region",
+					"settings": {
+						"region_name": "Bihar"
+					}
+				},
+				{
+					"type": "region",
+					"settings": {
+						"region_name": "Odisha"
+					}
+				}
+			]
+		}
+	]
+}
+{% endschema %}

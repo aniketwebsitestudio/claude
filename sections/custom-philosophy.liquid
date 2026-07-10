@@ -1,0 +1,120 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="philosophy" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+	{%- if section.settings.eyebrow != blank -%}
+	<div class="philosophy__eyebrow">
+		<span>{{ section.settings.eyebrow | escape }}</span>
+	</div>
+	{%- endif -%}
+
+	<x-grid columns="3" columns-s="1" class="philosophy__grid" style="gap:var(--padding);">
+		<x-cell class="philosophy__heading">
+			{%- if section.settings.heading != blank -%}<h2 class="h2">{{ section.settings.heading }}</h2>{%- endif -%}
+		</x-cell>
+
+		<x-cell class="philosophy__text">
+			{%- if section.settings.text != blank -%}<div class="rte">{{ section.settings.text }}</div>{%- endif -%}
+		</x-cell>
+
+		<x-cell class="philosophy__media">
+			{%- liquid
+				assign img = section.settings.image
+				assign width = 900
+				assign widths = '300,450,600,750,900'
+				assign sizes = '(max-width:777px) 60vw, (min-width:778px) 30vw, 450px'
+				render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: true
+			-%}
+		</x-cell>
+	</x-grid>
+</section>
+
+<style>
+	.philosophy { border-block-end: var(--globalBorder); padding-block: var(--padding); }
+	.philosophy__eyebrow {
+		text-align: center;
+		padding-block-end: var(--padding);
+		font-size: var(--type-2);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		opacity: 0.7;
+	}
+	.philosophy__grid { align-items: center; padding-inline: var(--padding); }
+	.philosophy__heading .h2 { margin: 0; line-height: 1.15; }
+	.philosophy__text .rte { opacity: 0.75; }
+	.philosophy__text .rte p { margin: 0 0 1em; }
+	.philosophy__text .rte p:last-child { margin-bottom: 0; }
+	.philosophy__media picture,
+	.philosophy__media img,
+	.philosophy__media svg { display: block; width: 100%; height: auto; }
+	@media (max-width: 777px) {
+		.philosophy__grid { padding-inline: var(--mardding); }
+		.philosophy__media { order: -1; margin-block-end: var(--margin); max-width: 220px; margin-inline: auto; }
+	}
+</style>
+
+{% schema %}
+{
+	"name": "Philosophy",
+	"disabled_on": { "groups": ["header", "footer", "aside"] },
+	"settings": [
+		{
+			"type": "text",
+			"id": "eyebrow",
+			"label": "Eyebrow label",
+			"default": "Our Philosophy"
+		},
+		{
+			"type": "header",
+			"content": "Heading"
+		},
+		{
+			"type": "inline_richtext",
+			"id": "heading",
+			"label": "Heading",
+			"default": "Craftsmanship is <em>knowledge</em>"
+		},
+		{
+			"type": "header",
+			"content": "Text"
+		},
+		{
+			"type": "richtext",
+			"id": "text",
+			"label": "Body text",
+			"default": "<p>Each piece in our collection is the result of years of knowledge, not algorithms, not automation.</p><p>The hands behind Bhoomija have spent lifetimes understanding material, form, and function. We simply have the privilege of bringing their work to you.</p>"
+		},
+		{
+			"type": "header",
+			"content": "Image"
+		},
+		{
+			"type": "image_picker",
+			"id": "image",
+			"label": "Illustration"
+		},
+		{
+			"type": "header",
+			"content": "Appearance"
+		},
+		{
+			"type": "checkbox",
+			"id": "global_color_scheme",
+			"label": "Use global color scheme",
+			"default": true
+		},
+		{
+			"type": "color_scheme",
+			"id": "color_scheme",
+			"label": "Color scheme",
+			"default": "coretex-1",
+			"visible_if": "{{ section.settings.global_color_scheme == false }}"
+		}
+	],
+	"presets": [
+		{
+			"name": "Philosophy",
+			"category": "Content"
+		}
+	]
+}
+{% endschema %}

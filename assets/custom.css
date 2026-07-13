@@ -36,6 +36,20 @@ header#mainHeader #headerGrid :where(.button, button, summary) {
   --globalBorderColor: #000;
 }
 
+/* Single painter for the grid's bottom line: the card outlines.
+   The grid and the section each draw their own border-block-end at the
+   same spot; with fractional column widths they can land a subpixel
+   apart and render as a thicker line in the non-hover state. Remove
+   the duplicates — the card outline (and the quick-buy bar's border on
+   hover, anchored to the same card box) draws the one true 1px line. */
+section.featured-products:not(:has(.loadmore)) {
+  border-block-end: none;
+}
+.featured-products .product-grid,
+.related .product-grid {
+  border-block-end: none;
+}
+
 /* Homepage Bestsellers: quick-buy button color.
    Mirrors the theme's own quick-buy border treatment (block borders in
    --globalBorderColor, no inline borders) so the bar's bottom border

@@ -24,25 +24,28 @@ header#mainHeader #headerGrid :where(.button, button, summary) {
   #mainHeader .menu ul[menu-list="1"] { gap: 36px; }
 }
 
+/* Product card grid lines: black like the Figma.
+   The theme draws card grid lines with `outline: var(--globalBorder)`
+   and keeps block borders on the quick-buy bar in the same color —
+   but the card scheme (coretex-2, white text over media) sets
+   --globalBorderColor to white. Re-point the variable to black at the
+   card level and let the theme's own rules draw every line, exactly
+   like the demo. */
+.featured-products .product-grid product-card,
+.related .product-grid product-card {
+  --globalBorderColor: #000;
+}
+
 /* Homepage Bestsellers: quick-buy button color.
-   Keep a bottom grid line — the button overlays the card's border,
-   so it must draw its own to close the section box (Figma).
-   #000 is hardcoded: the card scheme (coretex-2) turns border vars white. */
+   Mirrors the theme's own quick-buy border treatment (block borders in
+   --globalBorderColor, no inline borders) so the bar's bottom border
+   lands exactly on the grid line like the demo. */
 body[coretex-page="index"] .featured-products .superQuickBuy .cardButton,
 body[coretex-page="index"] .featured-products .soldoutButton {
   background-color: #7F1416;
   color: #fff;
-  border: none;
-  border-block-end: var(--globalBorderWidth, 1px) solid #000;
-}
-
-/* Product card grid lines: black like the Figma.
-   Cards use the coretex-2 scheme (white text over media), whose border
-   color is white — that made the 1px gaps between cards read as white
-   space. Force the card outlines black so the grid closes in black. */
-.featured-products .product-grid product-card,
-.related .product-grid product-card {
-  outline-color: #000;
+  border-block: var(--globalBorderWidth, 1px) solid var(--globalBorderColor, #000);
+  border-inline: none;
 }
 
 /* ===== Hero section custom CSS ===== */

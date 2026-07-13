@@ -477,3 +477,25 @@ section.philosophy .philosophy__media img {
 	product-card :is(.onHover, .onHover-a, .onHover-m, .onHover-s) :is(.on, .off) {
 		transition: opacity 0.45s ease;
 	}
+
+/* ===== Mobile refinements (desktop untouched) ===== */
+
+/* Hero content: right padding to match the 20px left */
+@media (max-width: 749px) {
+  x-cell.content { padding-right: 20px; }
+}
+
+@media (max-width: 777px) {
+  /* Philosophy: centered heading; left-aligned text (justified text
+     creates rivers of whitespace at narrow widths) */
+  section.philosophy .philosophy__grid {
+    row-gap: 1.25rem !important;
+    padding: 1.75rem var(--mardding);
+  }
+  section.philosophy .philosophy__heading .h2 { text-align: center; }
+  section.philosophy .philosophy__text .rte {
+    text-align: left;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+}

@@ -1,99 +1,195 @@
-<section class="explore-region" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="explore-region" style="--accent:{{ section.settings.accent }}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
 	{%- if section.settings.eyebrow != blank -%}
-	<div class="explore-region__eyebrow">
-		{{ section.settings.eyebrow | escape }}
-	</div>
+	<div class="explore-region__eyebrow"><span>{{ section.settings.eyebrow | escape }}</span></div>
 	{%- endif -%}
 
-	<div class="explore-region__tabs">
-		{%- for block in section.blocks -%}
-		{%- case block.type -%}
-		{%- when 'region' -%}
-		<button class="explore-region__tab {% if forloop.first %}active{% endif %}" data-reveal-trigger="region-{{ forloop.index0 }}" type="button">
-			{{ block.settings.region_name | escape }}
-		</button>
-		{%- endcase -%}
-		{%- endfor -%}
-	</div>
+	<component-loader>
+		<coretex-reveal data-section-id="{{ section.id }}" data-default="0" data-activation="click" data-hover-intent="0">
 
-	<div class="explore-region__content">
-		{%- for block in section.blocks -%}
-		{%- case block.type -%}
-		{%- when 'region' -%}
-		<div class="explore-region__grid" data-reveal-panel="region-{{ forloop.index0 }}" {% if forloop.index != 1 %}hidden{% endif %}>
-			{%- for i in (1..3) -%}
-			{%- capture collection_key %}collection_{{ i }}{%- endcapture -%}
-			{%- capture image_key %}image_override_{{ i }}{%- endcapture -%}
-			{%- capture label_key %}label_override_{{ i }}{%- endcapture -%}
-
-			{%- assign collection = block.settings[collection_key] -%}
-			{%- assign image_override = block.settings[image_key] -%}
-			{%- assign label_override = block.settings[label_key] -%}
-
-			{%- if collection != blank -%}
-			<div class="explore-region__card" data-collection-id="{{ collection.id }}">
-				{%- if image_override != blank -%}
-					<img src="{{ image_override | image_url: width: 500 }}" alt="{{ image_override.alt }}" class="explore-region__card-image" loading="lazy">
-				{%- elsif collection.featured_image -%}
-					<img src="{{ collection.featured_image | image_url: width: 500 }}" alt="{{ collection.featured_image.alt }}" class="explore-region__card-image" loading="lazy">
-				{%- else -%}
-					<div class="explore-region__card-image" style="background: #f5f5f5;"></div>
-				{%- endif -%}
-
-				<div class="explore-region__card-label">
-					{%- if label_override != blank -%}
-						{{ label_override | escape }}
-					{%- else -%}
-						{{ collection.title | escape }}
-					{%- endif -%}
-				</div>
+			<div class="explore-region__tabs" role="tablist">
+				{%- for block in section.blocks -%}
+				<button type="button" class="explore-region__tab{% if forloop.first %} is-active{% endif %}" data-reveal-trigger="region-{{ block.id }}" role="tab" {{ block.shopify_attributes }}>{{ block.settings.title | escape }}</button>
+				{%- endfor -%}
 			</div>
-			{%- endif -%}
-			{%- endfor -%}
-		</div>
-		{%- endcase -%}
-		{%- endfor -%}
-	</div>
+
+			<div class="explore-region__panels">
+				{%- for block in section.blocks -%}
+				<div data-reveal-panel="region-{{ block.id }}" {% if forloop.first %}class="is-active" aria-hidden="false"{% else %}aria-hidden="true"{% endif %}>
+					<div class="explore-region__grid">
+						{%- for i in (1..3) -%}
+							{%- liquid
+								assign ckey = 'collection_' | append: i
+								assign ikey = 'image_' | append: i
+								assign lkey = 'label_' | append: i
+								assign coll = block.settings[ckey]
+								assign img = block.settings[ikey]
+								assign label = block.settings[lkey]
+								if img == blank
+									assign img = coll.featured_image
+								endif
+								if label == blank
+									assign label = coll.title
+								endif
+							-%}
+							{%- if img != blank or coll != blank -%}
+								{%- if coll != blank -%}<a class="explore-region__card" href="{{ coll.url }}">{%- else -%}<div class="explore-region__card">{%- endif -%}
+									{%- render 'inc-img', img: img, widths: '480,640,960,1280', sizes: '(max-width:777px) 100vw, 34vw', fallback: true -%}
+									{%- if label != blank -%}<span class="explore-region__label">{{ label | escape }} &rarr;</span>{%- endif -%}
+								{%- if coll != blank -%}</a>{%- else -%}</div>{%- endif -%}
+							{%- endif -%}
+						{%- endfor -%}
+					</div>
+				</div>
+				{%- endfor -%}
+			</div>
+
+		</coretex-reveal>
+	</component-loader>
 </section>
 
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const tabs = document.querySelectorAll('[data-reveal-trigger]');
-		const panels = document.querySelectorAll('[data-reveal-panel]');
+<style>
+	.explore-region { border-block-end: var(--globalBorder) }
 
-		tabs.forEach(tab => {
-			tab.addEventListener('click', function() {
-				const targetPanel = this.getAttribute('data-reveal-trigger');
+	.explore-region__eyebrow {
+		text-align: center;
+		padding-block: 12px;
+		border-block-end: var(--globalBorder);
+		font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+		font-weight: 400;
+		font-size: 12px;
+		line-height: 1.1;
+		letter-spacing: 0;
+		text-transform: uppercase;
+	}
 
-				// Remove active class from all tabs
-				tabs.forEach(t => t.classList.remove('active'));
+	/* Region tabs: spread across, uppercase, active = brand red + underline */
+	.explore-region__tabs {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 2rem;
+		overflow-x: auto;
+		padding: 28px 76px;
+		border-block-end: var(--globalBorder);
+	}
+	.explore-region__tab {
+		background: none;
+		border: none;
+		border-radius: 0;
+		padding: 0.2rem 0;
+		cursor: pointer;
+		font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+		font-size: 20px;
+		font-weight: 400;
+		line-height: 1;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		white-space: nowrap;
+		color: currentColor;
+	}
+	.explore-region__tab.is-active {
+		color: var(--accent, #7F1416);
+		font-weight: 700;
+		text-decoration: underline;
+		text-underline-offset: 7px;
+		text-decoration-thickness: 1px;
+	}
 
-				// Hide all panels
-				panels.forEach(p => p.hidden = true);
+	/* Panels stack in place; coretex-reveal toggles .is-active */
+	.explore-region__panels { position: relative; overflow: clip }
+	.explore-region__panels [data-reveal-panel] {
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+	}
+	.explore-region__panels [data-reveal-panel].is-active {
+		position: relative;
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+	}
 
-				// Add active class to clicked tab
-				this.classList.add('active');
+	/* 3 cards with thin grid-line gaps */
+	.explore-region__grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: var(--globalBorderWidth, 1px);
+	}
+	.explore-region__card {
+		position: relative;
+		display: block;
+		text-decoration: none;
+	}
+	.explore-region__card picture { display: block }
+	.explore-region__card img,
+	.explore-region__card svg {
+		display: block;
+		width: 100%;
+		height: clamp(320px, 28vw, 389px);
+		object-fit: cover;
+	}
+	.explore-region__label {
+		position: absolute;
+		inset-inline-start: 16px;
+		inset-block-end: 12px;
+		color: #ffffff;
+		font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+		font-weight: 400;
+		font-size: 12px;
+		line-height: 1.4;
+		letter-spacing: 0;
+		text-transform: uppercase;
+		text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+	}
 
-				// Show corresponding panel
-				const panel = document.querySelector(`[data-reveal-panel="${targetPanel}"]`);
-				if (panel) {
-					panel.hidden = false;
-				}
-			});
-		});
-	});
-</script>
+	/* Mobile: compact scrollable tab strip + swipeable card row
+	   (mirrors the Shop by category slider pattern). Desktop untouched. */
+	@media (max-width: 777px) {
+		.explore-region__tabs {
+			justify-content: flex-start;
+			gap: 1.5rem;
+			padding: 14px 20px;
+			scrollbar-width: none;
+			-webkit-overflow-scrolling: touch;
+		}
+		.explore-region__tabs::-webkit-scrollbar { display: none }
+		.explore-region__tab { font-size: 14px; padding-block: 0.35rem }
+		.explore-region__tab.is-active { text-underline-offset: 5px }
+		.explore-region__grid {
+			display: flex;
+			overflow-x: auto;
+			scroll-snap-type: x mandatory;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: none;
+		}
+		.explore-region__grid::-webkit-scrollbar { display: none }
+		.explore-region__card { flex: 0 0 82%; scroll-snap-align: start }
+		.explore-region__card img,
+		.explore-region__card svg { height: min(88vw, 420px) }
+	}
+</style>
 
 {% schema %}
 {
-	"name": "Explore by Region",
+	"name": "Explore by region",
 	"disabled_on": { "groups": ["header", "footer", "aside"] },
+	"max_blocks": 8,
 	"settings": [
 		{
 			"type": "text",
 			"id": "eyebrow",
 			"label": "Eyebrow label",
 			"default": "Explore by Region"
+		},
+		{
+			"type": "color",
+			"id": "accent",
+			"label": "Active tab color",
+			"default": "#7F1416"
 		},
 		{
 			"type": "header",
@@ -120,9 +216,9 @@
 			"settings": [
 				{
 					"type": "text",
-					"id": "region_name",
-					"label": "Region Name",
-					"default": "West Bengal"
+					"id": "title",
+					"label": "Region name",
+					"default": "Region"
 				},
 				{
 					"type": "header",
@@ -131,17 +227,18 @@
 				{
 					"type": "collection",
 					"id": "collection_1",
-					"label": "Collection"
+					"label": "Collection",
+					"info": "Card links here. Its title and image are used unless overridden below."
 				},
 				{
 					"type": "image_picker",
-					"id": "image_override_1",
-					"label": "Image Override"
+					"id": "image_1",
+					"label": "Image override"
 				},
 				{
 					"type": "text",
-					"id": "label_override_1",
-					"label": "Label Override"
+					"id": "label_1",
+					"label": "Label override"
 				},
 				{
 					"type": "header",
@@ -154,13 +251,13 @@
 				},
 				{
 					"type": "image_picker",
-					"id": "image_override_2",
-					"label": "Image Override"
+					"id": "image_2",
+					"label": "Image override"
 				},
 				{
 					"type": "text",
-					"id": "label_override_2",
-					"label": "Label Override"
+					"id": "label_2",
+					"label": "Label override"
 				},
 				{
 					"type": "header",
@@ -173,52 +270,25 @@
 				},
 				{
 					"type": "image_picker",
-					"id": "image_override_3",
-					"label": "Image Override"
+					"id": "image_3",
+					"label": "Image override"
 				},
 				{
 					"type": "text",
-					"id": "label_override_3",
-					"label": "Label Override"
+					"id": "label_3",
+					"label": "Label override"
 				}
 			]
 		}
 	],
 	"presets": [
 		{
-			"name": "Explore by Region",
+			"name": "Explore by region",
 			"category": "Content",
 			"blocks": [
-				{
-					"type": "region",
-					"settings": {
-						"region_name": "West Bengal"
-					}
-				},
-				{
-					"type": "region",
-					"settings": {
-						"region_name": "Himachal Pradesh"
-					}
-				},
-				{
-					"type": "region",
-					"settings": {
-						"region_name": "Northeast India"
-					}
-				},
-				{
-					"type": "region",
-					"settings": {
-						"region_name": "Bihar"
-					}
-				},
-				{
-					"type": "region",
-					"settings": {
-						"region_name": "Odisha"
-					}
-				}
+				{ "type": "region" },
+				{ "type": "region" },
+				{ "type": "region" }
 			]
 		}
 	]

@@ -1,614 +1,462 @@
-/* ===== Custom Theme Styles ===== */
 
-/* ===== Global Variables ===== */
+
+
+/* ===== Global fonts / typography ===== */
 :root {
+  /* --fontFamily: "ivypresto-display", serif; */
   --hFontFamily: "ivypresto-display", serif;
-  --bodyFontFamily: "IBM Plex Sans", sans-serif;
-  --padding: 60px;
-  --margin: 40px;
-  --mardding: 20px; /* Note: This appears intentional from the theme for mobile padding */
-  --globalBorder: 1px solid #000;
-  --globalBorderWidth: 1px;
-  --brandRed: #7F1416;
 }
 
-/* ===== Hero Section ===== */
-.hero {
-  font-family: var(--bodyFontFamily);
-}
-
-.hero h1 {
-  font-family: var(--hFontFamily);
-  font-size: clamp(2.4rem, 5.28vw, 74px);
+/* Header nav links + header buttons: IBM Plex Sans 400 14px/1.1 -2% */
+#mainHeader [menu-list="1"] > li > a,
+#mainHeader [menu-list="1"] > li > details > summary,
+header#mainHeader #headerGrid :where(.button, button, summary) {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 14px;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  font-weight: 400;
+  text-transform: uppercase;
 }
 
-.hero p {
-  font-family: var(--bodyFontFamily);
+/* 60px gap between top-level menu links on desktop */
+@media (min-width: 778px) {
+  #mainHeader .menu ul[menu-list="1"] { gap: 36px; }
+}
+
+/* Homepage Bestsellers: quick-buy button color.
+   Keep a bottom grid line — the button overlays the card's border,
+   so it must draw its own to close the section box (Figma).
+   #000 is hardcoded: the card scheme (coretex-2) turns border vars white. */
+body[coretex-page="index"] .featured-products .superQuickBuy .cardButton,
+body[coretex-page="index"] .featured-products .soldoutButton {
+  background-color: #7F1416;
+  color: #fff;
+  border: none;
+  border-block-end: var(--globalBorderWidth, 1px) solid #000;
+}
+
+/* Product card grid lines: black like the Figma.
+   Cards use the coretex-2 scheme (white text over media), whose border
+   color is white — that made the 1px gaps between cards read as white
+   space. Force the card outlines black so the grid closes in black. */
+.featured-products .product-grid product-card,
+.related .product-grid product-card {
+  outline-color: #000;
+}
+
+/* ===== Hero section custom CSS ===== */
+
+x-cell.content {
+  --padding: 57px;   /* heading block ↔ button gap */
+  --space-1: 57px;   /* heading ↔ subheading gap */
+  padding-left: 60px;
+}
+
+x-cell.content h1 {
+  font-family: "ivypresto-display", serif;
+  font-size: 74px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  margin: 0;
+  text-transform: none;
+}
+
+x-cell.content p {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 300;
   font-size: 16px;
   line-height: 1.2;
+  letter-spacing: 0;
+  color: #ffffff;
+  margin: 0;
+}
+
+x-cell.content .button.is-customized {
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+
+@media (max-width: 749px) {
+  x-cell.content {
+    --padding: 32px;
+    --space-1: 32px;
+    padding-left: 20px;
+  }
+  x-cell.content h1 {
+    font-size: 42px;
+  }
+}
+header#mainHeader #headerGrid {
+  min-height: 72px;
+  align-items: center;
+  padding:0 48px;
+}
+#shopify-section-sections--22254940717103__header {
+  display: flex;
+  align-items: center;
+}
+#shopify-section-sections--22254940717103__header header#mainHeader {
+  width: 100%;
+}
+
+.featured-products .gs-title {
+  justify-content: center;
+  font-family: "IBM Plex Sans", sans-serif;
+}
+.featured-products .gs-title h2 {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4; /* 16.9/12 */
+  letter-spacing: 0;
+  margin: 0;
+}
+
+/* Product card title */
+.featured-products .product-grid .title h2,
+.featured-products .product-grid .title a {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2; /* 16.9/14 */
+  letter-spacing: 0;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Vendor line above it — Figma: "Divine Love" style */
+.featured-products .product-grid .vendor {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  margin: 0;
 }
 
 /* ===== Footer (Figma design) ===== */
-.footer {
-  border-top: var(--globalBorder);
-}
 
-.f-motto {
-  font-family: var(--bodyFontFamily);
-  font-size: 12px;
-  line-height: 1.4;
-  text-transform: uppercase;
+/* Eyebrow row: OUR NEWSLETTER */
+#f-motto {
+  padding: var(--space-2) var(--mardding);
   text-align: center;
-  padding: 10px 0;
-  border-bottom: var(--globalBorder);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
 }
+#f-motto p { margin: 0; }
 
-.f-newsletter {
-  position: relative;
-  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 300"><rect fill="%23f5f5f5" width="1440" height="300"/></svg>');
+/* Newsletter band — 60px padding, heading and form 78px apart */
+#f-newsletter {
+  background-image: linear-gradient(rgba(25, 8, 8, 0.28), rgba(25, 8, 8, 0.28)), url("https://cdn.shopify.com/s/files/1/0774/6987/6271/files/image_55_1.png?v=1783448746");
   background-size: cover;
   background-position: center;
-  padding: 60px 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  border-bottom: var(--globalBorder);
+  color: #ffffff;
+  padding: clamp(2rem, 4.17vw, 60px);
 }
+#f-newsletter > x-flex {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: clamp(1.5rem, 5.4vw, 78px);
+  row-gap: 1.5rem;
+}
+#f-newsletter > x-flex > x-cell:first-child { flex: 1 1 20rem; }
+#f-newsletter > x-flex > x-cell:last-child { flex: 0 1 461px; max-width: 100%; }
 
-.f-newsletter h2,
-.f-newsletter p {
-  font-family: var(--hFontFamily);
-  font-size: clamp(2.4rem, 5vw, 64px);
-  line-height: 1;
+/* Heading: IvyPresto Display 64px / 100%, thin (100) */
+#f-newsletter p {
+  font-family: "ivypresto-display", serif;
   font-weight: 100;
-  color: white;
-  text-align: center;
+  font-size: clamp(2.1rem, 4.45vw, 64px);
+  line-height: 1;
+  letter-spacing: 0;
   margin: 0;
 }
 
-.f-newsletter-form {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 24px;
-  flex-wrap: wrap;
-}
-
-.f-newsletter-form input {
+/* Newsletter form: 461px column, transparent input + white button */
+#f-newsletter .newsletterbox { gap: var(--space-2); }
+#f-newsletter input[type="email"] {
   background: transparent;
-  border: 1px solid white;
-  color: white;
-  padding: 16px;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 0;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
   font-size: 14px;
   height: 36px;
-  line-height: 1;
-  font-family: var(--bodyFontFamily);
-  flex: 1;
-  min-width: 200px;
+  padding: 0 0.9rem;
+  width: 100%;
 }
-
-.f-newsletter-form input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
+#f-newsletter input[type="email"]::placeholder {
+  color: rgba(255, 255, 255, 0.92);
+  opacity: 1;
+  font-size: 14px;
 }
-
-.f-newsletter-form button {
-  background: white;
-  color: black;
-  border: none;
-  padding: 12px 24px;
+#f-newsletter .usubscribe button {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  border-radius: 0;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
   font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  font-family: var(--bodyFontFamily);
-  cursor: pointer;
   height: 36px;
-  line-height: 1;
-  white-space: nowrap;
+  padding: 0 0.9rem;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Mobile: 16px input prevents iOS focus-zoom; form full width */
 @media (max-width: 777px) {
-  .f-newsletter {
-    padding: 40px 20px;
-  }
-
-  .f-newsletter h2,
-  .f-newsletter p {
-    font-size: clamp(1.8rem, 4vw, 48px);
-  }
-
-  .f-newsletter-form {
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .f-newsletter-form input {
-    width: 100%;
-    font-size: 16px; /* iOS zoom prevention */
-    height: 42px;
-  }
-
-  .f-newsletter-form button {
-    width: 100%;
-    height: 42px;
-    font-size: 12px;
-  }
+  #f-newsletter input[type="email"],
+  #f-newsletter input[type="email"]::placeholder { font-size: 16px; }
+  #f-newsletter input[type="email"],
+  #f-newsletter .usubscribe button { height: 42px; }
 }
 
-.f-menu {
-  display: flex;
+/* Footer menu row: centered cluster, 64px gaps, IBM Plex Sans Regular 16px */
+#f-links { padding-block: 1.7rem; }
+#f-links .f-links > x-flex {
+  width: auto;
   justify-content: center;
-  gap: 64px;
-  padding: 40px 0;
-  border-bottom: var(--globalBorder);
-  font-family: var(--bodyFontFamily);
+  column-gap: clamp(1.5rem, 4.45vw, 64px);
+  row-gap: 0.9rem;
 }
-
-.f-menu a {
+#f-links .f-links a {
   font-size: 16px;
-  text-decoration: none;
-  color: black;
+  font-weight: 400;
+  line-height: 1.06;
+  padding: 0.25rem 0;
 }
 
-.f-subfooter {
+/* Sub-footer: 12px text */
+sub-footer { font-size: 12px; }
+
+/* Sub-footer: payment icon badges */
+sub-footer .payment-icons img.payment-icon { width: 29px; height: 19px; border-radius: 0; }
+
+/* Sub-footer: boxed country/language selectors */
+sub-footer .selectors .fake-select {
+  border: var(--globalBorderWidth, 1px) solid #000000;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.6rem 0.95rem;
+  text-transform: uppercase;
   font-size: 12px;
-  text-align: center;
-  padding: 20px;
-  font-family: var(--bodyFontFamily);
+  letter-spacing: 0.02em;
 }
+sub-footer .selectors > x-flex { gap: 0.9rem; }
 
-.f-payment-icons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin: 20px 0;
-}
+/* Sub-footer: copyright — uppercase shop name */
+sub-footer .copyright { font-size: 12px; }
+sub-footer .copyright a { text-transform: uppercase; }
 
-.f-payment-icons img {
-  width: 29px;
-  height: 19px;
-}
+/* ===== Product page (Figma design) ===== */
 
-/* ===== Product Page (body[coretex-page="product"]) ===== */
-body[coretex-page="product"] .product-title {
-  font-family: var(--hFontFamily);
-  font-size: clamp(2.4rem, 4.4vw, 56px);
-  line-height: 1.08;
+/* Content column spacing */
+body[coretex-page="product"] .bullet-product-content product-content { gap: 1.4rem; }
+
+/* Title: IvyPresto Display ~56px, subtitle italic same size right below */
+body[coretex-page="product"] .bullet-product-content section.title h1 {
+  font-family: "ivypresto-display", serif;
   font-weight: 400;
-  margin: 0 0 12px 0;
+  font-size: clamp(2.2rem, 3.9vw, 56px);
+  line-height: 1.08;
+  letter-spacing: 0.01em;
+  margin: 0;
+  text-transform: none;
 }
-
-body[coretex-page="product"] .product-subtitle {
-  font-family: var(--hFontFamily);
+body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -1rem; }
+body[coretex-page="product"] .bullet-product-content section.subtitle h3 {
+  font-family: "ivypresto-display", serif;
+  font-weight: 400;
   font-style: italic;
-  font-size: clamp(2.4rem, 4.4vw, 56px);
+  font-size: clamp(2rem, 3.9vw, 56px);
   line-height: 1.08;
-  font-weight: 400;
-  margin: 0 0 24px 0;
+  letter-spacing: 0.01em;
+  margin: 0;
+  text-transform: none;
 }
 
-body[coretex-page="product"] .product-vendor {
-  font-family: var(--bodyFontFamily);
-  color: var(--brandRed);
+/* Region link (vendor): brand red, uppercase, underlined */
+body[coretex-page="product"] .bullet-product-content section.vendor a {
+  color: #7F1416;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 600;
   font-size: 14px;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   text-decoration: underline;
-  margin-bottom: 24px;
+  text-underline-offset: 5px;
+  text-decoration-thickness: 1px;
 }
 
-body[coretex-page="product"] .product-description {
-  font-family: var(--bodyFontFamily);
+/* Description: justified paragraphs like the design */
+body[coretex-page="product"] .bullet-product-content section.description .rte {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
   font-size: 15px;
   line-height: 1.55;
   text-align: justify;
-  margin: 24px 0;
 }
+body[coretex-page="product"] .bullet-product-content section.description .rte p { margin: 0 0 1.2em; }
+body[coretex-page="product"] .bullet-product-content section.description .rte p:last-child { margin-bottom: 0; }
 
-body[coretex-page="product"] .button {
+/* Buy buttons: ADD TO CART outlined, BUY NOW solid black, square corners */
+body[coretex-page="product"] .product-form .cartButton {
   border-radius: 0;
-  font-size: 13px;
   text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.03em;
   min-height: 48px;
 }
-
-body[coretex-page="product"] .button--primary {
-  background: black;
-  color: white;
+body[coretex-page="product"] .product-form .cartButton.is-outline {
+  border: 1px solid #000000;
+  background: transparent;
+  color: #000000;
 }
-
-body[coretex-page="product"] .button--secondary {
-  background: white;
-  color: black;
-  border: 1px solid black;
-}
-
-body[coretex-page="product"] .also-like-heading {
-  font-family: var(--bodyFontFamily);
-  font-size: 12px;
-  line-height: 1.4;
+body[coretex-page="product"] .product-form .shopify-payment-button__button--unbranded {
+  background: #000000;
+  color: #ffffff;
+  border-radius: 0;
   text-transform: uppercase;
-  text-align: center;
-  color: #000;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  min-height: 48px;
 }
+body[coretex-page="product"] .product-form .shopify-payment-button__more-options { display: none; }
 
-/* ===== Philosophy Section (Exact Figma Implementation) ===== */
-.philosophy {
-  border-bottom: var(--globalBorder);
-  padding-block: var(--padding);
-}
-
-.philosophy__eyebrow {
-  text-align: center;
-  padding-block-end: var(--padding);
-  font-size: 12px;
-  font-family: var(--bodyFontFamily);
+/* "YOU'D ALSO LIKE" heading: centered eyebrow like homepage */
+body[coretex-page="product"] .related .gs-title { justify-content: center; }
+body[coretex-page="product"] .related .gs-title h2 {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
   font-weight: 400;
+  font-size: 12px;
   line-height: 1.4;
+  letter-spacing: 0;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  margin: 0;
 }
 
-.philosophy__grid {
-  align-items: center;
-  padding-inline: clamp(1.25rem, 5vw, 60px);
+/* Tagline band (Hero text section): IvyPresto, brand red, like homepage */
+body[coretex-page="product"] .hero-text {
+  padding-block: clamp(3rem, 6.25vw, 88px);
+}
+body[coretex-page="product"] .hero-text .cta {
+  font-family: "ivypresto-display", serif;
+  font-weight: 100;
+  color: #7F1416;
+  font-size: clamp(1.6rem, 3.75vw, 54px) !important;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+body[coretex-page="product"] .hero-text .cta p { margin: 0; }
+
+/* ===== Mini section headers (eyebrows) — one consistent size & row height ===== */
+/* Applies to: OUR PHILOSOPHY, EXPLORE BY REGION, OUR VALUES, OUR NEWSLETTER.
+   Spec matches BESTSELLERS: IBM Plex Sans 400, 12px / 1.4, uppercase, centered, ~40px row. */
+section.philosophy .philosophy__eyebrow,
+section.our-values .our-values__eyebrow,
+section.explore-region .explore-region__eyebrow,
+footer #f-motto {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  text-align: center;
+  color: currentColor;
+  opacity: 1;
+  padding: 10px var(--mardding);
+  border-block-end: var(--globalBorder);
+}
+section.philosophy .philosophy__eyebrow span,
+section.our-values .our-values__eyebrow span,
+section.explore-region .explore-region__eyebrow span { opacity: 1; }
+
+/* BESTSELLERS + YOU'D ALSO LIKE title rows: same row height as eyebrows */
+.featured-products .gs-title,
+.related .gs-title {
+  padding-block: 10px;
+}
+
+/* ===== Philosophy section — exact Figma spacing =====
+   1440 spec: section ~445px tall, content vertically centered;
+   heading from x=60; body text 396.66px wide at x=570.81, IBM Plex 16/140% justified;
+   illustration ~473px, flush to the right viewport edge. */
+section.philosophy .philosophy__grid {
   display: grid;
   grid-template-columns: minmax(0, 511px) minmax(260px, 397px) minmax(0, 473px);
-  gap: 0;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0 !important;
+  padding: 0 0 0 clamp(1.25rem, 4.17vw, 60px);
+  min-height: clamp(300px, 30.9vw, 445px);
   width: 100%;
   max-width: none;
   margin: 0;
-  min-height: 445px;
 }
-
-.philosophy__heading {
-  justify-self: start;
-}
-
-.philosophy__heading .h2 {
-  margin: 0;
-  font-family: var(--hFontFamily);
-  font-size: clamp(2.4rem, 4.4vw, 54px);
-  line-height: 1.15;
+section.philosophy .philosophy__heading .h2 {
+  font-family: "ivypresto-display", serif;
   font-weight: 100;
+  font-size: clamp(2rem, 3.75vw, 54px);
+  line-height: 1.15;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: none;
 }
-
-.philosophy__text {
-  justify-self: center;
-}
-
-.philosophy__text .rte {
-  font-family: var(--bodyFontFamily);
+section.philosophy .philosophy__text .rte {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
   font-size: 16px;
   line-height: 1.4;
   text-align: justify;
-  color: #000;
+  color: #000000;
+  opacity: 1;
 }
-
-.philosophy__text .rte p {
-  margin: 0 0 1em 0;
-}
-
-.philosophy__text .rte p:last-child {
-  margin-bottom: 0;
-}
-
-.philosophy__media {
+section.philosophy .philosophy__text .rte p { margin: 0 0 1em; }
+section.philosophy .philosophy__text .rte p:last-child { margin: 0; }
+section.philosophy .philosophy__media {
   justify-self: end;
+  align-self: center;
+  width: 100%;
+  max-width: 473px;
+  margin-right: 0;
 }
-
-.philosophy__media picture,
-.philosophy__media img,
-.philosophy__media svg {
+section.philosophy .philosophy__media img {
   display: block;
   width: 100%;
   height: auto;
 }
 
 @media (max-width: 1024px) {
-  .philosophy__grid {
+  section.philosophy .philosophy__grid {
     grid-template-columns: 1.1fr 1fr 0.9fr;
-    gap: 24px;
-    min-height: auto;
-    align-items: center;
+    column-gap: 24px !important;
+    padding: 2rem 0 2rem var(--mardding);
+    min-height: 0;
   }
 }
-
 @media (max-width: 777px) {
-  .philosophy__grid {
+  section.philosophy .philosophy__grid {
     grid-template-columns: 1fr;
-    padding-inline: var(--mardding);
-    gap: 0;
+    row-gap: 1.5rem !important;
+    padding: 2rem var(--mardding);
+    min-height: 0;
   }
-
-  .philosophy__media {
-    order: -1;
-    margin-block-end: var(--margin);
-    max-width: 220px;
+  section.philosophy .philosophy__media {
+    justify-self: center;
+    max-width: 240px;
     margin-inline: auto;
   }
 }
 
-/* ===== Mini Section Headers (Eyebrows) ===== */
-.section-eyebrow,
-.eyebrow-label {
-  font-family: var(--bodyFontFamily);
-  font-size: 12px;
-  line-height: 1.4;
-  text-transform: uppercase;
-  text-align: center;
-  padding: 10px 0;
-  border-bottom: var(--globalBorder);
-  font-weight: 400;
-  letter-spacing: 0.05em;
-}
-
-/* ===== Our Values Section ===== */
-.our-values {
-  border-bottom: var(--globalBorder);
-  padding-block: var(--padding);
-}
-
-.our-values__eyebrow {
-  text-align: center;
-  padding-block-end: var(--padding);
-  font-size: 12px;
-  font-family: var(--bodyFontFamily);
-  font-weight: 400;
-  line-height: 1.4;
-  text-transform: uppercase;
-  border-bottom: var(--globalBorder);
-  margin-bottom: var(--padding);
-}
-
-.our-values__heading {
-  font-family: var(--hFontFamily);
-  font-size: clamp(2.4rem, 5vw, 54px);
-  line-height: 1.15;
-  font-weight: 100;
-  margin: 0 0 40px 0;
-  text-align: center;
-}
-
-.our-values__tagline {
-  font-family: var(--hFontFamily);
-  font-style: italic;
-  font-size: clamp(2rem, 4vw, 54px);
-  line-height: 1.1;
-  font-weight: 400;
-  margin: 0 0 60px 0;
-  text-align: center;
-}
-
-.our-values__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--globalBorderWidth, 1px);
-  padding: 0 var(--padding);
-}
-
-.our-values__column {
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-}
-
-.our-values__column--left,
-.our-values__column--right {
-  animation: slideDown 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-}
-
-.our-values__column--center {
-  animation: slideUp 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.08s forwards;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-64px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(64px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .our-values__column--left,
-  .our-values__column--right,
-  .our-values__column--center {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.our-values__image {
-  width: 100%;
-  height: auto;
-  margin-bottom: 20px;
-}
-
-.our-values__title {
-  font-family: var(--hFontFamily);
-  font-size: 24px;
-  line-height: 1.2;
-  font-weight: 400;
-  margin: 0 0 16px 0;
-}
-
-.our-values__text {
-  font-family: var(--bodyFontFamily);
-  font-size: 14px;
-  line-height: 1.6;
-  margin: 0;
-  flex-grow: 1;
-}
-
-@media (max-width: 777px) {
-  .our-values__grid {
-    grid-template-columns: 1fr;
-    gap: 0;
-    padding: 0 var(--mardding);
-  }
-
-  .our-values__column {
-    padding: 30px 0;
-    border-bottom: var(--globalBorder);
-  }
-
-  .our-values__column:last-child {
-    border-bottom: none;
-  }
-
-  .our-values__column--left,
-  .our-values__column--right,
-  .our-values__column--center {
-    animation: none;
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* ===== Explore by Region Section ===== */
-.explore-region {
-  border-bottom: var(--globalBorder);
-  padding-block: var(--padding);
-}
-
-.explore-region__eyebrow {
-  text-align: center;
-  padding-block-end: var(--padding);
-  font-size: 12px;
-  font-family: var(--bodyFontFamily);
-  font-weight: 400;
-  line-height: 1.4;
-  text-transform: uppercase;
-  border-bottom: var(--globalBorder);
-  margin-bottom: var(--padding);
-}
-
-.explore-region__tabs {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  padding: 0 var(--padding) 40px var(--padding);
-  border-bottom: var(--globalBorder);
-}
-
-.explore-region__tab {
-  font-family: var(--bodyFontFamily);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: black;
-  padding-bottom: 8px;
-  border-bottom: 2px solid transparent;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.explore-region__tab.active {
-  color: var(--brandRed);
-  border-bottom-color: var(--brandRed);
-}
-
-.explore-region__content {
-  padding: 40px var(--padding);
-}
-
-.explore-region__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--globalBorderWidth, 1px);
-}
-
-.explore-region__card {
-  background: white;
-  cursor: pointer;
-  transition: opacity 0.3s ease;
-}
-
-.explore-region__card:hover {
-  opacity: 0.8;
-}
-
-.explore-region__card-image {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  display: block;
-}
-
-.explore-region__card-label {
-  font-family: var(--bodyFontFamily);
-  font-size: 14px;
-  padding: 12px;
-  text-align: center;
-  border-top: var(--globalBorder);
-}
-
-@media (max-width: 1024px) {
-  .explore-region__tabs {
-    gap: 24px;
-  }
-
-  .explore-region__grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 777px) {
-  .explore-region__tabs {
-    flex-wrap: wrap;
-    gap: 16px;
-    padding: 0 var(--mardding) 20px var(--mardding);
-  }
-
-  .explore-region__tab {
-    font-size: 11px;
-    padding-bottom: 6px;
-  }
-
-  .explore-region__content {
-    padding: 20px var(--mardding);
-    overflow-x: auto;
-  }
-
-  .explore-region__grid {
-    grid-template-columns: 1fr;
-    gap: var(--globalBorderWidth, 1px);
-  }
-}
-
-/* ===== Responsive Typography ===== */
-@media (max-width: 777px) {
-  :root {
-    --padding: 20px;
-    --margin: 20px;
-  }
-
-  .hero h1 {
-    font-size: clamp(1.8rem, 6vw, 48px);
-  }
-
-  body[coretex-page="product"] .product-title,
-  body[coretex-page="product"] .product-subtitle {
-    font-size: clamp(1.8rem, 4vw, 40px);
-  }
-}
+	/* Product cards: smooth fade when swapping to secondary image on hover */
+	product-card :is(.onHover, .onHover-a, .onHover-m, .onHover-s) :is(.on, .off) {
+		transition: opacity 0.45s ease;
+	}

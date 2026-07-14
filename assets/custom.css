@@ -111,6 +111,24 @@ header#mainHeader #headerGrid {
   align-items: center;
   padding:0 48px;
 }
+/* Mobile header: the 48px desktop padding and the three equal-width
+   grid columns leave big empty gaps on a phone. Tighten the padding
+   and size the MENU/SEARCH columns to their content so the logo sits
+   left and menu + search sit together on the right. */
+@media (max-width: 777px) {
+  header#mainHeader #headerGrid {
+    padding: 0 20px;
+    grid-template-columns: 1fr auto auto;
+    column-gap: 24px;
+  }
+  header#mainHeader #headerGrid .hamburger {
+    justify-content: flex-end;
+  }
+  header#mainHeader #headerGrid ul.utility {
+    justify-content: flex-end;
+    gap: 0;
+  }
+}
 #shopify-section-sections--22254940717103__header {
   display: flex;
   align-items: center;

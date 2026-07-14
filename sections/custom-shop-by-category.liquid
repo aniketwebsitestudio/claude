@@ -477,6 +477,7 @@ if (!customElements.get('sbc-slider')) {
 
 		initDrag() {
 			let active = false;
+			let dragging = false;
 			let preRotated = false;
 			let startX = 0;
 			let baseX = 0;
@@ -486,19 +487,28 @@ if (!customElements.get('sbc-slider')) {
 				if (this.busy || !this.overflowing()) return;
 				if (e.pointerType === 'mouse') e.preventDefault(); /* stops native image drag */
 				active = true;
+				dragging = false;
 				preRotated = false;
 				this.moved = 0;
 				startX = e.clientX;
 				dx = 0;
 				baseX = this.loop ? 0 : this.restX();
-				this.setPointerCapture(e.pointerId);
-				this.classList.add('sbc-dragging');
 			});
 
 			this.addEventListener('pointermove', (e) => {
 				if (!active) return;
 				dx = e.clientX - startX;
 				this.moved = Math.max(this.moved, Math.abs(dx));
+
+				/* A press only becomes a drag after real movement — capturing
+				   the pointer right away retargets the release event and
+				   swallows the card link's click. */
+				if (!dragging) {
+					if (Math.abs(dx) < 7) return;
+					dragging = true;
+					this.setPointerCapture(e.pointerId);
+					this.classList.add('sbc-dragging');
+				}
 				const step = this.step();
 
 				if (this.loop) {
@@ -519,6 +529,8 @@ if (!customElements.get('sbc-slider')) {
 			const release = (e) => {
 				if (!active) return;
 				active = false;
+				if (!dragging) return; /* plain tap/click: let the link work */
+				dragging = false;
 				this.classList.remove('sbc-dragging');
 				if (this.hasPointerCapture(e.pointerId)) this.releasePointerCapture(e.pointerId);
 

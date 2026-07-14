@@ -1,104 +1,300 @@
 {
   "sections": {
-    "hero": {
+    "gs_hero_z9BKMH": {
       "type": "gs-hero",
+      "custom_css": [
+        "h1 {font-family: \"ivypresto-display\", serif; font-size: 74px; line-height: 1.1; /* 110% */ letter-spacing: 0.02em; /* 2% */ font-weight: 100; margin: 0; text-transform: capitalize;}",
+        "p {font-family: \"IBM Plex Sans\", sans-serif; font-weight: 300; font-size: 16px; line-height: 1.2; /* 120% */ letter-spacing: 0; /* 0% */ color: #ffffff; margin: 0;}"
+      ],
+      "name": "Hero banner",
       "settings": {
-        "height": "600px"
+        "mediaType": "image",
+        "image": "shopify://shop_images/Hero_Banner.png",
+        "imgClickable": false,
+        "videoLoop": true,
+        "videoMute": true,
+        "videoAutoplay": true,
+        "clickToPlay": true,
+        "playPause": true,
+        "cropVideo": false,
+        "heroHeight": "var(--heroHeight-f)",
+        "heroHeightMobile": "default",
+        "title": "Born from the Earth.<br><i>Made by hand</i>",
+        "headingTag": "h1",
+        "content": "Every piece carries the memory of the hands<br>that made it, and the land that taught them how.",
+        "cta": "EXPLORE THE COLLECTIONS",
+        "url": "",
+        "contentPosition": "center left",
+        "contentDirection": "column",
+        "textAlignment": "left",
+        "contentPositionMob": "center between",
+        "contentDirectionMob": "column",
+        "textAlignmentMob": "center",
+        "heroMetaH1hasBg": false,
+        "global_color_scheme": false,
+        "color_scheme": "coretex-2"
       }
     },
-    "featured-products": {
+    "gs_featured_products_bVFLHK": {
       "type": "gs-featured-products",
+      "name": "Featured products",
       "settings": {
-        "title": "Bestsellers",
-        "product_limit": 3
+        "heading": "BESTSELLERS",
+        "url": "",
+        "product_list": [
+          "peacock",
+          "peacock-copy",
+          "peacock-copy-copy"
+        ],
+        "horizontalScroller": "none",
+        "global_color_scheme": false,
+        "color_scheme": "coretex-1"
       }
     },
-    "philosophy": {
+    "custom_shop_by_category_6zAzQ7": {
+      "type": "custom-shop-by-category",
+      "blocks": {
+        "collection_qT7X7i": {
+          "type": "collection",
+          "settings": {
+            "collection": "accessories",
+            "image": "shopify://shop_images/Rectangle_97.png",
+            "title": "accessories"
+          }
+        },
+        "collection_b98pCc": {
+          "type": "collection",
+          "settings": {
+            "collection": "clothing",
+            "image": "shopify://shop_images/Rectangle_100.png",
+            "title": "clothing"
+          }
+        },
+        "collection_zbfpep": {
+          "type": "collection",
+          "settings": {
+            "collection": "jewelry",
+            "image": "shopify://shop_images/Rectangle_98.png",
+            "title": "jewelry"
+          }
+        },
+        "collection_gaHwMY": {
+          "type": "collection",
+          "settings": {
+            "collection": "home-decor",
+            "image": "shopify://shop_images/Rectangle_101.png",
+            "title": "home decor"
+          }
+        },
+        "collection_HF3Hqj": {
+          "type": "collection",
+          "settings": {
+            "collection": "painting",
+            "image": "shopify://shop_images/Rectangle_99.png",
+            "title": "painting"
+          }
+        },
+        "collection_D7kKaW": {
+          "type": "collection",
+          "settings": {
+            "collection": "gift-ideas",
+            "image": "shopify://shop_images/image_111.png",
+            "title": "Gift Ideas"
+          }
+        }
+      },
+      "block_order": [
+        "collection_qT7X7i",
+        "collection_b98pCc",
+        "collection_zbfpep",
+        "collection_gaHwMY",
+        "collection_HF3Hqj",
+        "collection_D7kKaW"
+      ],
+      "name": "Shop by category",
+      "settings": {
+        "heading": "Shop by <em>category</em>",
+        "image_ratio": "4 / 5",
+        "uppercase_labels": true,
+        "columns_desktop": 5,
+        "gap_desktop": 24,
+        "heading_size": 48,
+        "label_size": 13,
+        "padding_top": 60,
+        "padding_bottom": 60,
+        "columns_mobile": 2,
+        "gap_mobile": 12,
+        "heading_size_mobile": 32,
+        "label_size_mobile": 12,
+        "padding_top_mobile": 40,
+        "padding_bottom_mobile": 40
+      }
+    },
+    "custom_philosophy_1": {
       "type": "custom-philosophy",
+      "name": "Philosophy",
       "settings": {
         "eyebrow": "Our Philosophy",
         "heading": "Craftsmanship is <em>knowledge</em>",
-        "text": "<p>Each piece in our collection is the result of years of knowledge, not algorithms, not automation.</p><p>The hands behind Bhoomija have spent lifetimes understanding material, form, and function. We simply have the privilege of bringing their work to you.</p>"
+        "text": "<p>Each piece in our collection is the result of years of knowledge, not algorithms, not automation.</p><p>The hands behind Bhoomija have spent lifetimes understanding material, form, and function. We simply have the privilege of bringing their work to you.</p>",
+        "image": "shopify://shop_images/Man_1_1.png",
+        "global_color_scheme": true,
+        "color_scheme": ""
       }
     },
-    "explore-region": {
+    "custom_explore_region_1": {
       "type": "custom-explore-region",
       "blocks": {
-        "region-1": {
+        "region_wb": {
           "type": "region",
           "settings": {
-            "region_name": "West Bengal"
+            "title": "West Bengal",
+            "collection_1": "",
+            "image_1": "shopify://shop_images/image_112.png",
+            "label_1": "Dokra Decor",
+            "collection_2": "",
+            "image_2": "shopify://shop_images/image_111.png",
+            "label_2": "Thread Jewellery",
+            "collection_3": "",
+            "image_3": "shopify://shop_images/image_110.png",
+            "label_3": "Wooden Serviettes"
           }
         },
-        "region-2": {
+        "region_hp": {
           "type": "region",
           "settings": {
-            "region_name": "Himachal Pradesh"
+            "title": "Himachal Pradesh",
+            "collection_1": "",
+            "image_1": "shopify://shop_images/image_111.png",
+            "label_1": "Thread Jewellery",
+            "collection_2": "",
+            "image_2": "shopify://shop_images/image_110.png",
+            "label_2": "Wooden Serviettes",
+            "collection_3": "",
+            "image_3": "shopify://shop_images/image_112.png",
+            "label_3": "Dokra Decor"
           }
         },
-        "region-3": {
+        "region_ne": {
           "type": "region",
           "settings": {
-            "region_name": "Northeast India"
+            "title": "Northeast India",
+            "collection_1": "",
+            "image_1": "shopify://shop_images/image_110.png",
+            "label_1": "Wooden Serviettes",
+            "collection_2": "",
+            "image_2": "shopify://shop_images/image_112.png",
+            "label_2": "Dokra Decor",
+            "collection_3": "",
+            "image_3": "shopify://shop_images/image_111.png",
+            "label_3": "Thread Jewellery"
           }
         },
-        "region-4": {
+        "region_bh": {
           "type": "region",
           "settings": {
-            "region_name": "Bihar"
+            "title": "Bihar",
+            "collection_1": "",
+            "image_1": "shopify://shop_images/image_112.png",
+            "label_1": "Dokra Decor",
+            "collection_2": "",
+            "image_2": "shopify://shop_images/image_110.png",
+            "label_2": "Wooden Serviettes",
+            "collection_3": "",
+            "image_3": "shopify://shop_images/image_111.png",
+            "label_3": "Thread Jewellery"
           }
         },
-        "region-5": {
+        "region_od": {
           "type": "region",
           "settings": {
-            "region_name": "Odisha"
+            "title": "Odisha",
+            "collection_1": "",
+            "image_1": "shopify://shop_images/image_111.png",
+            "label_1": "Thread Jewellery",
+            "collection_2": "",
+            "image_2": "shopify://shop_images/image_112.png",
+            "label_2": "Dokra Decor",
+            "collection_3": "",
+            "image_3": "shopify://shop_images/image_110.png",
+            "label_3": "Wooden Serviettes"
           }
         }
       },
+      "block_order": [
+        "region_wb",
+        "region_hp",
+        "region_ne",
+        "region_bh",
+        "region_od"
+      ],
+      "disabled": true,
+      "name": "Explore by region",
       "settings": {
-        "eyebrow": "Explore by Region"
+        "eyebrow": "Explore by Region",
+        "accent": "#7f1416",
+        "global_color_scheme": true,
+        "color_scheme": ""
       }
     },
-    "our-values": {
+    "custom_our_values_1": {
       "type": "custom-our-values",
       "blocks": {
-        "value-1": {
+        "col_1": {
           "type": "column",
           "settings": {
-            "position": "left",
-            "title": "Authenticity",
-            "text": "True to our roots."
+            "image": "shopify://shop_images/image_28.png",
+            "title": "Made to Mean Something",
+            "text": "<p>What you bring home from Bhoomija will outlast the occasion you bought it for. That is the intention, and that is the promise.</p>",
+            "text_first": false,
+            "offset": 0
           }
         },
-        "value-2": {
+        "col_2": {
           "type": "column",
           "settings": {
-            "position": "center",
-            "title": "Excellence",
-            "text": "No compromises."
+            "image": "shopify://shop_images/image_27.png",
+            "title": "Craft First",
+            "text": "<p>We begin where the maker begins, with material and method. Not with margin.</p>",
+            "text_first": true,
+            "offset": 0
           }
         },
-        "value-3": {
+        "col_3": {
           "type": "column",
           "settings": {
-            "position": "right",
-            "title": "Sustainability",
-            "text": "Built to last."
+            "image": "shopify://shop_images/image_29.png",
+            "title": "Rooted in Relationship",
+            "text": "<p>Our artisans are not vendors. They are the reason Bhoomija exists. Every collection starts with a conversation, not a brief.</p>",
+            "text_first": false,
+            "offset": 0
           }
         }
       },
+      "block_order": [
+        "col_1",
+        "col_2",
+        "col_3"
+      ],
+      "name": "Our Values",
       "settings": {
         "eyebrow": "Our Values",
-        "heading": "Crafted with Purpose",
-        "tagline": "<em>Every detail matters</em>"
+        "heading": "The clay that <br> we are made of",
+        "tagline": "Bhoomija, born from the earth. Made by hand.",
+        "accent": "#7f1416",
+        "enable_animation": true,
+        "scroll_scrub": true,
+        "global_color_scheme": true,
+        "color_scheme": ""
       }
     }
   },
   "order": [
-    "hero",
-    "featured-products",
-    "philosophy",
-    "explore-region",
-    "our-values"
+    "gs_hero_z9BKMH",
+    "gs_featured_products_bVFLHK",
+    "custom_shop_by_category_6zAzQ7",
+    "custom_philosophy_1",
+    "custom_explore_region_1",
+    "custom_our_values_1"
   ]
 }

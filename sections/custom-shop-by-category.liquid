@@ -64,43 +64,45 @@
 		<h2 class="sbc-heading">{{ section.settings.heading }}</h2>
 	{%- endif -%}
 
-	<div class="sbc-viewport">
-		<sbc-slider class="sbc-track{% if section.settings.uppercase_labels %} sbc-uppercase{% endif %}" data-loop="{{ section.settings.infinite_loop }}">
-			{%- for block in section.blocks -%}
-				{%- liquid
-					assign c = block.settings.collection
+	<div class="sbc-stage">
+		<div class="sbc-viewport">
+			<sbc-slider class="sbc-track{% if section.settings.uppercase_labels %} sbc-uppercase{% endif %}" data-loop="{{ section.settings.infinite_loop }}">
+				{%- for block in section.blocks -%}
+					{%- liquid
+						assign c = block.settings.collection
 
-					assign display_image = null
-					if block.settings.image
-						assign display_image = block.settings.image
-					elsif c.image
-						assign display_image = c.image
-					elsif c.featured_image
-						assign display_image = c.featured_image
-					endif
+						assign display_image = null
+						if block.settings.image
+							assign display_image = block.settings.image
+						elsif c.image
+							assign display_image = c.image
+						elsif c.featured_image
+							assign display_image = c.featured_image
+						endif
 
-					if block.settings.title != blank
-						assign display_title = block.settings.title
-					elsif c != blank
-						assign display_title = c.title
-					else
-						assign display_title = 'collection.collection' | t
-					endif
-				-%}
-				<div class="sbc-item" {{ block.shopify_attributes }}>
-					<a class="sbc-card" {% if c != blank %}href="{{ c.url }}"{% endif %}>
-						<div class="sbc-media">
-							{%- if display_image -%}
-								{{ display_image | image_url: width: 900 | image_tag: widths: '300, 450, 600, 900', sizes: sizes, class: 'sbc-img', loading: 'lazy', alt: display_title }}
-							{%- else -%}
-								{{ 'collection-1' | placeholder_svg_tag: 'sbc-img sbc-placeholder' }}
-							{%- endif -%}
-						</div>
-						<span class="sbc-label">{{ display_title }}</span>
-					</a>
-				</div>
-			{%- endfor -%}
-		</sbc-slider>
+						if block.settings.title != blank
+							assign display_title = block.settings.title
+						elsif c != blank
+							assign display_title = c.title
+						else
+							assign display_title = 'collection.collection' | t
+						endif
+					-%}
+					<div class="sbc-item" {{ block.shopify_attributes }}>
+						<a class="sbc-card" {% if c != blank %}href="{{ c.url }}"{% endif %}>
+							<div class="sbc-media">
+								{%- if display_image -%}
+									{{ display_image | image_url: width: 900 | image_tag: widths: '300, 450, 600, 900', sizes: sizes, class: 'sbc-img', loading: 'lazy', alt: display_title }}
+								{%- else -%}
+									{{ 'collection-1' | placeholder_svg_tag: 'sbc-img sbc-placeholder' }}
+								{%- endif -%}
+							</div>
+							<span class="sbc-label">{{ display_title }}</span>
+						</a>
+					</div>
+				{%- endfor -%}
+			</sbc-slider>
+		</div>
 
 		{%- if section.settings.show_arrows -%}
 		<button type="button" class="sbc-arrow sbc-prev" aria-label="{{ 'pagination.previous' | t }}">
@@ -138,33 +140,35 @@
 }
 .shop-by-category .sbc-heading em { font-style: italic; }
 
-.shop-by-category .sbc-viewport { position: relative; }
+/* The stage spans the full section width; the arrows anchor to it so
+   both keep the same gap to the screen edge even though the viewport
+   inside it has asymmetric margins (start gutter vs. edge-flush peek). */
+.shop-by-category .sbc-stage { position: relative; }
 
+.shop-by-category .sbc-viewport {
+	overflow: hidden;
+	margin-inline: 20px var(--sbc-pe-m, 20px);
+}
+
+/* Transform-driven track: the row always rests with a full card at the
+   left content edge; sliding is translate + card rotation (infinite). */
 .shop-by-category .sbc-track {
 	display: flex;
 	gap: var(--sbc-gap-m);
-	overflow-x: auto;
-	scroll-snap-type: x mandatory;
-	overscroll-behavior-x: contain;
-	-webkit-overflow-scrolling: touch;
-	scrollbar-width: none;
-	padding-inline: 20px var(--sbc-pe-m, 20px);
-	scroll-padding-inline-start: 20px;
+	touch-action: pan-y;
+	will-change: transform;
 }
-.shop-by-category .sbc-track::-webkit-scrollbar { display: none; }
+.shop-by-category .sbc-track img {
+	-webkit-user-drag: none;
+	user-select: none;
+}
 
 /* N full cards + a fraction of the next one (the peek) fit the row.
    With no peek the formula reduces to the classic N-columns layout. */
 .shop-by-category .sbc-item {
 	flex: 0 0 calc((100% - (var(--sbc-cols-m) - 1 + var(--sbc-haspeek-m, 0)) * var(--sbc-gap-m)) / (var(--sbc-cols-m) + var(--sbc-peek-m, 0)));
 	min-width: 0;
-	scroll-snap-align: start;
 }
-
-/* The end of the track is a valid snap position, so the last card can
-   be shown fully — otherwise mandatory snap bounces back to the
-   nearest card-start and clips it. */
-.shop-by-category .sbc-item:last-child { scroll-snap-align: end; }
 
 .shop-by-category .sbc-card {
 	display: block;
@@ -209,11 +213,14 @@
 }
 .shop-by-category .sbc-track.sbc-dragging .sbc-img { transition: none; }
 
-/* Arrows: shown on hover only (pointer devices); hidden on touch */
+/* Arrows: shown on hover only (pointer devices); hidden on touch.
+   Both arrows keep the same fixed gap to the screen edge. */
 .shop-by-category .sbc-arrow {
+	--sbc-arrow-edge: 16px;
 	position: absolute;
 	top: 50%;
 	transform: translateY(-50%);
+	margin: 0;
 	z-index: 2;
 	width: 44px;
 	height: 44px;
@@ -227,8 +234,8 @@
 	cursor: pointer;
 	padding: 0;
 }
-.shop-by-category .sbc-prev { left: 16px; }
-.shop-by-category .sbc-next { right: 16px; }
+.shop-by-category .sbc-prev { left: var(--sbc-arrow-edge); right: auto; }
+.shop-by-category .sbc-next { right: var(--sbc-arrow-edge); left: auto; }
 .shop-by-category .sbc-arrow[disabled] { opacity: 0.3 !important; pointer-events: none; }
 .shop-by-category .sbc-arrow[hidden] { display: none !important; }
 @media (hover: hover) {
@@ -237,7 +244,7 @@
 		opacity: 0;
 		transition: opacity 0.25s ease;
 	}
-	.shop-by-category .sbc-viewport:hover .sbc-arrow,
+	.shop-by-category .sbc-stage:hover .sbc-arrow,
 	.shop-by-category .sbc-arrow:focus-visible { opacity: 1; }
 }
 
@@ -272,10 +279,11 @@
 		margin-bottom: 44px;
 		padding-inline: 76px;
 	}
+	.shop-by-category .sbc-viewport {
+		margin-inline: 76px var(--sbc-pe, 76px);
+	}
 	.shop-by-category .sbc-track {
 		gap: var(--sbc-gap);
-		padding-inline: 76px var(--sbc-pe, 76px);
-		scroll-padding-inline-start: 76px;
 	}
 	.shop-by-category .sbc-item {
 		flex-basis: calc((100% - (var(--sbc-cols) - 1 + var(--sbc-haspeek, 0)) * var(--sbc-gap)) / (var(--sbc-cols) + var(--sbc-peek, 0)));
@@ -288,46 +296,26 @@
 if (!customElements.get('sbc-slider')) {
 	customElements.define('sbc-slider', class extends HTMLElement {
 		connectedCallback() {
-			this.dragging = false;
-			this.moved = 0;
 			this.section = this.closest('.shop-by-category');
 			this.loop = this.getAttribute('data-loop') === 'true';
 			this.dotsWrap = this.section ? this.section.querySelector('.sbc-dots') : null;
 			this.prevBtn = this.section ? this.section.querySelector('.sbc-prev') : null;
 			this.nextBtn = this.section ? this.section.querySelector('.sbc-next') : null;
+			this.offset = 0;   /* loop mode: rotation counter */
+			this.pos = 0;      /* clamped mode: page index */
+			this.busy = false;
+			this.moved = 0;
 
 			const refresh = () => {
-				this.classList.toggle('sbc-draggable', this.scrollWidth > this.clientWidth + 2);
+				this.classList.toggle('sbc-draggable', this.overflowing());
+				this.setX(this.restX(), false);
 				this.buildDots();
 			};
 			refresh();
 			new ResizeObserver(refresh).observe(this);
 
-			this.addEventListener('pointerdown', (e) => {
-				if (e.pointerType !== 'mouse' || !this.classList.contains('sbc-draggable')) return;
-				this.dragging = true;
-				this.moved = 0;
-				this.startX = e.clientX;
-				this.startScroll = this.scrollLeft;
-				this.setPointerCapture(e.pointerId);
-				this.classList.add('sbc-dragging');
-			});
-
-			this.addEventListener('pointermove', (e) => {
-				if (!this.dragging) return;
-				const dx = e.clientX - this.startX;
-				this.moved = Math.max(this.moved, Math.abs(dx));
-				this.scrollLeft = this.startScroll - dx;
-			});
-
-			const stop = (e) => {
-				if (!this.dragging) return;
-				this.dragging = false;
-				this.classList.remove('sbc-dragging');
-				if (this.hasPointerCapture(e.pointerId)) this.releasePointerCapture(e.pointerId);
-			};
-			this.addEventListener('pointerup', stop);
-			this.addEventListener('pointercancel', stop);
+			if (this.prevBtn) this.prevBtn.addEventListener('click', () => this.go(-1));
+			if (this.nextBtn) this.nextBtn.addEventListener('click', () => this.go(1));
 
 			this.addEventListener('click', (e) => {
 				if (this.moved > 6) {
@@ -337,44 +325,121 @@ if (!customElements.get('sbc-slider')) {
 				this.moved = 0;
 			}, true);
 
-			this.addEventListener('scroll', () => {
-				if (this.scrollRaf) return;
-				this.scrollRaf = requestAnimationFrame(() => {
-					this.scrollRaf = null;
-					this.syncUI();
-				});
-			}, { passive: true });
-
-			if (this.prevBtn) this.prevBtn.addEventListener('click', () => this.go(-1));
-			if (this.nextBtn) this.nextBtn.addEventListener('click', () => this.go(1));
+			this.initDrag();
 		}
+
+		count() { return this.children.length; }
 
 		step() {
-			const items = this.querySelectorAll('.sbc-item');
-			if (items.length > 1) return items[1].offsetLeft - items[0].offsetLeft;
-			return items.length ? items[0].offsetWidth : this.clientWidth;
+			if (this.count() > 1) return this.children[1].offsetLeft - this.children[0].offsetLeft;
+			return this.count() ? this.children[0].offsetWidth : this.clientWidth;
 		}
 
-		maxScroll() {
-			return Math.max(0, this.scrollWidth - this.clientWidth);
+		contentEnd() {
+			if (!this.count()) return 0;
+			const last = this.children[this.count() - 1];
+			return last.offsetLeft + last.offsetWidth;
 		}
+
+		maxX() { return Math.max(0, this.contentEnd() - this.clientWidth); }
+
+		overflowing() { return this.contentEnd() > this.clientWidth + 2; }
 
 		pages() {
-			const max = this.maxScroll();
-			if (max < 2) return 1;
-			return Math.round(max / this.step()) + 1;
+			if (!this.overflowing()) return 1;
+			if (this.loop) return this.count();
+			return Math.ceil(this.maxX() / this.step() - 0.02) + 1;
 		}
 
-		index() {
-			return Math.min(this.pages() - 1, Math.round(this.scrollLeft / this.step()));
+		restX() { return this.loop ? 0 : -Math.min(this.pos * this.step(), this.maxX()); }
+
+		setX(x, animate) {
+			this.style.transition = animate ? 'transform 0.45s cubic-bezier(0.33, 0, 0.2, 1)' : 'none';
+			this.style.transform = 'translate3d(' + x + 'px, 0, 0)';
+		}
+
+		afterSlide(fn) {
+			let done = false;
+			let t;
+			const onEnd = (e) => { if (e.target === this && e.propertyName === 'transform') finish(); };
+			const finish = () => {
+				if (done) return;
+				done = true;
+				clearTimeout(t);
+				this.removeEventListener('transitionend', onEnd);
+				fn();
+			};
+			this.addEventListener('transitionend', onEnd);
+			t = setTimeout(finish, 550);
+		}
+
+		/* Completed one-card slide forward: rotate first card to the end */
+		settleNext() {
+			const n = this.count();
+			this.busy = true;
+			this.afterSlide(() => {
+				this.appendChild(this.children[0]);
+				this.setX(0, false);
+				this.offset = (this.offset + 1) % n;
+				this.busy = false;
+				this.syncUI();
+			});
+			this.setX(-this.step(), true);
 		}
 
 		go(dir) {
-			const max = this.maxScroll();
-			let target = (this.index() + dir) * this.step();
-			if (this.loop && dir > 0 && this.scrollLeft >= max - 2) target = 0;
-			else if (this.loop && dir < 0 && this.scrollLeft <= 2) target = max;
-			this.scrollTo({ left: Math.max(0, Math.min(max, target)), behavior: 'smooth' });
+			if (this.busy || !this.overflowing()) return;
+			const n = this.count();
+			const step = this.step();
+
+			if (this.loop) {
+				if (dir > 0) {
+					this.settleNext();
+				} else {
+					/* bring the last card in from the left, then slide to it */
+					this.insertBefore(this.children[n - 1], this.children[0]);
+					this.setX(-step, false);
+					void this.offsetWidth; /* reflow: the jump must not animate */
+					this.busy = true;
+					this.afterSlide(() => {
+						this.offset = (this.offset - 1 + n) % n;
+						this.busy = false;
+						this.syncUI();
+					});
+					this.setX(0, true);
+				}
+				return;
+			}
+
+			const next = Math.max(0, Math.min(this.pages() - 1, this.pos + dir));
+			if (next === this.pos) return;
+			this.pos = next;
+			this.busy = true;
+			this.afterSlide(() => { this.busy = false; this.syncUI(); });
+			this.setX(this.restX(), true);
+			this.syncUI();
+		}
+
+		goTo(i) {
+			if (this.busy || !this.overflowing()) return;
+			const n = this.count();
+			if (this.loop) {
+				let delta = (i - this.offset + n) % n;
+				if (delta === 0) return;
+				if (delta === 1) return this.go(1);
+				if (delta === n - 1) return this.go(-1);
+				while (delta--) this.appendChild(this.children[0]);
+				this.offset = i;
+				this.setX(0, false);
+				this.syncUI();
+			} else {
+				if (i === this.pos) return;
+				this.pos = Math.max(0, Math.min(this.pages() - 1, i));
+				this.busy = true;
+				this.afterSlide(() => { this.busy = false; this.syncUI(); });
+				this.setX(this.restX(), true);
+				this.syncUI();
+			}
 		}
 
 		buildDots() {
@@ -387,9 +452,7 @@ if (!customElements.get('sbc-slider')) {
 					b.type = 'button';
 					b.className = 'sbc-dot';
 					b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
-					b.addEventListener('click', () => {
-						this.scrollTo({ left: Math.min(this.maxScroll(), i * this.step()), behavior: 'smooth' });
-					});
+					b.addEventListener('click', () => this.goTo(i));
 					this.dotsWrap.appendChild(b);
 				}
 			}
@@ -397,20 +460,113 @@ if (!customElements.get('sbc-slider')) {
 		}
 
 		syncUI() {
-			const i = this.index();
+			const active = this.loop ? this.offset : this.pos;
 			if (this.dotsWrap) {
-				this.dotsWrap.querySelectorAll('.sbc-dot').forEach((d, di) => d.classList.toggle('is-active', di === i));
+				this.dotsWrap.querySelectorAll('.sbc-dot').forEach((d, di) => d.classList.toggle('is-active', di === active));
 			}
-			const max = this.maxScroll();
-			const noScroll = max < 2;
+			const off = !this.overflowing();
 			if (this.prevBtn) {
-				this.prevBtn.hidden = noScroll;
-				this.prevBtn.toggleAttribute('disabled', !this.loop && this.scrollLeft <= 2);
+				this.prevBtn.hidden = off;
+				this.prevBtn.toggleAttribute('disabled', !this.loop && this.pos <= 0);
 			}
 			if (this.nextBtn) {
-				this.nextBtn.hidden = noScroll;
-				this.nextBtn.toggleAttribute('disabled', !this.loop && this.scrollLeft >= max - 2);
+				this.nextBtn.hidden = off;
+				this.nextBtn.toggleAttribute('disabled', !this.loop && this.pos >= this.pages() - 1);
 			}
+		}
+
+		initDrag() {
+			let active = false;
+			let preRotated = false;
+			let startX = 0;
+			let baseX = 0;
+			let dx = 0;
+
+			this.addEventListener('pointerdown', (e) => {
+				if (this.busy || !this.overflowing()) return;
+				if (e.pointerType === 'mouse') e.preventDefault(); /* stops native image drag */
+				active = true;
+				preRotated = false;
+				this.moved = 0;
+				startX = e.clientX;
+				dx = 0;
+				baseX = this.loop ? 0 : this.restX();
+				this.setPointerCapture(e.pointerId);
+				this.classList.add('sbc-dragging');
+			});
+
+			this.addEventListener('pointermove', (e) => {
+				if (!active) return;
+				dx = e.clientX - startX;
+				this.moved = Math.max(this.moved, Math.abs(dx));
+				const step = this.step();
+
+				if (this.loop) {
+					if (dx > 8 && !preRotated) {
+						/* dragging toward the previous card: bring it in from the left */
+						this.insertBefore(this.children[this.count() - 1], this.children[0]);
+						baseX = -step;
+						preRotated = true;
+					}
+					const x = Math.max(-step, Math.min(preRotated ? 0 : 8, baseX + dx));
+					this.setX(x, false);
+				} else {
+					const x = Math.max(-this.maxX(), Math.min(0, baseX + dx));
+					this.setX(x, false);
+				}
+			});
+
+			const release = (e) => {
+				if (!active) return;
+				active = false;
+				this.classList.remove('sbc-dragging');
+				if (this.hasPointerCapture(e.pointerId)) this.releasePointerCapture(e.pointerId);
+
+				const step = this.step();
+				const th = Math.min(60, step * 0.18);
+				const n = this.count();
+
+				if (this.loop) {
+					if (preRotated) {
+						if (dx > th) {
+							/* complete the previous-card slide */
+							this.busy = true;
+							this.afterSlide(() => {
+								this.offset = (this.offset - 1 + n) % n;
+								this.busy = false;
+								this.syncUI();
+							});
+							this.setX(0, true);
+						} else {
+							/* cancel: slide back, then undo the rotation */
+							this.busy = true;
+							this.afterSlide(() => {
+								this.appendChild(this.children[0]);
+								this.setX(0, false);
+								this.busy = false;
+								this.syncUI();
+							});
+							this.setX(-step, true);
+						}
+					} else if (dx < -th) {
+						this.settleNext();
+					} else {
+						this.busy = true;
+						this.afterSlide(() => { this.busy = false; });
+						this.setX(0, true);
+					}
+					return;
+				}
+
+				const x = Math.max(-this.maxX(), Math.min(0, baseX + dx));
+				this.pos = Math.max(0, Math.min(this.pages() - 1, Math.round(-x / step)));
+				this.busy = true;
+				this.afterSlide(() => { this.busy = false; this.syncUI(); });
+				this.setX(this.restX(), true);
+				this.syncUI();
+			};
+			this.addEventListener('pointerup', release);
+			this.addEventListener('pointercancel', release);
 		}
 	});
 }

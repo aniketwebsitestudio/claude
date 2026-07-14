@@ -480,22 +480,88 @@ section.philosophy .philosophy__media img {
 
 /* ===== Mobile refinements (desktop untouched) ===== */
 
-/* Hero content: right padding to match the 20px left */
 @media (max-width: 749px) {
+  /* Hero: right padding to match the 20px left; 38px heading (the
+     section's custom CSS pins 74px, hence !important); cluster the
+     heading/subheading/button with tight spacing instead of letting
+     them spread across the full banner height */
   x-cell.content { padding-right: 20px; }
+  .hero x-cell.content h1 { font-size: 38px !important; }
+  .hero x-cell.content {
+    --padding: 28px;  /* heading block <-> button */
+    --space-1: 14px;  /* heading <-> subheading */
+  }
+  .hero .meta .box {
+    justify-content: center !important;
+    align-content: center !important;
+    align-items: center !important;
+  }
+  .hero .meta .box > x-cell.content {
+    height: auto !important;
+    flex: 0 0 auto !important;
+    align-self: center !important;
+  }
+  .hero x-cell.content x-flex {
+    height: auto !important;
+    min-height: 0 !important;
+  }
 }
 
 @media (max-width: 777px) {
-  /* Philosophy: centered heading; left-aligned text (justified text
-     creates rivers of whitespace at narrow widths) */
+  /* Philosophy: header strip flush to the section top like every other
+     grid header (the section adds 20px above it on mobile) */
+  section.philosophy { padding-block: 0 32px; }
+
+  /* Philosophy: all text left-aligned; illustration right-aligned and
+     flush to the viewport edge (negative margin escapes the grid's
+     side padding) */
   section.philosophy .philosophy__grid {
     row-gap: 1.25rem !important;
-    padding: 1.75rem var(--mardding);
+    padding: 1rem var(--mardding) 0.5rem;
   }
-  section.philosophy .philosophy__heading .h2 { text-align: center; }
+  section.philosophy .philosophy__heading .h2 { text-align: left; }
   section.philosophy .philosophy__text .rte {
     text-align: left;
     font-size: 15px;
     line-height: 1.55;
+  }
+  section.philosophy .philosophy__media {
+    order: -1;
+    justify-self: end;
+    width: min(62vw, 240px);
+    max-width: 240px;
+    margin: 0 calc(-1 * var(--mardding, 20px)) 0 auto;
+  }
+
+  /* Footer menu: left-aligned */
+  #f-links .f-links,
+  #f-links .f-links x-flex,
+  #f-links .f-links x-grid {
+    justify-content: flex-start !important;
+    text-align: left;
+  }
+
+  /* Sub-footer: payment icons + the two selector boxes share one
+     left-aligned row; copyright/credits flow left below */
+  sub-footer > x-grid {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    column-gap: 1.25rem;
+    row-gap: 0.75rem;
+  }
+  sub-footer .payment-icons { justify-content: flex-start !important; }
+  sub-footer .payment-icons > x-flex { gap: 0.5rem !important; }
+  sub-footer .selectors > x-flex {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 0.6rem !important;
+  }
+  sub-footer .copyright,
+  sub-footer #shopify-credits {
+    width: 100%;
+    justify-content: flex-start !important;
+    text-align: left !important;
   }
 }

@@ -113,7 +113,7 @@
 	</div>
 
 	{%- if section.settings.show_dots -%}
-	<div class="sbc-dots" role="tablist" aria-label="Carousel pagination"></div>
+	<div class="sbc-dots" aria-label="Carousel pagination"></div>
 	{%- endif -%}
 </section>
 
@@ -160,6 +160,11 @@
 	min-width: 0;
 	scroll-snap-align: start;
 }
+
+/* The end of the track is a valid snap position, so the last card can
+   be shown fully — otherwise mandatory snap bounces back to the
+   nearest card-start and clips it. */
+.shop-by-category .sbc-item:last-child { scroll-snap-align: end; }
 
 .shop-by-category .sbc-card {
 	display: block;
@@ -236,13 +241,14 @@
 	.shop-by-category .sbc-arrow:focus-visible { opacity: 1; }
 }
 
-/* Dots */
+/* Dots: centered cluster, 12px apart */
 .shop-by-category .sbc-dots {
 	display: flex;
+	width: fit-content;
 	justify-content: center;
 	align-items: center;
-	gap: 8px;
-	margin-top: 22px;
+	gap: 12px;
+	margin: 22px auto 0;
 }
 .shop-by-category .sbc-dots[hidden] { display: none; }
 .shop-by-category .sbc-dot {

@@ -1,0 +1,658 @@
+{%- liquid
+	assign cols = section.settings.columns_desktop
+	assign cols_m = section.settings.columns_mobile
+
+	assign vw = 100 | divided_by: cols
+	assign vw_m = 100 | divided_by: cols_m
+	capture sizes
+		echo '(min-width: 778px) ' | append: vw | append: 'vw, ' | append: vw_m | append: 'vw'
+	endcapture
+
+	comment
+		Peek: fraction of the next card visible at the right edge.
+		Only applies when there are more cards than visible columns;
+		otherwise the cards fill the row and the end padding is restored.
+	endcomment
+	assign peek_d = section.settings.peek | times: 1.0 | divided_by: 100
+	assign haspeek_d = 1
+	assign pad_end_d = '0px'
+	if section.blocks.size <= cols
+		assign peek_d = 0
+		assign haspeek_d = 0
+		assign pad_end_d = '76px'
+	elsif peek_d == 0
+		assign haspeek_d = 0
+	endif
+
+	assign peek_m = section.settings.peek_mobile | times: 1.0 | divided_by: 100
+	assign haspeek_m = 1
+	assign pad_end_m = '0px'
+	if section.blocks.size <= cols_m
+		assign peek_m = 0
+		assign haspeek_m = 0
+		assign pad_end_m = '20px'
+	elsif peek_m == 0
+		assign haspeek_m = 0
+	endif
+-%}
+
+<section
+	class="shop-by-category"
+	style="
+		--sbc-cols: {{ cols }};
+		--sbc-cols-m: {{ cols_m }};
+		--sbc-gap: {{ section.settings.gap_desktop }}px;
+		--sbc-gap-m: {{ section.settings.gap_mobile }}px;
+		--sbc-peek: {{ peek_d }};
+		--sbc-haspeek: {{ haspeek_d }};
+		--sbc-peek-m: {{ peek_m }};
+		--sbc-haspeek-m: {{ haspeek_m }};
+		--sbc-pe: {{ pad_end_d }};
+		--sbc-pe-m: {{ pad_end_m }};
+		--sbc-ratio: {{ section.settings.image_ratio }};
+		--sbc-heading-size: {{ section.settings.heading_size }}px;
+		--sbc-heading-size-m: {{ section.settings.heading_size_mobile }}px;
+		--sbc-label-size: {{ section.settings.label_size }}px;
+		--sbc-label-size-m: {{ section.settings.label_size_mobile }}px;
+		--sbc-pt: {{ section.settings.padding_top }}px;
+		--sbc-pb: {{ section.settings.padding_bottom }}px;
+		--sbc-pt-m: {{ section.settings.padding_top_mobile }}px;
+		--sbc-pb-m: {{ section.settings.padding_bottom_mobile }}px;
+	"
+>
+	{%- if section.settings.heading != blank -%}
+		<h2 class="sbc-heading">{{ section.settings.heading }}</h2>
+	{%- endif -%}
+
+	<div class="sbc-viewport">
+		<sbc-slider class="sbc-track{% if section.settings.uppercase_labels %} sbc-uppercase{% endif %}" data-loop="{{ section.settings.infinite_loop }}">
+			{%- for block in section.blocks -%}
+				{%- liquid
+					assign c = block.settings.collection
+
+					assign display_image = null
+					if block.settings.image
+						assign display_image = block.settings.image
+					elsif c.image
+						assign display_image = c.image
+					elsif c.featured_image
+						assign display_image = c.featured_image
+					endif
+
+					if block.settings.title != blank
+						assign display_title = block.settings.title
+					elsif c != blank
+						assign display_title = c.title
+					else
+						assign display_title = 'collection.collection' | t
+					endif
+				-%}
+				<div class="sbc-item" {{ block.shopify_attributes }}>
+					<a class="sbc-card" {% if c != blank %}href="{{ c.url }}"{% endif %}>
+						<div class="sbc-media">
+							{%- if display_image -%}
+								{{ display_image | image_url: width: 900 | image_tag: widths: '300, 450, 600, 900', sizes: sizes, class: 'sbc-img', loading: 'lazy', alt: display_title }}
+							{%- else -%}
+								{{ 'collection-1' | placeholder_svg_tag: 'sbc-img sbc-placeholder' }}
+							{%- endif -%}
+						</div>
+						<span class="sbc-label">{{ display_title }}</span>
+					</a>
+				</div>
+			{%- endfor -%}
+		</sbc-slider>
+
+		{%- if section.settings.show_arrows -%}
+		<button type="button" class="sbc-arrow sbc-prev" aria-label="{{ 'pagination.previous' | t }}">
+			{%- render 'global-icon' with 'arrow-left' -%}
+		</button>
+		<button type="button" class="sbc-arrow sbc-next" aria-label="{{ 'pagination.next' | t }}">
+			{%- render 'global-icon' with 'arrow-right' -%}
+		</button>
+		{%- endif -%}
+	</div>
+
+	{%- if section.settings.show_dots -%}
+	<div class="sbc-dots" role="tablist" aria-label="Carousel pagination"></div>
+	{%- endif -%}
+</section>
+
+{% stylesheet %}
+.shop-by-category {
+	position: relative;
+	padding-block: var(--sbc-pt-m) var(--sbc-pb-m);
+	padding-inline: 0;
+	overflow: hidden;
+}
+
+.shop-by-category .sbc-heading {
+	margin: 0 0 34px;
+	padding-inline: 20px;
+	text-align: center;
+	font-family: var(--hFontFamily);
+	font-weight: 100;
+	font-size: var(--sbc-heading-size-m);
+	line-height: 1;            /* Figma 100% */
+	letter-spacing: 0.02em;    /* Figma 2% */
+	text-transform: none;      /* kills theme uppercase — Figma is "Shop by category" */
+}
+.shop-by-category .sbc-heading em { font-style: italic; }
+
+.shop-by-category .sbc-viewport { position: relative; }
+
+.shop-by-category .sbc-track {
+	display: flex;
+	gap: var(--sbc-gap-m);
+	overflow-x: auto;
+	scroll-snap-type: x mandatory;
+	overscroll-behavior-x: contain;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none;
+	padding-inline: 20px var(--sbc-pe-m, 20px);
+	scroll-padding-inline-start: 20px;
+}
+.shop-by-category .sbc-track::-webkit-scrollbar { display: none; }
+
+/* N full cards + a fraction of the next one (the peek) fit the row.
+   With no peek the formula reduces to the classic N-columns layout. */
+.shop-by-category .sbc-item {
+	flex: 0 0 calc((100% - (var(--sbc-cols-m) - 1 + var(--sbc-haspeek-m, 0)) * var(--sbc-gap-m)) / (var(--sbc-cols-m) + var(--sbc-peek-m, 0)));
+	min-width: 0;
+	scroll-snap-align: start;
+}
+
+.shop-by-category .sbc-card {
+	display: block;
+	text-decoration: none;
+	color: inherit;
+}
+
+.shop-by-category .sbc-media {
+	aspect-ratio: var(--sbc-ratio);
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.04);
+}
+
+.shop-by-category .sbc-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 0.5s ease;
+}
+@media (hover: hover) {
+	.shop-by-category .sbc-card:hover .sbc-img { transform: scale(1.04); }
+}
+
+.shop-by-category .sbc-label {
+	display: block;
+	margin-top: 14px;
+	text-align: center;
+	font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+	font-weight: 400;
+	font-size: var(--sbc-label-size-m);
+	line-height: 1.4;          /* Figma 140% */
+	letter-spacing: 0;         /* Figma 0% */
+}
+.shop-by-category .sbc-uppercase .sbc-label { text-transform: uppercase; }
+
+.shop-by-category .sbc-track.sbc-draggable { cursor: grab; }
+.shop-by-category .sbc-track.sbc-dragging {
+	cursor: grabbing;
+	scroll-snap-type: none;
+	user-select: none;
+}
+.shop-by-category .sbc-track.sbc-dragging .sbc-img { transition: none; }
+
+/* Arrows: shown on hover only (pointer devices); hidden on touch */
+.shop-by-category .sbc-arrow {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 2;
+	width: 44px;
+	height: 44px;
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: #ffffff;
+	color: #000000;
+	border: var(--globalBorderWidth, 1px) solid #000000;
+	border-radius: 50%;
+	cursor: pointer;
+	padding: 0;
+}
+.shop-by-category .sbc-prev { left: 16px; }
+.shop-by-category .sbc-next { right: 16px; }
+.shop-by-category .sbc-arrow[disabled] { opacity: 0.3 !important; pointer-events: none; }
+.shop-by-category .sbc-arrow[hidden] { display: none !important; }
+@media (hover: hover) {
+	.shop-by-category .sbc-arrow {
+		display: inline-flex;
+		opacity: 0;
+		transition: opacity 0.25s ease;
+	}
+	.shop-by-category .sbc-viewport:hover .sbc-arrow,
+	.shop-by-category .sbc-arrow:focus-visible { opacity: 1; }
+}
+
+/* Dots */
+.shop-by-category .sbc-dots {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 8px;
+	margin-top: 22px;
+}
+.shop-by-category .sbc-dots[hidden] { display: none; }
+.shop-by-category .sbc-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	border: var(--globalBorderWidth, 1px) solid #000000;
+	background: transparent;
+	padding: 0;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+.shop-by-category .sbc-dot.is-active { background: #000000; }
+
+@media (min-width: 778px) {
+	.shop-by-category {
+		padding-block: var(--sbc-pt) var(--sbc-pb);
+	}
+	.shop-by-category .sbc-heading {
+		font-size: var(--sbc-heading-size);
+		margin-bottom: 44px;
+		padding-inline: 76px;
+	}
+	.shop-by-category .sbc-track {
+		gap: var(--sbc-gap);
+		padding-inline: 76px var(--sbc-pe, 76px);
+		scroll-padding-inline-start: 76px;
+	}
+	.shop-by-category .sbc-item {
+		flex-basis: calc((100% - (var(--sbc-cols) - 1 + var(--sbc-haspeek, 0)) * var(--sbc-gap)) / (var(--sbc-cols) + var(--sbc-peek, 0)));
+	}
+	.shop-by-category .sbc-label { font-size: var(--sbc-label-size); }
+}
+{% endstylesheet %}
+
+{% javascript %}
+if (!customElements.get('sbc-slider')) {
+	customElements.define('sbc-slider', class extends HTMLElement {
+		connectedCallback() {
+			this.dragging = false;
+			this.moved = 0;
+			this.section = this.closest('.shop-by-category');
+			this.loop = this.getAttribute('data-loop') === 'true';
+			this.dotsWrap = this.section ? this.section.querySelector('.sbc-dots') : null;
+			this.prevBtn = this.section ? this.section.querySelector('.sbc-prev') : null;
+			this.nextBtn = this.section ? this.section.querySelector('.sbc-next') : null;
+
+			const refresh = () => {
+				this.classList.toggle('sbc-draggable', this.scrollWidth > this.clientWidth + 2);
+				this.buildDots();
+			};
+			refresh();
+			new ResizeObserver(refresh).observe(this);
+
+			this.addEventListener('pointerdown', (e) => {
+				if (e.pointerType !== 'mouse' || !this.classList.contains('sbc-draggable')) return;
+				this.dragging = true;
+				this.moved = 0;
+				this.startX = e.clientX;
+				this.startScroll = this.scrollLeft;
+				this.setPointerCapture(e.pointerId);
+				this.classList.add('sbc-dragging');
+			});
+
+			this.addEventListener('pointermove', (e) => {
+				if (!this.dragging) return;
+				const dx = e.clientX - this.startX;
+				this.moved = Math.max(this.moved, Math.abs(dx));
+				this.scrollLeft = this.startScroll - dx;
+			});
+
+			const stop = (e) => {
+				if (!this.dragging) return;
+				this.dragging = false;
+				this.classList.remove('sbc-dragging');
+				if (this.hasPointerCapture(e.pointerId)) this.releasePointerCapture(e.pointerId);
+			};
+			this.addEventListener('pointerup', stop);
+			this.addEventListener('pointercancel', stop);
+
+			this.addEventListener('click', (e) => {
+				if (this.moved > 6) {
+					e.preventDefault();
+					e.stopPropagation();
+				}
+				this.moved = 0;
+			}, true);
+
+			this.addEventListener('scroll', () => {
+				if (this.scrollRaf) return;
+				this.scrollRaf = requestAnimationFrame(() => {
+					this.scrollRaf = null;
+					this.syncUI();
+				});
+			}, { passive: true });
+
+			if (this.prevBtn) this.prevBtn.addEventListener('click', () => this.go(-1));
+			if (this.nextBtn) this.nextBtn.addEventListener('click', () => this.go(1));
+		}
+
+		step() {
+			const items = this.querySelectorAll('.sbc-item');
+			if (items.length > 1) return items[1].offsetLeft - items[0].offsetLeft;
+			return items.length ? items[0].offsetWidth : this.clientWidth;
+		}
+
+		maxScroll() {
+			return Math.max(0, this.scrollWidth - this.clientWidth);
+		}
+
+		pages() {
+			const max = this.maxScroll();
+			if (max < 2) return 1;
+			return Math.round(max / this.step()) + 1;
+		}
+
+		index() {
+			return Math.min(this.pages() - 1, Math.round(this.scrollLeft / this.step()));
+		}
+
+		go(dir) {
+			const max = this.maxScroll();
+			let target = (this.index() + dir) * this.step();
+			if (this.loop && dir > 0 && this.scrollLeft >= max - 2) target = 0;
+			else if (this.loop && dir < 0 && this.scrollLeft <= 2) target = max;
+			this.scrollTo({ left: Math.max(0, Math.min(max, target)), behavior: 'smooth' });
+		}
+
+		buildDots() {
+			if (this.dotsWrap) {
+				const pages = this.pages();
+				this.dotsWrap.innerHTML = '';
+				this.dotsWrap.hidden = pages <= 1;
+				for (let i = 0; i < pages; i++) {
+					const b = document.createElement('button');
+					b.type = 'button';
+					b.className = 'sbc-dot';
+					b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+					b.addEventListener('click', () => {
+						this.scrollTo({ left: Math.min(this.maxScroll(), i * this.step()), behavior: 'smooth' });
+					});
+					this.dotsWrap.appendChild(b);
+				}
+			}
+			this.syncUI();
+		}
+
+		syncUI() {
+			const i = this.index();
+			if (this.dotsWrap) {
+				this.dotsWrap.querySelectorAll('.sbc-dot').forEach((d, di) => d.classList.toggle('is-active', di === i));
+			}
+			const max = this.maxScroll();
+			const noScroll = max < 2;
+			if (this.prevBtn) {
+				this.prevBtn.hidden = noScroll;
+				this.prevBtn.toggleAttribute('disabled', !this.loop && this.scrollLeft <= 2);
+			}
+			if (this.nextBtn) {
+				this.nextBtn.hidden = noScroll;
+				this.nextBtn.toggleAttribute('disabled', !this.loop && this.scrollLeft >= max - 2);
+			}
+		}
+	});
+}
+{% endjavascript %}
+
+{% schema %}
+{
+	"name": "Shop by category",
+	"tag": "section",
+	"disabled_on": { "groups": ["header", "footer", "aside"] },
+	"settings": [
+		{
+			"type": "inline_richtext",
+			"id": "heading",
+			"label": "Heading",
+			"default": "Shop by <em>category</em>",
+			"info": "Use italic formatting for the accent word."
+		},
+		{
+			"type": "select",
+			"id": "image_ratio",
+			"label": "Image ratio",
+			"default": "4 / 5",
+			"options": [
+				{ "value": "1 / 1", "label": "Square" },
+				{ "value": "4 / 5", "label": "Portrait" },
+				{ "value": "3 / 4", "label": "Tall portrait" },
+				{ "value": "4 / 3", "label": "Landscape" }
+			]
+		},
+		{
+			"type": "checkbox",
+			"id": "uppercase_labels",
+			"label": "Uppercase labels",
+			"default": true
+		},
+		{
+			"type": "header",
+			"content": "Carousel"
+		},
+		{
+			"type": "checkbox",
+			"id": "infinite_loop",
+			"label": "Infinite loop",
+			"info": "Arrows wrap around from the last card back to the first.",
+			"default": true
+		},
+		{
+			"type": "checkbox",
+			"id": "show_arrows",
+			"label": "Show arrows",
+			"info": "Arrows appear on hover (desktop only).",
+			"default": true
+		},
+		{
+			"type": "checkbox",
+			"id": "show_dots",
+			"label": "Show dots",
+			"default": true
+		},
+		{
+			"type": "header",
+			"content": "Desktop"
+		},
+		{
+			"type": "range",
+			"id": "columns_desktop",
+			"label": "Visible collections",
+			"min": 2,
+			"max": 6,
+			"step": 1,
+			"default": 5,
+			"info": "Add more blocks than this to enable the carousel."
+		},
+		{
+			"type": "range",
+			"id": "peek",
+			"label": "Next card preview",
+			"info": "How much of the next card shows at the right edge. Applies only when there are more cards than visible.",
+			"min": 0,
+			"max": 40,
+			"step": 5,
+			"default": 20,
+			"unit": "%"
+		},
+		{
+			"type": "range",
+			"id": "gap_desktop",
+			"label": "Gap between cards",
+			"min": 4,
+			"max": 60,
+			"step": 2,
+			"default": 24,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "heading_size",
+			"label": "Heading size",
+			"min": 20,
+			"max": 80,
+			"step": 2,
+			"default": 48,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "label_size",
+			"label": "Label size",
+			"min": 10,
+			"max": 24,
+			"step": 1,
+			"default": 13,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "padding_top",
+			"label": "Padding top",
+			"min": 0,
+			"max": 120,
+			"step": 4,
+			"default": 60,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "padding_bottom",
+			"label": "Padding bottom",
+			"min": 0,
+			"max": 120,
+			"step": 4,
+			"default": 60,
+			"unit": "px"
+		},
+		{
+			"type": "header",
+			"content": "Mobile"
+		},
+		{
+			"type": "range",
+			"id": "columns_mobile",
+			"label": "Visible collections",
+			"min": 1,
+			"max": 3,
+			"step": 1,
+			"default": 2
+		},
+		{
+			"type": "range",
+			"id": "peek_mobile",
+			"label": "Next card preview",
+			"info": "How much of the next card shows at the right edge on mobile.",
+			"min": 0,
+			"max": 40,
+			"step": 5,
+			"default": 20,
+			"unit": "%"
+		},
+		{
+			"type": "range",
+			"id": "gap_mobile",
+			"label": "Gap between cards",
+			"min": 4,
+			"max": 40,
+			"step": 2,
+			"default": 12,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "heading_size_mobile",
+			"label": "Heading size",
+			"min": 18,
+			"max": 60,
+			"step": 2,
+			"default": 32,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "label_size_mobile",
+			"label": "Label size",
+			"min": 9,
+			"max": 20,
+			"step": 1,
+			"default": 12,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "padding_top_mobile",
+			"label": "Padding top",
+			"min": 0,
+			"max": 100,
+			"step": 4,
+			"default": 40,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "padding_bottom_mobile",
+			"label": "Padding bottom",
+			"min": 0,
+			"max": 100,
+			"step": 4,
+			"default": 40,
+			"unit": "px"
+		}
+	],
+	"blocks": [
+		{
+			"type": "collection",
+			"name": "Collection",
+			"settings": [
+				{
+					"type": "collection",
+					"id": "collection",
+					"label": "Collection"
+				},
+				{
+					"type": "image_picker",
+					"id": "image",
+					"label": "Custom image",
+					"info": "Takes priority over the collection image assigned in Shopify admin."
+				},
+				{
+					"type": "text",
+					"id": "title",
+					"label": "Custom label",
+					"info": "Leave blank to use the collection title."
+				}
+			]
+		}
+	],
+	"presets": [
+		{
+			"name": "Shop by category",
+			"category": "Collections",
+			"blocks": [
+				{ "type": "collection" },
+				{ "type": "collection" },
+				{ "type": "collection" },
+				{ "type": "collection" },
+				{ "type": "collection" },
+				{ "type": "collection" }
+			]
+		}
+	]
+}
+{% endschema %}

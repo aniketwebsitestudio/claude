@@ -573,12 +573,38 @@ section.philosophy .philosophy__media img {
     transform: rotate(-100deg);
   }
 
-  /* Big serif headings elsewhere (newsletter): 32px / 100% / 2% */
-  #f-newsletter p {
-    font-size: 32px;
+  /* Big serif headings elsewhere (newsletter, our-values, taglines):
+     32px / 100% / 2% */
+  #f-newsletter p,
+  .our-values .our-values__heading,
+  .our-values .our-values__tagline,
+  .hero-text .cta {
+    font-size: 32px !important;
     line-height: 1;
     letter-spacing: 0.02em;
   }
+
+  /* Hero banner heading: same 32px spec (overrides the 38px pin above) */
+  .hero x-cell.content h1 {
+    font-size: 32px !important;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  /* Hero subheading + Our Values column text: IBM Plex Sans 400,
+     12px / 100% / 2% */
+  .hero x-cell.content p,
+  .our-values .our-values__text,
+  .our-values .our-values__text h3,
+  .our-values .our-values__text p {
+    font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .our-values .our-values__text h3 { font-weight: 600; }
+  .our-values .our-values__text p { margin: 0 0 1.2em; }
+  .our-values .our-values__text p:last-child { margin: 0; }
 
   /* Footer menu: left-aligned */
   #f-links .f-links,

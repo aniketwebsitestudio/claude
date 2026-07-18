@@ -171,6 +171,51 @@ header#mainHeader #headerGrid {
   margin: 0;
 }
 
+/* ===== Collection pages: match homepage Bestsellers ===== */
+
+/* Section header (collection title): IBM Plex Sans 400 12px caps,
+   same as the BESTSELLERS eyebrow */
+.listing-page .intro h1 {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+/* Product card title + vendor: same type as homepage cards */
+.listing-page .product-grid .title h2,
+.listing-page .product-grid .title a {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  margin: 0;
+}
+.listing-page .product-grid .vendor {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Card grid lines black + red quick-buy bar, like Bestsellers */
+.listing-page .product-grid product-card {
+  --globalBorderColor: #000;
+}
+.listing-page .superQuickBuy .cardButton,
+.listing-page .soldoutButton {
+  background-color: #7F1416;
+  color: #fff;
+  border-block: var(--globalBorderWidth, 1px) solid var(--globalBorderColor, #000);
+  border-inline: none;
+}
+
 /* ===== Footer (Figma design) ===== */
 
 /* Eyebrow row: OUR NEWSLETTER */

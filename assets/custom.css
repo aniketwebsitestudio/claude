@@ -526,29 +526,58 @@ section.philosophy .philosophy__media img {
 }
 
 @media (max-width: 777px) {
+  /* Mini section headers (OUR PHILOSOPHY, etc.): IBM Plex Sans 400 caps,
+     12px, letter-spacing 0 on mobile */
+  section.philosophy .philosophy__eyebrow,
+  section.our-values .our-values__eyebrow,
+  section.explore-region .explore-region__eyebrow,
+  footer #f-motto {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
   /* Philosophy: header strip flush to the section top like every other
      grid header (the section adds 20px above it on mobile) */
   section.philosophy { padding-block: 0 32px; }
 
-  /* Philosophy: all text left-aligned; illustration right-aligned and
-     flush to the viewport edge (negative margin escapes the grid's
-     side padding) */
+  /* Philosophy mobile layout per Figma: heading and body centered,
+     illustration below them, centered and rotated */
   section.philosophy .philosophy__grid {
-    row-gap: 1.25rem !important;
-    padding: 1rem var(--mardding) 0.5rem;
+    row-gap: 2rem !important;
+    padding: 2.5rem var(--mardding) 1.5rem;
   }
-  section.philosophy .philosophy__heading .h2 { text-align: left; }
+  section.philosophy .philosophy__heading .h2 {
+    text-align: center;
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
   section.philosophy .philosophy__text .rte {
-    text-align: left;
-    font-size: 15px;
-    line-height: 1.55;
+    text-align: center;
+    font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    max-width: 42ch;
+    margin-inline: auto;
   }
+  section.philosophy .philosophy__text .rte p { margin: 0 0 1.4em; }
+  section.philosophy .philosophy__text .rte p:last-child { margin: 0; }
   section.philosophy .philosophy__media {
-    order: -1;
-    justify-self: end;
-    width: min(62vw, 240px);
-    max-width: 240px;
-    margin: 0 calc(-1 * var(--mardding, 20px)) 0 auto;
+    order: 1;
+    justify-self: center;
+    width: min(60vw, 230px);
+    max-width: 230px;
+    margin: 1.5rem auto 1rem;
+    transform: rotate(-100deg);
+  }
+
+  /* Big serif headings elsewhere (newsletter): 32px / 100% / 2% */
+  #f-newsletter p {
+    font-size: 32px;
+    line-height: 1;
+    letter-spacing: 0.02em;
   }
 
   /* Footer menu: left-aligned */

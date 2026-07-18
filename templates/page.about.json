@@ -1,0 +1,15 @@
+{
+  "sections": {
+    "main": {
+      "type": "custom-about",
+      "blocks": {
+        "journey_1": { "type": "journey_image", "settings": {} },
+        "journey_2": { "type": "journey_image", "settings": {} },
+        "journey_3": { "type": "journey_image", "settings": {} }
+      },
+      "block_order": ["journey_1", "journey_2", "journey_3"],
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

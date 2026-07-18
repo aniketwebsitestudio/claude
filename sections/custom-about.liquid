@@ -1,0 +1,427 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="about-figma" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+
+	{%- comment -%} Band 1: hero title {%- endcomment -%}
+	<div class="af-hero">
+		<h1>{% if section.settings.hero_heading != blank %}{{ section.settings.hero_heading }}{% else %}{{ page.title }}{% endif %}</h1>
+	</div>
+
+	{%- comment -%} Band 2: origin image + short statement {%- endcomment -%}
+	<div class="af-origin">
+		<div class="af-origin__media">
+			{%- liquid
+				assign img = section.settings.origin_image
+				assign widths = '400,600,900,1200,1600'
+				assign sizes = '(max-width:777px) 100vw, 60vw'
+				render 'inc-img', img: img, widths: widths, sizes: sizes, fallback: true
+			-%}
+		</div>
+		<div class="af-origin__text rte">{{ section.settings.origin_text }}</div>
+	</div>
+
+	{%- if section.settings.origin_eyebrow != blank -%}
+	<div class="af-eyebrow"><span>{{ section.settings.origin_eyebrow | escape }}</span></div>
+	{%- endif -%}
+
+	{%- comment -%} Band 3: where we come from {%- endcomment -%}
+	<div class="af-from">
+		<h2 class="af-h2">{{ section.settings.from_heading }}</h2>
+		<div class="af-from__col rte">{{ section.settings.from_text_1 }}</div>
+		<div class="af-from__col is-wide rte">{{ section.settings.from_text_2 }}</div>
+	</div>
+
+	{%- if section.settings.name_eyebrow != blank -%}
+	<div class="af-eyebrow"><span>{{ section.settings.name_eyebrow | escape }}</span></div>
+	{%- endif -%}
+
+	{%- comment -%} Band 4: what the name means (wordmark + overlapping illustration) {%- endcomment -%}
+	<div class="af-name">
+		{%- if section.settings.name_illustration != blank -%}
+		<div class="af-name__art" aria-hidden="true">
+			{%- render 'inc-img', img: section.settings.name_illustration, widths: '300,450,600', sizes: '(max-width:777px) 45vw, 450px' -%}
+		</div>
+		{%- endif -%}
+		<h2 class="af-h2 af-name__heading">{{ section.settings.name_heading }}</h2>
+		<div class="af-name__row">
+			<div class="af-name__wordmark">
+				{%- if section.settings.name_wordmark != blank -%}
+					{%- render 'inc-img', img: section.settings.name_wordmark, widths: '300,450,600,750', sizes: '(max-width:777px) 70vw, 380px' -%}
+				{%- endif -%}
+			</div>
+			<div class="af-name__text rte">{{ section.settings.name_text }}</div>
+		</div>
+	</div>
+
+	{%- comment -%} Band 5: mission {%- endcomment -%}
+	<div class="af-split">
+		<h2 class="af-h2">{{ section.settings.mission_heading }}</h2>
+		<div class="af-split__text rte">{{ section.settings.mission_text }}</div>
+	</div>
+
+	{%- comment -%} Band 6: vision {%- endcomment -%}
+	<div class="af-split is-vision">
+		<h2 class="af-h2">{{ section.settings.vision_heading }}</h2>
+		<div class="af-split__text rte">{{ section.settings.vision_text }}</div>
+	</div>
+
+	{%- comment -%} Band 7: journey gallery {%- endcomment -%}
+	{%- if section.settings.journey_heading != blank or section.blocks.size > 0 -%}
+	<div class="af-journey">
+		{%- if section.settings.journey_heading != blank -%}
+		<h2 class="af-h2 af-journey__heading">{{ section.settings.journey_heading }}</h2>
+		{%- endif -%}
+		{%- if section.blocks.size > 0 -%}
+		<div class="af-journey__grid">
+			{%- for block in section.blocks -%}
+			<div class="af-journey__item" {{ block.shopify_attributes }}>
+				{%- render 'inc-img', img: block.settings.image, widths: '400,600,900,1200', sizes: '(max-width:777px) 100vw, 33vw', fallback: true -%}
+			</div>
+			{%- endfor -%}
+		</div>
+		{%- endif -%}
+	</div>
+	{%- endif -%}
+
+</section>
+
+<style>
+	.about-figma { overflow: clip; border-block-end: var(--globalBorder); }
+	.about-figma .rte { font-family: "IBM Plex Sans", var(--fontFamily), sans-serif; font-size: 16px; line-height: 1.4; text-align: justify; }
+	.about-figma .rte p { margin: 0 0 1em; }
+	.about-figma .rte p:last-child { margin: 0; }
+
+	/* Shared serif headings: IvyPresto Thin 74px / 100% / +2% */
+	.about-figma .af-h2 {
+		font-family: "ivypresto-display", serif;
+		font-weight: 100;
+		font-size: clamp(2rem, 5.14vw, 74px);
+		line-height: 1;
+		letter-spacing: 0.02em;
+		margin: 0;
+		text-transform: none;
+	}
+	.about-figma .af-h2 em { font-style: italic; }
+
+	/* Band 1: hero — 104px thin, left */
+	.af-hero {
+		padding: clamp(2rem, 4.2vw, 60px) clamp(1.25rem, 4.17vw, 60px);
+		border-block-end: var(--globalBorder);
+	}
+	.af-hero h1 {
+		font-family: "ivypresto-display", serif;
+		font-weight: 100;
+		font-size: clamp(2.6rem, 7.22vw, 104px);
+		line-height: 1;
+		letter-spacing: 0;
+		margin: 0;
+		text-transform: none;
+	}
+
+	/* Band 2: origin — image flush left ~60% wide, text on the right */
+	.af-origin {
+		display: grid;
+		grid-template-columns: 59.9% 1fr;
+		align-items: center;
+	}
+	.af-origin__media picture,
+	.af-origin__media img,
+	.af-origin__media svg { display: block; width: 100%; height: clamp(220px, 23.4vw, 336px); object-fit: cover; }
+	.af-origin__text {
+		max-width: 272px;
+		margin-inline: auto;
+		padding: 2rem clamp(1.25rem, 2vw, 2rem);
+	}
+
+	/* Eyebrow strips: THE ORIGIN / THE NAME */
+	.af-eyebrow {
+		font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+		font-weight: 400;
+		font-size: 12px;
+		line-height: 1.4;
+		letter-spacing: 0.02em;
+		text-transform: uppercase;
+		text-align: center;
+		padding: 10px var(--mardding);
+		border-block: var(--globalBorder);
+	}
+
+	/* Band 3: where we come from — heading + two text columns */
+	.af-from {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		gap: clamp(2rem, 4.17vw, 60px);
+		padding: clamp(3rem, 9vw, 130px) clamp(1.25rem, 4.17vw, 60px);
+	}
+	.af-from .af-h2 { max-width: 404px; flex: 0 1 404px; }
+	.af-from__col { flex: 0 1 272px; }
+	.af-from__col.is-wide { flex: 0 1 350px; }
+
+	/* Band 4: what the name means */
+	.af-name {
+		position: relative;
+		padding: clamp(3rem, 6vw, 85px) clamp(1.25rem, 4.17vw, 60px) clamp(4rem, 14vw, 200px);
+	}
+	.af-name__art {
+		position: absolute;
+		top: clamp(-190px, -9vw, -60px);
+		left: clamp(-150px, -8vw, -60px);
+		width: clamp(200px, 31vw, 450px);
+		transform: rotate(57.64deg);
+		pointer-events: none;
+		z-index: 1;
+	}
+	.af-name__art img { display: block; width: 100%; height: auto; }
+	.af-name__heading { text-align: center; position: relative; z-index: 2; }
+	.af-name__row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: clamp(2rem, 4vw, 60px);
+		margin-block-start: clamp(2.5rem, 8vw, 115px);
+		padding-inline: clamp(0px, 8vw, 120px);
+		position: relative;
+		z-index: 2;
+	}
+	.af-name__wordmark { flex: 0 1 380px; }
+	.af-name__wordmark img { display: block; width: 100%; height: auto; }
+	.af-name__text { flex: 0 1 335px; }
+
+	/* Bands 5 + 6: mission / vision — heading left, text right */
+	.af-split {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: clamp(2rem, 4vw, 60px);
+		padding: clamp(3rem, 8.5vw, 122px) clamp(1.25rem, 4.17vw, 60px) clamp(3rem, 8.5vw, 122px) clamp(1.25rem, 10vw, 144px);
+	}
+	.af-split .af-h2 { flex: 0 1 490px; }
+	.af-split__text { flex: 0 1 488px; }
+	.af-split.is-vision { padding-inline-start: clamp(1.25rem, 7.2vw, 104px); justify-content: flex-start; gap: clamp(2rem, 6vw, 90px); }
+
+	/* Band 7: journey gallery */
+	.af-journey { padding-block: clamp(3rem, 7vw, 100px) 0; }
+	.af-journey__heading { text-align: center; padding-inline: var(--mardding); }
+	.af-journey__grid {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 20px;
+		margin-block-start: clamp(2rem, 4.6vw, 66px);
+	}
+	.af-journey__item { background: #000; }
+	.af-journey__item picture,
+	.af-journey__item img,
+	.af-journey__item svg { display: block; width: 100%; height: clamp(200px, 23.4vw, 336px); object-fit: cover; }
+
+	/* ===== Mobile ===== */
+	@media (max-width: 777px) {
+		.about-figma .rte {
+			font-size: 12px;
+			line-height: 1.5;
+			letter-spacing: 0.02em;
+			text-align: left;
+		}
+		.about-figma .af-h2 {
+			font-size: 32px;
+			line-height: 1.15;
+			letter-spacing: 0.02em;
+		}
+		.af-hero h1 { font-size: 40px; }
+		.af-eyebrow { letter-spacing: 0; }
+
+		.af-origin { grid-template-columns: 1fr; }
+		.af-origin__text { max-width: none; padding: 1.5rem var(--mardding); }
+
+		.af-from {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1.25rem;
+			padding: 2.5rem var(--mardding);
+		}
+		.af-from .af-h2,
+		.af-from__col,
+		.af-from__col.is-wide { flex: 0 0 auto; max-width: none; }
+
+		.af-name { padding: 2.5rem var(--mardding) 3rem; }
+		.af-name__art {
+			top: -40px;
+			left: -50px;
+			width: 45vw;
+		}
+		.af-name__heading { text-align: center; }
+		.af-name__row {
+			flex-direction: column;
+			align-items: center;
+			gap: 1.75rem;
+			margin-block-start: 2rem;
+			padding-inline: 0;
+		}
+		.af-name__wordmark { flex: 0 0 auto; width: min(70vw, 300px); }
+		.af-name__text { flex: 0 0 auto; }
+
+		.af-split,
+		.af-split.is-vision {
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 1.25rem;
+			padding: 2.5rem var(--mardding);
+		}
+		.af-split .af-h2,
+		.af-split__text { flex: 0 0 auto; }
+
+		.af-journey { padding-block-start: 2.5rem; }
+		.af-journey__grid { grid-template-columns: 1fr; gap: 12px; }
+	}
+</style>
+
+{% schema %}
+{
+	"name": "About (Figma)",
+	"disabled_on": { "groups": ["header", "footer", "aside"] },
+	"settings": [
+		{ "type": "header", "content": "Hero" },
+		{
+			"type": "text",
+			"id": "hero_heading",
+			"label": "Page heading",
+			"default": "Our roots run deep"
+		},
+		{ "type": "header", "content": "Origin band" },
+		{
+			"type": "image_picker",
+			"id": "origin_image",
+			"label": "Image (left, ~60% width)"
+		},
+		{
+			"type": "richtext",
+			"id": "origin_text",
+			"label": "Statement",
+			"default": "<p>We did not set out to build a brand. We set out to do right by the people who make things the world keeps forgetting to value.</p>"
+		},
+		{
+			"type": "text",
+			"id": "origin_eyebrow",
+			"label": "Eyebrow label",
+			"default": "The Origin"
+		},
+		{ "type": "header", "content": "Where we come from" },
+		{
+			"type": "inline_richtext",
+			"id": "from_heading",
+			"label": "Heading",
+			"info": "Use italics for the IvyPresto italic style.",
+			"default": "W<em>here we come from</em>"
+		},
+		{
+			"type": "richtext",
+			"id": "from_text_1",
+			"label": "Column 1",
+			"default": "<p>Bhoomija was born from a simple, stubborn belief, that the craftsman who has spent a lifetime learning his trade deserves more than a shrinking market and an invisible name.</p>"
+		},
+		{
+			"type": "richtext",
+			"id": "from_text_2",
+			"label": "Column 2",
+			"default": "<p>We watched extraordinary skill go unrecognised. We watched handmade become a marketing word rather than a meaningful one. We watched the gap between maker and market grow wider every year. So we closed it.</p>"
+		},
+		{
+			"type": "text",
+			"id": "name_eyebrow",
+			"label": "Eyebrow label",
+			"default": "The Name"
+		},
+		{ "type": "header", "content": "What the name means" },
+		{
+			"type": "inline_richtext",
+			"id": "name_heading",
+			"label": "Heading",
+			"default": "What the name means"
+		},
+		{
+			"type": "image_picker",
+			"id": "name_wordmark",
+			"label": "Wordmark image (BHOOMIJA)"
+		},
+		{
+			"type": "image_picker",
+			"id": "name_illustration",
+			"label": "Illustration (overlaps top-left)"
+		},
+		{
+			"type": "richtext",
+			"id": "name_text",
+			"label": "Text",
+			"default": "<p>Bhoomija means born from the earth.</p><p>It is the name of Sita, daughter of the soil, raised from the ground up. In her story is ours: that what grows from the earth, slowly and deliberately, carries more strength and more grace than anything hurried into existence.</p><p>Our craft is our ground. Our artisans are our roots. Everything else grows from there.</p>"
+		},
+		{ "type": "header", "content": "Mission" },
+		{
+			"type": "inline_richtext",
+			"id": "mission_heading",
+			"label": "Heading",
+			"default": "What are we here for?"
+		},
+		{
+			"type": "richtext",
+			"id": "mission_text",
+			"label": "Text",
+			"default": "<p>Our Mission To create a meaningful platform for local artisans, one that values skill, dignity, and fair opportunity.</p><p>We work closely with craftsmen to bring their work to a wider audience through thoughtful design and ethical practices. The platform is not ours. It belongs to the makers it was built for.</p>"
+		},
+		{ "type": "header", "content": "Vision" },
+		{
+			"type": "inline_richtext",
+			"id": "vision_heading",
+			"label": "Heading",
+			"default": "What we are building toward"
+		},
+		{
+			"type": "richtext",
+			"id": "vision_text",
+			"label": "Text",
+			"default": "<p>Our Vision To make local craft globally relevant.</p><p>We envision a world where artisanal work from our communities stands shoulder to shoulder with the world's most respected brands, not because it has been packaged to look global, but because the people who understand quality recognise it regardless of where it was made.</p>"
+		},
+		{ "type": "header", "content": "Journey gallery" },
+		{
+			"type": "inline_richtext",
+			"id": "journey_heading",
+			"label": "Heading",
+			"default": "The journey that brought Bhoomija alive"
+		},
+		{ "type": "header", "content": "Appearance" },
+		{
+			"type": "checkbox",
+			"id": "global_color_scheme",
+			"label": "Use global color scheme",
+			"default": true
+		},
+		{
+			"type": "color_scheme",
+			"id": "color_scheme",
+			"label": "Color scheme",
+			"default": "coretex-1",
+			"visible_if": "{{ section.settings.global_color_scheme == false }}"
+		}
+	],
+	"blocks": [
+		{
+			"type": "journey_image",
+			"name": "Journey image",
+			"limit": 3,
+			"settings": [
+				{ "type": "image_picker", "id": "image", "label": "Image" }
+			]
+		}
+	],
+	"presets": [
+		{
+			"name": "About (Figma)",
+			"category": "Content",
+			"blocks": [
+				{ "type": "journey_image" },
+				{ "type": "journey_image" },
+				{ "type": "journey_image" }
+			]
+		}
+	]
+}
+{% endschema %}

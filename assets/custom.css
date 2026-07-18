@@ -297,34 +297,41 @@ sub-footer .copyright a { text-transform: uppercase; }
 /* Content column spacing */
 body[coretex-page="product"] .bullet-product-content product-content { gap: 1.4rem; }
 
-/* Title: IvyPresto Display ~56px, subtitle italic same size right below */
+/* Title: IvyPresto Display Thin 74px / 100% / +2%, italic subtitle right below (Figma 341:1225) */
 body[coretex-page="product"] .bullet-product-content section.title h1 {
   font-family: "ivypresto-display", serif;
-  font-weight: 400;
-  font-size: clamp(2.2rem, 3.9vw, 56px);
-  line-height: 1.08;
-  letter-spacing: 0.01em;
+  font-weight: 100;
+  font-size: clamp(2.4rem, 5.14vw, 74px);
+  line-height: 1;
+  letter-spacing: 0.02em;
   margin: 0;
   text-transform: none;
 }
-body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -1rem; }
+body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -1.4rem; }
 body[coretex-page="product"] .bullet-product-content section.subtitle h3 {
   font-family: "ivypresto-display", serif;
-  font-weight: 400;
+  font-weight: 100;
   font-style: italic;
-  font-size: clamp(2rem, 3.9vw, 56px);
-  line-height: 1.08;
-  letter-spacing: 0.01em;
+  font-size: clamp(2.4rem, 5.14vw, 74px);
+  line-height: 1;
+  letter-spacing: 0.02em;
   margin: 0;
   text-transform: none;
 }
 
-/* Region link (vendor): brand red, uppercase, underlined */
+/* Figma rhythm: 44px title -> region -> first paragraph, ~107px before buttons */
+body[coretex-page="product"] .bullet-product-content product-content { gap: clamp(1.4rem, 3.05vw, 44px); }
+body[coretex-page="product"] .bullet-product-content .product-form {
+  margin-block-start: clamp(1.5rem, 4.4vw, 63px);
+}
+
+/* Region link (vendor): brand red, IBM Plex Sans Bold 20px, uppercase, underlined */
 body[coretex-page="product"] .bullet-product-content section.vendor a {
   color: #7F1416;
   font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: clamp(0.875rem, 1.39vw, 20px);
+  line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   text-decoration: underline;
@@ -332,23 +339,26 @@ body[coretex-page="product"] .bullet-product-content section.vendor a {
   text-decoration-thickness: 1px;
 }
 
-/* Description: justified paragraphs like the design */
+/* Description: IBM Plex Sans 16px / 140%, justified (Figma 341:1226) */
 body[coretex-page="product"] .bullet-product-content section.description .rte {
   font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.4;
   text-align: justify;
 }
 body[coretex-page="product"] .bullet-product-content section.description .rte p { margin: 0 0 1.2em; }
 body[coretex-page="product"] .bullet-product-content section.description .rte p:last-child { margin-bottom: 0; }
 
-/* Buy buttons: ADD TO CART outlined, BUY NOW solid black, square corners */
+/* Buy buttons: 49px tall, 18px uppercase regular; ADD TO CART outlined,
+   BUY NOW solid black, square corners (Figma 341:1229/1231) */
 body[coretex-page="product"] .product-form .cartButton {
   border-radius: 0;
   text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  min-height: 48px;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
+  min-height: 49px;
 }
 body[coretex-page="product"] .product-form .cartButton.is-outline {
   border: 1px solid #000000;
@@ -360,11 +370,25 @@ body[coretex-page="product"] .product-form .shopify-payment-button__button--unbr
   color: #ffffff;
   border-radius: 0;
   text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  min-height: 48px;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
+  min-height: 49px;
 }
 body[coretex-page="product"] .product-form .shopify-payment-button__more-options { display: none; }
+
+/* Related products quick-buy bar: cream like the Figma, not red */
+body[coretex-page="product"] .related .superQuickBuy .cardButton,
+body[coretex-page="product"] .related .soldoutButton {
+  background-color: #F8EFD2;
+  color: #000000;
+  text-transform: uppercase;
+  font-size: 18px;
+  font-weight: 400;
+  border-block: var(--globalBorderWidth, 1px) solid var(--globalBorderColor, #000);
+  border-inline: none;
+}
 
 /* "YOU'D ALSO LIKE" heading: centered eyebrow like homepage */
 body[coretex-page="product"] .related .gs-title { justify-content: center; }
@@ -578,10 +602,36 @@ section.philosophy .philosophy__media img {
   #f-newsletter p,
   .our-values .our-values__heading,
   .our-values .our-values__tagline,
-  .hero-text .cta {
+  .hero-text .cta,
+  body[coretex-page="product"] .hero-text .cta {
     font-size: 32px !important;
     line-height: 1.15;
     letter-spacing: 0.02em;
+  }
+
+  /* Product page: title/subtitle 32px, region link 14px, description 12px,
+     buttons 14px — same mobile type scale as the homepage */
+  body[coretex-page="product"] .bullet-product-content section.title h1,
+  body[coretex-page="product"] .bullet-product-content section.subtitle h3 {
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+  }
+  body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -0.9rem; }
+  body[coretex-page="product"] .bullet-product-content section.vendor a {
+    font-size: 14px;
+  }
+  body[coretex-page="product"] .bullet-product-content section.description .rte {
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    text-align: left;
+  }
+  body[coretex-page="product"] .product-form .cartButton,
+  body[coretex-page="product"] .product-form .shopify-payment-button__button--unbranded,
+  body[coretex-page="product"] .related .superQuickBuy .cardButton,
+  body[coretex-page="product"] .related .soldoutButton {
+    font-size: 14px;
   }
 
   /* Hero banner heading: same 32px spec (overrides the 38px pin above) */

@@ -570,7 +570,7 @@ section.philosophy .philosophy__media img {
     width: min(60vw, 230px);
     max-width: 230px;
     margin: 1.5rem auto 1rem;
-    transform: scaleY(-1) rotate(-100deg);
+    transform: scaleX(-1) scaleY(-1) rotate(-100deg);
   }
 
   /* Big serif headings elsewhere (newsletter, our-values, taglines):

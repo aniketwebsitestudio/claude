@@ -549,7 +549,7 @@ section.philosophy .philosophy__media img {
   section.philosophy .philosophy__heading .h2 {
     text-align: center;
     font-size: 32px;
-    line-height: 1;
+    line-height: 1.15;
     letter-spacing: 0.02em;
   }
   section.philosophy .philosophy__text .rte {
@@ -557,7 +557,7 @@ section.philosophy .philosophy__media img {
     font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
     font-weight: 400;
     font-size: 12px;
-    line-height: 1;
+    line-height: 1.5;
     letter-spacing: 0.02em;
     max-width: 42ch;
     margin-inline: auto;
@@ -570,36 +570,35 @@ section.philosophy .philosophy__media img {
     width: min(60vw, 230px);
     max-width: 230px;
     margin: 1.5rem auto 1rem;
-    transform: rotate(-100deg);
+    transform: scaleY(-1) rotate(-100deg);
   }
 
   /* Big serif headings elsewhere (newsletter, our-values, taglines):
-     32px / 100% / 2% */
+     32px / 2% */
   #f-newsletter p,
   .our-values .our-values__heading,
   .our-values .our-values__tagline,
   .hero-text .cta {
     font-size: 32px !important;
-    line-height: 1;
+    line-height: 1.15;
     letter-spacing: 0.02em;
   }
 
   /* Hero banner heading: same 32px spec (overrides the 38px pin above) */
   .hero x-cell.content h1 {
     font-size: 32px !important;
-    line-height: 1;
+    line-height: 1.15;
     letter-spacing: 0.02em;
   }
 
-  /* Hero subheading + Our Values column text: IBM Plex Sans 400,
-     12px / 100% / 2% */
+  /* Hero subheading + Our Values column text: IBM Plex Sans 400, 12px / 2% */
   .hero x-cell.content p,
   .our-values .our-values__text,
   .our-values .our-values__text h3,
   .our-values .our-values__text p {
     font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
     font-size: 12px;
-    line-height: 1;
+    line-height: 1.5;
     letter-spacing: 0.02em;
   }
   .our-values .our-values__text h3 { font-weight: 600; }

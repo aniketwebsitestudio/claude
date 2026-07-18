@@ -39,9 +39,9 @@
 	<div class="af-name">
 		<div class="af-name__art" aria-hidden="true">
 			{%- if section.settings.name_illustration != blank -%}
-				{%- render 'inc-img', img: section.settings.name_illustration, widths: '300,450,600', sizes: '(max-width:777px) 45vw, 350px' -%}
+				{%- render 'inc-img', img: section.settings.name_illustration, widths: '300,450,600', sizes: '(max-width:777px) 45vw, 500px' -%}
 			{%- else -%}
-				<img src="https://cdn.shopify.com/s/files/1/0774/6987/6271/files/Untitled_Artwork_14_2_851105cf-0f08-4f48-84b8-c7c592190e39.png?v=1784398872" alt="" loading="lazy" width="348" height="547">
+				<img src="https://cdn.shopify.com/s/files/1/0774/6987/6271/files/Untitled_Artwork_14_2_851105cf-0f08-4f48-84b8-c7c592190e39.png?v=1784398872" alt="" loading="lazy" width="498" height="587">
 			{%- endif -%}
 		</div>
 		<h2 class="af-h2 af-name__heading">{{ section.settings.name_heading }}</h2>
@@ -165,16 +165,15 @@
 		position: relative;
 		padding: clamp(3rem, 6vw, 85px) clamp(1.25rem, 4.17vw, 60px) clamp(4rem, 14vw, 200px);
 	}
-	/* Figma 359:253: 348x547 artwork rotated 57.64deg cw. CSS rotates
-	   about the element center, so top/left place the unrotated box so
-	   its center lands where Figma's rotated bounding box center sits
-	   (~x174 / y67 relative to this band at 1440). */
+	/* The store's Untitled_Artwork_14_2 PNG (498x587) is exported with
+	   the Figma rotation already baked in — place it as-is so its box
+	   straddles THE NAME strip like the design (bounding top ~-226 at
+	   1440, poking past the left viewport edge). Do NOT rotate here. */
 	.af-name__art {
 		position: absolute;
-		top: clamp(-207px, -14.3vw, -50px);
-		left: 0;
-		width: clamp(180px, 24.2vw, 348px);
-		transform: rotate(57.64deg);
+		top: clamp(-230px, -15.7vw, -70px);
+		left: clamp(-80px, -4vw, -30px);
+		width: clamp(240px, 34.6vw, 498px);
 		pointer-events: none;
 		z-index: 1;
 	}
@@ -251,9 +250,9 @@
 
 		.af-name { padding: 2.5rem var(--mardding) 3rem; }
 		.af-name__art {
-			top: -70px;
-			left: -6vw;
-			width: 42vw;
+			top: -100px;
+			left: -8vw;
+			width: 52vw;
 		}
 		.af-name__heading { text-align: center; }
 		.af-name__row {

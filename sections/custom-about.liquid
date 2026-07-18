@@ -37,11 +37,13 @@
 
 	{%- comment -%} Band 4: what the name means (wordmark + overlapping illustration) {%- endcomment -%}
 	<div class="af-name">
-		{%- if section.settings.name_illustration != blank -%}
 		<div class="af-name__art" aria-hidden="true">
-			{%- render 'inc-img', img: section.settings.name_illustration, widths: '300,450,600', sizes: '(max-width:777px) 45vw, 450px' -%}
+			{%- if section.settings.name_illustration != blank -%}
+				{%- render 'inc-img', img: section.settings.name_illustration, widths: '300,450,600', sizes: '(max-width:777px) 45vw, 350px' -%}
+			{%- else -%}
+				<img src="https://cdn.shopify.com/s/files/1/0774/6987/6271/files/Untitled_Artwork_14_2_851105cf-0f08-4f48-84b8-c7c592190e39.png?v=1784398872" alt="" loading="lazy" width="348" height="547">
+			{%- endif -%}
 		</div>
-		{%- endif -%}
 		<h2 class="af-h2 af-name__heading">{{ section.settings.name_heading }}</h2>
 		<div class="af-name__row">
 			<div class="af-name__wordmark">
@@ -163,11 +165,15 @@
 		position: relative;
 		padding: clamp(3rem, 6vw, 85px) clamp(1.25rem, 4.17vw, 60px) clamp(4rem, 14vw, 200px);
 	}
+	/* Figma 359:253: 348x547 artwork rotated 57.64deg cw. CSS rotates
+	   about the element center, so top/left place the unrotated box so
+	   its center lands where Figma's rotated bounding box center sits
+	   (~x174 / y67 relative to this band at 1440). */
 	.af-name__art {
 		position: absolute;
-		top: clamp(-190px, -9vw, -60px);
-		left: clamp(-150px, -8vw, -60px);
-		width: clamp(200px, 31vw, 450px);
+		top: clamp(-207px, -14.3vw, -50px);
+		left: 0;
+		width: clamp(180px, 24.2vw, 348px);
 		transform: rotate(57.64deg);
 		pointer-events: none;
 		z-index: 1;
@@ -245,9 +251,9 @@
 
 		.af-name { padding: 2.5rem var(--mardding) 3rem; }
 		.af-name__art {
-			top: -40px;
-			left: -50px;
-			width: 45vw;
+			top: -70px;
+			left: -6vw;
+			width: 42vw;
 		}
 		.af-name__heading { text-align: center; }
 		.af-name__row {

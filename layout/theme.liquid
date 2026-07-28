@@ -10,10 +10,26 @@
     {%- # Preload assets -%}
     {%- render 'global-preload' -%}
 
-    {%- if settings.favicon != blank -%}
-    <link rel="shortcut icon" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
-    <link rel="apple-touch-icon-precomposed" href="{{ settings.favicon | image_url: width: 250, height: 250 }}">
-    {%- endif -%}
+    {%- comment -%}
+        Favicon, dark-mode aware.
+        The light mark comes from the theme setting when one is picked
+        (Theme settings > Favicon); the white mark is used whenever the
+        browser reports a dark colour scheme. CSS cannot do this: the
+        `media` attribute on <link rel="icon"> works in Safari and Firefox
+        but is ignored by Chrome, so the swap is done with matchMedia,
+        which every current browser honours.
+    {%- endcomment -%}
+    {%- liquid
+        if settings.favicon != blank
+            assign faviconLight = settings.favicon | image_url: width: 180, height: 180
+        else
+            assign faviconLight = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/Black_Bhoomija_Mark.png?v=1785259520'
+        endif
+        assign faviconDark = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/White_Bhoomija_Mark.png?v=1785259520'
+    -%}
+    <link id="faviconLink" rel="icon" type="image/png" href="{{ faviconLight }}">
+    <link rel="apple-touch-icon-precomposed" href="{{ faviconLight }}">
+    <script>(() => { const light = {{ faviconLight | json }}, dark = {{ faviconDark | json }}; const link = document.getElementById('faviconLink'); const mq = window.matchMedia('(prefers-color-scheme: dark)'); const paint = () => { link.href = mq.matches ? dark : light; }; paint(); mq.addEventListener ? mq.addEventListener('change', paint) : mq.addListener(paint); })();</script>
 
     <!-- BEGIN content_for_header -->
     {{ content_for_header }}

@@ -565,3 +565,21 @@ section.philosophy .philosophy__media img {
     text-align: left !important;
   }
 }
+
+/* ==========================================================================
+   Dark-mode header logo
+   Swaps the header logo for the white version when the visitor's OS/browser
+   is set to dark mode. The original <img> stays in place (so layout, sizing
+   and alt text are untouched) and is faded out over the white logo painted
+   on the wrapping link.
+   ========================================================================== */
+@media (prefers-color-scheme: dark) {
+  #mainHeader .bogo > a {
+    display: inline-flex;
+    background-image: url("https://cdn.shopify.com/s/files/1/0774/6987/6271/files/White_Bhoomija_Unit.png?v=1785257087");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+  #mainHeader .bogo > a img.logo { visibility: hidden; }
+}

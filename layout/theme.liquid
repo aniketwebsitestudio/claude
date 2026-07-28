@@ -55,6 +55,7 @@
     {% # Shopify injects tracking + other code here before the closing of the head tag. %}
     {{ 'custom.css' | asset_url | stylesheet_tag }}
     {{ 'custom-dark.css' | asset_url | stylesheet_tag }}
+    {{ 'custom-header.css' | asset_url | stylesheet_tag }}
 </head>
 <body 
     class="{{ settings.a11yFocusStyles }}" 

@@ -1,0 +1,277 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,300;1,9..144,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap');
+
+#sneh-exp{
+  --ink:#0B211F; --ink-2:#153733; --ink-3:#1D4A45;
+  --teal:#397f79; --teal-lt:#489a8f; --olive:#83931f;
+  --coral:#f49b7b; --coral-dp:#D9764F;
+  --d1:#F2F4F1; --d2:rgba(242,244,241,.66); --d3:rgba(242,244,241,.40);
+  --line-d:rgba(242,244,241,.13);
+  --serif:"Fraunces",Georgia,serif;
+  --sans:"DM Sans",-apple-system,"Segoe UI",sans-serif;
+  --pad:clamp(20px,5vw,72px);
+  --sec:clamp(72px,11vh,150px);
+  --ease:cubic-bezier(.16,1,.3,1);
+
+  background:var(--ink); color:var(--d1);
+  font-family:var(--sans); font-weight:300; line-height:1.6;
+  padding:var(--sec) 0; margin:0; overflow-x:clip;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+#sneh-exp *,#sneh-exp *::before,#sneh-exp *::after{box-sizing:border-box}
+#sneh-exp div,#sneh-exp p,#sneh-exp h2,#sneh-exp h3,#sneh-exp article,#sneh-exp span,#sneh-exp a{
+  margin:0; padding:0; border:0; background:none; text-transform:none; letter-spacing:normal}
+#sneh-exp a{color:inherit;text-decoration:none;box-shadow:none}
+#sneh-exp img{display:block;width:100%;height:100%;object-fit:cover;max-width:none;border-radius:0}
+#sneh-exp ::selection{background:var(--coral);color:#3A1B0C}
+
+/* ---------- type ---------- */
+#sneh-exp .eyebrow{font-family:var(--sans);font-size:10px;letter-spacing:.26em;
+  text-transform:uppercase;font-weight:500;color:var(--d3);line-height:1.6}
+#sneh-exp .h1{font-family:var(--serif);font-weight:300;letter-spacing:-.028em;line-height:1.0;
+  font-size:clamp(32px,4.8vw,72px);font-variation-settings:"opsz" 96;color:var(--d1)}
+#sneh-exp .h1 em,#sneh-exp .h1 .it{font-style:italic;color:var(--coral)}
+
+/* ---------- reveal primitives ---------- */
+#sneh-exp .rv{overflow:hidden;display:block}
+#sneh-exp .rv > span{display:block}
+#sneh-exp .fade{opacity:0}
+#sneh-exp.is-static .fade{opacity:1}
+
+/* ---------- links ---------- */
+#sneh-exp .tlink{display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  padding-bottom:5px;border-bottom:1px solid currentColor;
+  color:var(--teal-lt);transition:gap .4s var(--ease),color .4s var(--ease)}
+#sneh-exp .tlink:hover,#sneh-exp .tlink:focus{gap:15px;color:var(--teal-lt)}
+
+/* ============ EXPERIENCES (sticky) ============ */
+#sneh-exp .head{padding:0 var(--pad);max-width:1180px;margin:0 auto 54px}
+#sneh-exp .head .h1{margin-top:16px}
+#sneh-exp .cols{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,80px);
+  padding:0 var(--pad);max-width:1400px;margin:0 auto;align-items:start}
+#sneh-exp .media{position:sticky;top:12vh;height:76vh;border-radius:3px;
+  overflow:hidden;background:var(--ink-2)}
+#sneh-exp .media .lay{position:absolute;inset:0;opacity:0}
+#sneh-exp .media .lay:first-child{opacity:1}
+#sneh-exp .media .lay::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(11,33,31,.05),rgba(11,33,31,.55))}
+#sneh-exp .media .cnt{position:absolute;left:22px;bottom:20px;z-index:2;font-family:var(--sans);
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--d2)}
+#sneh-exp .list{display:flex;flex-direction:column}
+#sneh-exp .it-row{padding:clamp(30px,4.6vh,48px) 0;border-bottom:1px solid var(--line-d);cursor:pointer}
+#sneh-exp .it-row:first-child{border-top:1px solid var(--line-d)}
+#sneh-exp .it-row .top{display:flex;align-items:baseline;gap:16px}
+#sneh-exp .it-row .ix{font-family:var(--sans);font-size:10px;letter-spacing:.18em;
+  color:var(--d3);font-variant-numeric:tabular-nums;font-weight:400;flex:none}
+#sneh-exp .it-row h3{font-family:var(--serif);font-weight:300;font-size:clamp(24px,3vw,42px);
+  letter-spacing:-.025em;line-height:1.05;color:var(--d3);transition:color .55s var(--ease)}
+#sneh-exp .it-row.on h3{color:var(--d1)}
+#sneh-exp .it-row .d{max-width:44ch;font-family:var(--sans);font-size:13.5px;line-height:1.7;
+  color:var(--d3);margin-top:12px;margin-left:26px;font-weight:300;
+  transition:color .55s var(--ease)}
+#sneh-exp .it-row.on .d{color:var(--d2)}
+#sneh-exp .it-row .go{margin-left:26px;margin-top:16px;opacity:0;transform:translateY(-6px);
+  transition:opacity .5s var(--ease),transform .5s var(--ease)}
+#sneh-exp .it-row.on .go{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media(max-width:980px){
+  #sneh-exp .cols{grid-template-columns:1fr}
+  #sneh-exp .media{position:relative;top:0;height:56vh;margin-bottom:26px}
+}
+@media(max-width:767px){
+  #sneh-exp .media{height:46vh;min-height:280px}
+  #sneh-exp .it-row .d{margin-left:0;max-width:100%}
+  #sneh-exp .it-row .go{margin-left:0;opacity:1;transform:none}
+  #sneh-exp .it-row h3{color:var(--d1)}
+  #sneh-exp .it-row .d{color:var(--d2)}
+  #sneh-exp .it-row .top{gap:12px}
+  #sneh-exp .media .cnt{left:16px;bottom:14px}
+}
+@media(prefers-reduced-motion:reduce){
+  #sneh-exp .fade{opacity:1}
+  #sneh-exp *{transition-duration:.01ms!important}
+}
+</style>
+
+<section id="sneh-exp">
+  <div class="head">
+    <div class="eyebrow fade">Six ways to be here</div>
+    <h2 class="h1 sneh-lines">One resort,<br>six <em>experiences.</em></h2>
+  </div>
+
+  <div class="cols">
+    <div class="media">
+      <div class="lay"><img src="https://pikaso.cdnpk.net/private/production/5017165555/render.jpg?token=exp=1785628800~hmac=46236a65556037bd4a4a2aeadca82a33d70b696edcfec63b66d142887ec08a99" alt="Dam-view suite" loading="lazy" decoding="async"><span class="cnt">Dam-view suite</span></div>
+      <div class="lay"><img src="https://pikaso.cdnpk.net/private/production/5017168452/render.jpg?token=exp=1785628800~hmac=8a1171ee0cdee2471fb1a28caf351338342a90b3fcd7b340a5227b551187b033" alt="Lakeside tent" loading="lazy" decoding="async"><span class="cnt">Lakeside tent</span></div>
+      <div class="lay"><img src="https://pikaso.cdnpk.net/private/production/5017166004/render.jpg?token=exp=1785628800~hmac=4ba5bb06fc03bf74f9a6f0fb83d798eb86bbdc239da116726b904964f5b8b68d" alt="Infinity pool" loading="lazy" decoding="async"><span class="cnt">Infinity pool</span></div>
+      <div class="lay"><img src="https://pikaso.cdnpk.net/private/production/5017169705/render.jpg?token=exp=1785628800~hmac=66012fbb56569972f3ed8a50fe02a597d346178f67b218bb7481e37143c1919f" alt="Dining pavilion" loading="lazy" decoding="async"><span class="cnt">Dining pavilion</span></div>
+      <div class="lay"><img src="https://pikaso.cdnpk.net/private/production/5017169629/render.jpg?token=exp=1785628800~hmac=ab34a1029a8dcc2e0ac6dd47504f2beed731900b67c0910914c83761b961348f" alt="Main lawn" loading="lazy" decoding="async"><span class="cnt">Main lawn</span></div>
+      <div class="lay"><img src="https://pikaso.cdnpk.net/private/production/5017170347/render.jpg?token=exp=1785628800~hmac=c14924c6fd8a3a45a9dcd60bab606152dcf49da3801fab769a70d6f681cd4d59" alt="Offsite lawn" loading="lazy" decoding="async"><span class="cnt">Offsite lawn</span></div>
+    </div>
+
+    <div class="list">
+      <article class="it-row">
+        <div class="top"><span class="ix">01</span><h3>Dam-view rooms</h3></div>
+        <p class="d">Forty-two rooms and tents facing the water. Check in at 1 PM, wake to the dam. Room-only, or with all meals from separate veg and non-veg kitchens.</p>
+        <a class="tlink go" href="#pkg">From &#8377;2,500 per person &rarr;</a>
+      </article>
+      <article class="it-row">
+        <div class="top"><span class="ix">02</span><h3>Luxury tents</h3></div>
+        <p class="d">Canvas suites on timber decks at the water&rsquo;s edge. Same amenities as the rooms, none of the walls between you and the lake.</p>
+        <a class="tlink go" href="#pkg">See stay packages &rarr;</a>
+      </article>
+      <article class="it-row">
+        <div class="top"><span class="ix">03</span><h3>One-day picnic</h3></div>
+        <p class="d">9:30 to 6. Breakfast, pure-veg buffet lunch, evening tea. Pool, rain dance, twenty-nine rides and the kids&rsquo; play area &mdash; all of it included.</p>
+        <a class="tlink go" href="#pkg">&#8377;1,650 per adult &rarr;</a>
+      </article>
+      <article class="it-row">
+        <div class="top"><span class="ix">04</span><h3>Dining</h3></div>
+        <p class="d">Multi-cuisine buffets in an open pavilion over the water. Pure-veg for day guests; separate veg and non-veg kitchens for stays.</p>
+        <a class="tlink go" href="#enq">Ask about menus &rarr;</a>
+      </article>
+      <article class="it-row">
+        <div class="top"><span class="ix">05</span><h3>Destination weddings</h3></div>
+        <p class="d">A 20,000 sqft main lawn for up to 1,500, a 4,500 sqft AC banquet hall, and a poolside lawn for the small, good ones.</p>
+        <a class="tlink go" href="#occ">Get a venue quote &rarr;</a>
+      </article>
+      <article class="it-row">
+        <div class="top"><span class="ix">06</span><h3>Corporate offsites</h3></div>
+        <p class="d">AC conference hall for 5 to 60 with AV and high-speed internet, then the whole estate for the part people actually remember.</p>
+        <a class="tlink go" href="#occ">Plan an offsite &rarr;</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  var GSAP_URL = 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js';
+  var ST_URL   = 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js';
+  var E = 'expo.out';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function root(){ return document.getElementById('sneh-exp'); }
+
+  /* split on <br> into masked lines — same as the source's lineSplit() */
+  function lineSplit(el){
+    var parts = el.innerHTML.split(/<br\s*\/?>/i);
+    el.innerHTML = parts.map(function(p){
+      return '<span class="rv"><span>' + p + '</span></span>';
+    }).join('');
+    return el.querySelectorAll('.rv > span');
+  }
+
+  /* ---------------- GSAP path: identical timings to the source ------------- */
+  function run(el){
+    var gsap = window.gsap, ScrollTrigger = window.ScrollTrigger;
+    gsap.registerPlugin(ScrollTrigger);
+
+    /* masked line reveal on the h2 */
+    Array.prototype.forEach.call(el.querySelectorAll('.sneh-lines'), function(h){
+      var sp = lineSplit(h);
+      if(reduce) return;
+      gsap.set(sp, {yPercent:118});
+      gsap.to(sp, {yPercent:0, duration:1.2, ease:E, stagger:.085,
+        scrollTrigger:{trigger:h, start:'top 86%'}});
+    });
+
+    /* fade + rise */
+    var fades = el.querySelectorAll('.fade');
+    if(!reduce){
+      Array.prototype.forEach.call(fades, function(f){
+        gsap.to(f,   {opacity:1, duration:.9, ease:E, scrollTrigger:{trigger:f, start:'top 90%'}});
+        gsap.from(f, {y:22,      duration:.9, ease:E, scrollTrigger:{trigger:f, start:'top 90%'}});
+      });
+    } else { gsap.set(fades, {opacity:1}); }
+
+    /* sticky media swap */
+    var rows = Array.prototype.slice.call(el.querySelectorAll('.it-row'));
+    var lays = Array.prototype.slice.call(el.querySelectorAll('.media .lay'));
+    function setExp(i){
+      rows.forEach(function(r,k){ r.classList.toggle('on', k === i); });
+      lays.forEach(function(l,k){ gsap.to(l, {opacity: k === i ? 1 : 0, duration:.75, ease:E}); });
+    }
+    setExp(0);
+    rows.forEach(function(r,i){
+      r.addEventListener('mouseenter', function(){ setExp(i); });
+      r.addEventListener('focusin',    function(){ setExp(i); });
+      if(!reduce) ScrollTrigger.create({trigger:r, start:'top 62%', end:'bottom 62%',
+        onEnter:function(){ setExp(i); }, onEnterBack:function(){ setExp(i); }});
+    });
+
+    /* Elementor re-lays-out after its own init; recalc so triggers sit right */
+    window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
+    setTimeout(function(){ ScrollTrigger.refresh(); }, 600);
+  }
+
+  /* ---------------- no-GSAP fallback: same look, plain JS ------------------ */
+  function runStatic(el){
+    el.classList.add('is-static');
+    Array.prototype.forEach.call(el.querySelectorAll('.sneh-lines'), function(h){ lineSplit(h); });
+
+    var rows = Array.prototype.slice.call(el.querySelectorAll('.it-row'));
+    var lays = Array.prototype.slice.call(el.querySelectorAll('.media .lay'));
+    lays.forEach(function(l){ l.style.transition = 'opacity .75s cubic-bezier(.16,1,.3,1)'; });
+    var current = -1;
+    function setExp(i){
+      if(i === current) return;
+      current = i;
+      rows.forEach(function(r,k){ r.classList.toggle('on', k === i); });
+      lays.forEach(function(l,k){ l.style.opacity = k === i ? 1 : 0; });
+    }
+    setExp(0);
+    rows.forEach(function(r,i){ r.addEventListener('mouseenter', function(){ setExp(i); }); });
+
+    if(reduce) return;
+    var ticking = false;
+    function sync(){
+      ticking = false;
+      var line = window.innerHeight * 0.62, idx = 0;
+      for(var i = 0; i < rows.length; i++){
+        if(rows[i].getBoundingClientRect().top <= line) idx = i;
+      }
+      setExp(idx);
+    }
+    window.addEventListener('scroll', function(){
+      if(ticking) return; ticking = true; window.requestAnimationFrame(sync);
+    }, {passive:true});
+    window.addEventListener('resize', sync, {passive:true});
+    sync();
+  }
+
+  /* ---------------- loader ------------------------------------------------ */
+  function load(src, cb){
+    var s = document.createElement('script');
+    s.src = src; s.async = false;
+    s.onload  = function(){ cb(false); };
+    s.onerror = function(){ cb(true); };
+    document.head.appendChild(s);
+  }
+
+  function boot(){
+    var el = root();
+    if(!el || el.dataset.snehReady === '1') return;
+    el.dataset.snehReady = '1';
+
+    if(window.gsap && window.ScrollTrigger) return run(el);
+    if(window.gsap) return load(ST_URL, function(err){
+      err || !window.ScrollTrigger ? runStatic(el) : run(el);
+    });
+
+    load(GSAP_URL, function(err){
+      if(err || !window.gsap) return runStatic(el);
+      load(ST_URL, function(err2){
+        if(err2 || !window.ScrollTrigger) return runStatic(el);
+        run(el);
+      });
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else { boot(); }
+})();
+</script>

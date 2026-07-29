@@ -1,71 +1,72 @@
-# "Six ways to be here" — Elementor template
+# "Six ways to be here" — Elementor section
 
-`six-ways-to-be-here.json` is a ready-to-import Elementor template rebuilt from the
-`#exp` section of the source HTML.
+Exact port of the `#exp` section from the source HTML: same colors, fonts, easings and
+GSAP animation, in one self-contained block.
 
-## Import
+## Why the first version looked wrong
 
-1. WordPress admin → **Templates → Saved Templates → Import Templates**
-2. Upload `six-ways-to-be-here.json`
-3. Edit any page with Elementor → folder icon in the widget panel → **My Templates** →
-   insert **"Six ways to be here — Experiences"**
+On your site everything from Elementor's own widget settings applied (dark background,
+Fraunces headings, dimmed heading colors) but nothing from the CSS did — default blue
+buttons, no dividers, no animation. That's Elementor's template importer sanitizing
+`<style>` and `<script>` out of the HTML widget on import.
 
-Needs Elementor **3.16+** (uses flexbox Containers). Nothing else — no add-ons, no GSAP.
+So this version doesn't depend on the import carrying the code. Everything — markup,
+CSS and JS — is one HTML widget you can paste in by hand.
 
-## What's included
+## Recommended: paste it (most reliable)
 
-**Colors** (exact values from the source `:root`)
+1. Edit the page with Elementor
+2. Drag in an **HTML** widget where the section should go
+3. Open `six-ways.html`, copy **all** of it, paste into the widget's HTML box
+4. Update → view the page (animations don't run inside the editor canvas)
 
-| Token | Value | Used for |
-|---|---|---|
-| `--sn-ink` | `#0B211F` | section background |
-| `--sn-ink2` | `#153733` | media placeholder |
-| `--sn-d1` | `#F2F4F1` | active headings |
-| `--sn-d2` | `rgba(242,244,241,.66)` | active body copy |
-| `--sn-d3` | `rgba(242,244,241,.40)` | inactive headings, eyebrow, index |
-| `--sn-coral` | `#f49b7b` | the italic "experiences." |
-| `--sn-teal-lt` | `#489a8f` | CTA links |
-| `--sn-line-d` | `rgba(242,244,241,.13)` | row dividers |
+Set the widget's parent container to **full width** with **zero padding** — the section
+brings its own `clamp(20px,5vw,72px)` padding, same as the source.
 
-**Fonts** — Fraunces (headings) + DM Sans (body), pulled from Google Fonts by the
-template's own `@import`, with the same weights, letter-spacing and line-heights as
-the source.
+## Or import the JSON
 
-**Animation** — vanilla JS, no library:
+`six-ways-to-be-here.json` → Templates → Saved Templates → Import Templates. It's the
+same block wrapped in a full-width container. If the code survives your site's
+sanitizing it works as-is; if the section comes in looking unstyled again, the import
+stripped it — fall back to the paste method above.
 
-- Sticky media column that cross-fades between the six images as you scroll
-  (0.75s, `cubic-bezier(.16,1,.3,1)` — same easing as the original)
-- Active row lights up: heading `d3 → d1`, body `d3 → d2`, CTA link fades/slides in
-- Row activates when its top crosses the 62% viewport line (matching the original
-  ScrollTrigger `top 62%`), plus hover and keyboard-focus activation
-- Eyebrow + title fade/rise in on entry via `IntersectionObserver`
-- Full `prefers-reduced-motion` support
+## What it does
 
-**Responsive**
+**Animation** — ported verbatim from the source, same GSAP + ScrollTrigger:
 
-- **>1024px** — 50/50 split, media sticky at `top:12vh`, `76vh` tall
-- **≤1024px** — stacks to one column, media unpins, `56vh`
-- **≤767px** — media `46vh`, tighter row padding, all headings and CTAs shown at full
-  contrast (no hover state to rely on)
-- Heading sizes step down per breakpoint via Elementor's own responsive typography
-  controls (72/52/34px title, 42/32/26px row headings), so they're editable in the UI
+| Effect | Timing |
+|---|---|
+| "One resort, / six experiences." masked line reveal | `yPercent 118 → 0`, 1.2s, `expo.out`, 0.085s stagger, fires at `top 86%` |
+| Eyebrow fade + rise | opacity → 1 and `y 22 → 0`, 0.9s, `expo.out`, at `top 90%` |
+| Sticky image cross-fade | 0.75s `expo.out`, driven by the active row |
+| Row activation | ScrollTrigger `top 62%` / `bottom 62%`, plus hover and keyboard focus |
+| Row states | heading `d3 → d1`, body `d3 → d2`, CTA fades/slides in, 0.55s `cubic-bezier(.16,1,.3,1)` |
 
-## Editing after import
+GSAP 3.12.5 loads from jsDelivr at runtime (skipped if your site already has it). If
+the CDN is blocked, it falls back to a plain-JS version with the same look and the same
+62% trigger line — verified in both modes.
 
-Text, headings, links and typography are real Elementor widgets — edit them normally
-in the panel. The only raw-code parts are two HTML widgets:
+**Colors** — the source's exact tokens: `#0B211F` ink, `#F2F4F1` / `.66` / `.40` text
+tiers, `#f49b7b` coral italic, `#489a8f` teal links, `rgba(242,244,241,.13)` dividers.
 
-- the **first** widget in the section holds all CSS + JS
-- the **media stack** widget in the left column holds the six `<img>` tags
+**Fonts** — Fraunces + DM Sans via the block's own `@import`, with the source's
+weights, `letter-spacing`, `line-height` and `font-variation-settings:"opsz" 96`.
+
+**Responsive** — the source's own breakpoint at 980px (grid collapses to one column,
+media unpins to `56vh`), plus a 767px pass: media `46vh`, indents dropped, and headings
+and CTAs shown at full contrast since there's no hover on touch.
+
+Everything is scoped under `#sneh-exp` so theme styles can't leak in — tested against a
+theme that sets its own link colors, article borders, heading fonts and paragraph
+styles, all correctly overridden.
 
 ## ⚠️ Replace the images
 
-The image URLs are carried over from the source file and are signed Pikaso CDN links
-that **expire 2026-08-02**. Before or right after importing, open the media stack HTML
-widget in the left column and swap each `src` for your own WordPress media library URL.
-Keep the surrounding markup — the `.sneh-lay` order maps 1:1 to the six rows:
+The six image URLs are the signed Pikaso CDN links from your source file and they
+**expire 2026-08-02**. Swap each `src` in the `.media` block for your own media library
+URL. Order maps 1:1 to the rows:
 
-| # | Layer caption | Row |
+| # | Caption | Row |
 |---|---|---|
 | 1 | Dam-view suite | Dam-view rooms |
 | 2 | Lakeside tent | Luxury tents |
@@ -74,13 +75,10 @@ Keep the surrounding markup — the `.sneh-lay` order maps 1:1 to the six rows:
 | 5 | Main lawn | Destination weddings |
 | 6 | Offsite lawn | Corporate offsites |
 
-The CTA links point at `#pkg`, `#enq` and `#occ` — repoint them to your real pages.
+CTA links point at `#pkg`, `#enq`, `#occ` — repoint them to your real pages.
 
-## Regenerating
+## Files
 
-`build_six_ways.py` generates the JSON; `preview.py` renders it into Elementor-like
-markup (`preview.html`) for browser QA without a WordPress install.
-
-```
-python3 build_six_ways.py && python3 preview.py
-```
+- `six-ways.html` — the block (paste this)
+- `six-ways-to-be-here.json` — same block as an Elementor template
+- `build_six_ways.py` — regenerates the JSON from the HTML

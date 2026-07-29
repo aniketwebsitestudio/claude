@@ -1,7 +1,7 @@
 {
   "content": [
     {
-      "id": "5784eaa",
+      "id": "47a15fe",
       "elType": "container",
       "settings": {
         "content_width": "full",
@@ -28,12 +28,11 @@
           "column": "0",
           "row": "0",
           "isLinked": true
-        },
-        "_css_classes": "sneh-exp-wrap"
+        }
       },
       "elements": [
         {
-          "id": "dfc6975",
+          "id": "0b61dde",
           "elType": "widget",
           "widgetType": "html",
           "settings": {

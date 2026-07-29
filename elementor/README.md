@@ -1,3 +1,19 @@
+# Sneh Agri Tourism — Elementor sections
+
+Self-contained blocks ported from the source HTML. Each one is a single HTML widget:
+paste the `.html` file into an Elementor **HTML** widget, or import the matching
+`.json` as a Saved Template.
+
+| Section | Block | Template |
+|---|---|---|
+| "Six ways to be here" experiences | `six-ways.html` | `six-ways-to-be-here.json` |
+| "Guest stories" reviews carousel | `reviews-carousel.html` | `reviews-carousel.json` |
+
+Set the parent container to **full width** with **zero padding** — each section brings
+its own `clamp(20px,5vw,72px)` padding, same as the source.
+
+---
+
 # "Six ways to be here" — Elementor section
 
 Exact port of the `#exp` section from the source HTML: same colors, fonts, easings and
@@ -92,4 +108,46 @@ CTA links point at `#pkg`, `#enq`, `#occ` — repoint them to your real pages.
 
 - `six-ways.html` — the block (paste this)
 - `six-ways-to-be-here.json` — same block as an Elementor template
-- `build_six_ways.py` — regenerates the JSON from the HTML
+- `build_template.py` — regenerates the JSON from the HTML
+
+---
+
+# "Guest stories" — reviews carousel
+
+`reviews-carousel.html` — paste into an HTML widget. **No external dependency at all:**
+no GSAP, no CDN script. Everything is CSS plus a small rAF loop, so nothing can fail to
+load.
+
+## What it does
+
+| Effect | Detail |
+|---|---|
+| Infinite marquee | 38s per full loop, linear, seamless wrap on a duplicated track |
+| Hover | eases down to 0.25× speed, back to 1× on leave (touch: slows while held) |
+| Edge fade | `mask-image` gradient, transparent → opaque at 9% and 91% |
+| Score count-up | 0 → 4.3 over 1.6s on true `expo.out` easing, fires when scrolled into view |
+| Quote reveal | masked line rise, `translateY(118%) → 0`, 1.25s, 0.09s stagger |
+| Eyebrow / lede / attribution | fade + 22px rise, 0.9s |
+
+The marquee is a rAF loop rather than CSS keyframes because the loop distance depends on
+measured card widths, which change with the viewport — it re-measures on resize and once
+webfonts land. It only runs while on screen and pauses on a hidden tab.
+
+**Colors** — `#153733` panel (the section sits on `--ink-2`, one step lighter than the
+experiences section), `#f49b7b` coral stars, `#F2F4F1` / `.66` / `.40` text tiers,
+`rgba(242,244,241,.13)` card borders.
+
+**Responsive** — cards are `clamp(250px,25vw,330px)`, dropping to `clamp(230px,72vw,300px)`
+under 767px with tighter padding and a narrower edge mask; the score/quote row wraps to
+stacked. Verified at 1440 / 820 / 390 with no horizontal page overflow.
+
+**Reduced motion** — the marquee doesn't auto-run; the row becomes a native swipeable
+scroller instead, and the count-up and reveals resolve instantly.
+
+## Editing the reviews
+
+Each card is one `.q` block inside `.mqin` — copy or delete them freely, the loop
+re-measures itself. Only write the originals; the script clones the set at runtime for
+the seamless wrap and marks the clones `aria-hidden`.
+
+Stars are literal `★`/`☆` characters, so a 4-star card is four filled and one hollow.

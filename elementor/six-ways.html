@@ -35,8 +35,8 @@
 /* ---------- reveal primitives ---------- */
 #sneh-exp .rv{overflow:hidden;display:block}
 #sneh-exp .rv > span{display:block}
-#sneh-exp .fade{opacity:0}
-#sneh-exp.is-static .fade{opacity:1}
+/* only hide before reveal when JS is actually running */
+#sneh-exp.js .fade{opacity:0}
 
 /* ---------- links ---------- */
 #sneh-exp .tlink{display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);
@@ -90,7 +90,7 @@
   #sneh-exp .media .cnt{left:16px;bottom:14px}
 }
 @media(prefers-reduced-motion:reduce){
-  #sneh-exp .fade{opacity:1}
+  #sneh-exp.js .fade{opacity:1}
   #sneh-exp *{transition-duration:.01ms!important}
 }
 </style>
@@ -151,25 +151,91 @@
   var GSAP_URL = 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js';
   var ST_URL   = 'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js';
   var E = 'expo.out';
+  var LINE = 0.62;   /* the viewport line a row must cross to activate */
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function root(){ return document.getElementById('sneh-exp'); }
+  var el = document.getElementById('sneh-exp');
+  if(!el || el.dataset.snehReady === '1') return;
+  el.dataset.snehReady = '1';
+  el.className = 'js';   /* set before paint so .fade can start hidden */
+
+  var rows = Array.prototype.slice.call(el.querySelectorAll('.it-row'));
+  var lays = Array.prototype.slice.call(el.querySelectorAll('.media .lay'));
 
   /* split on <br> into masked lines — same as the source's lineSplit() */
-  function lineSplit(el){
-    var parts = el.innerHTML.split(/<br\s*\/?>/i);
-    el.innerHTML = parts.map(function(p){
+  function lineSplit(h){
+    var parts = h.innerHTML.split(/<br\s*\/?>/i);
+    h.innerHTML = parts.map(function(p){
       return '<span class="rv"><span>' + p + '</span></span>';
     }).join('');
-    return el.querySelectorAll('.rv > span');
+    return h.querySelectorAll('.rv > span');
   }
 
-  /* ---------------- GSAP path: identical timings to the source ------------- */
-  function run(el){
+  /* ---------------- active row + image cross-fade -------------------------
+     Driven by our own scroll math rather than ScrollTrigger: some themes and
+     smooth-scroll plugins scroll a wrapper element instead of the window, and
+     ScrollTrigger's triggers then never fire. Reading rects each frame works
+     no matter which element is doing the scrolling.                        */
+  var current = -1, useGsap = false;
+
+  function setExp(i){
+    if(i === current) return;
+    current = i;
+    rows.forEach(function(r,k){ r.classList.toggle('on', k === i); });
+    lays.forEach(function(l,k){
+      var o = k === i ? 1 : 0;
+      if(useGsap) window.gsap.to(l, {opacity:o, duration: reduce ? 0 : .75, ease:E});
+      else l.style.opacity = o;
+    });
+  }
+
+  function watch(){
+    var running = false, raf = null, lastScrollIdx = -1;
+
+    function compute(){
+      var line = window.innerHeight * LINE, idx = 0;
+      for(var i = 0; i < rows.length; i++){
+        if(rows[i].getBoundingClientRect().top <= line) idx = i;
+      }
+      return idx;
+    }
+    /* Only act when the scroll-derived row actually changes, so hovering a
+       row keeps it active until you scroll — same feel as the source. */
+    function tick(){
+      var idx = compute();
+      if(idx !== lastScrollIdx){ lastScrollIdx = idx; setExp(idx); }
+      if(running) raf = window.requestAnimationFrame(tick);
+    }
+    function start(){ if(running) return; running = true; tick(); }
+    function stop(){ running = false; if(raf) window.cancelAnimationFrame(raf); raf = null; }
+
+    /* run the loop only while the section is anywhere near the viewport */
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(entries){
+        entries[0].isIntersecting ? start() : stop();
+      }, {rootMargin:'300px 0px'}).observe(el);
+    } else { start(); }
+
+    /* belt and braces: catch scrolls from any scrolling ancestor */
+    ['scroll','resize','orientationchange'].forEach(function(ev){
+      window.addEventListener(ev, function(){ if(!running) tick(); },
+        {passive:true, capture:true});
+    });
+
+    lastScrollIdx = compute();
+    setExp(lastScrollIdx);
+  }
+
+  rows.forEach(function(r,i){
+    r.addEventListener('mouseenter', function(){ setExp(i); });
+    r.addEventListener('focusin',    function(){ setExp(i); });
+  });
+
+  /* ---------------- reveals ----------------------------------------------- */
+  function revealsWithScrollTrigger(){
     var gsap = window.gsap, ScrollTrigger = window.ScrollTrigger;
     gsap.registerPlugin(ScrollTrigger);
 
-    /* masked line reveal on the h2 */
     Array.prototype.forEach.call(el.querySelectorAll('.sneh-lines'), function(h){
       var sp = lineSplit(h);
       if(reduce) return;
@@ -178,68 +244,49 @@
         scrollTrigger:{trigger:h, start:'top 86%'}});
     });
 
-    /* fade + rise */
     var fades = el.querySelectorAll('.fade');
-    if(!reduce){
-      Array.prototype.forEach.call(fades, function(f){
-        gsap.to(f,   {opacity:1, duration:.9, ease:E, scrollTrigger:{trigger:f, start:'top 90%'}});
-        gsap.from(f, {y:22,      duration:.9, ease:E, scrollTrigger:{trigger:f, start:'top 90%'}});
-      });
-    } else { gsap.set(fades, {opacity:1}); }
-
-    /* sticky media swap */
-    var rows = Array.prototype.slice.call(el.querySelectorAll('.it-row'));
-    var lays = Array.prototype.slice.call(el.querySelectorAll('.media .lay'));
-    function setExp(i){
-      rows.forEach(function(r,k){ r.classList.toggle('on', k === i); });
-      lays.forEach(function(l,k){ gsap.to(l, {opacity: k === i ? 1 : 0, duration:.75, ease:E}); });
-    }
-    setExp(0);
-    rows.forEach(function(r,i){
-      r.addEventListener('mouseenter', function(){ setExp(i); });
-      r.addEventListener('focusin',    function(){ setExp(i); });
-      if(!reduce) ScrollTrigger.create({trigger:r, start:'top 62%', end:'bottom 62%',
-        onEnter:function(){ setExp(i); }, onEnterBack:function(){ setExp(i); }});
+    if(reduce){ gsap.set(fades, {opacity:1}); return; }
+    Array.prototype.forEach.call(fades, function(f){
+      gsap.to(f,   {opacity:1, duration:.9, ease:E, scrollTrigger:{trigger:f, start:'top 90%'}});
+      gsap.from(f, {y:22,      duration:.9, ease:E, scrollTrigger:{trigger:f, start:'top 90%'}});
     });
 
-    /* Elementor re-lays-out after its own init; recalc so triggers sit right */
     window.addEventListener('load', function(){ ScrollTrigger.refresh(); });
     setTimeout(function(){ ScrollTrigger.refresh(); }, 600);
   }
 
-  /* ---------------- no-GSAP fallback: same look, plain JS ------------------ */
-  function runStatic(el){
-    el.classList.add('is-static');
-    Array.prototype.forEach.call(el.querySelectorAll('.sneh-lines'), function(h){ lineSplit(h); });
+  /* same reveal, no GSAP: CSS transitions triggered by IntersectionObserver */
+  function revealsPlain(){
+    Array.prototype.forEach.call(el.querySelectorAll('.sneh-lines'), function(h){
+      var sp = lineSplit(h);
+      if(reduce) return;
+      Array.prototype.forEach.call(sp, function(s,i){
+        s.style.transform = 'translateY(118%)';
+        s.style.transition = 'transform 1.2s cubic-bezier(.16,1,.3,1) ' + (i * .085) + 's';
+      });
+    });
 
-    var rows = Array.prototype.slice.call(el.querySelectorAll('.it-row'));
-    var lays = Array.prototype.slice.call(el.querySelectorAll('.media .lay'));
-    lays.forEach(function(l){ l.style.transition = 'opacity .75s cubic-bezier(.16,1,.3,1)'; });
-    var current = -1;
-    function setExp(i){
-      if(i === current) return;
-      current = i;
-      rows.forEach(function(r,k){ r.classList.toggle('on', k === i); });
-      lays.forEach(function(l,k){ l.style.opacity = k === i ? 1 : 0; });
-    }
-    setExp(0);
-    rows.forEach(function(r,i){ r.addEventListener('mouseenter', function(){ setExp(i); }); });
+    var items = Array.prototype.slice.call(el.querySelectorAll('.fade'));
+    items.forEach(function(f){
+      f.style.transform = 'translateY(22px)';
+      f.style.transition = 'opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)';
+    });
 
-    if(reduce) return;
-    var ticking = false;
-    function sync(){
-      ticking = false;
-      var line = window.innerHeight * 0.62, idx = 0;
-      for(var i = 0; i < rows.length; i++){
-        if(rows[i].getBoundingClientRect().top <= line) idx = i;
-      }
-      setExp(idx);
+    function show(n){
+      n.style.opacity = 1; n.style.transform = 'none';
+      Array.prototype.forEach.call(n.querySelectorAll('.rv > span'), function(s){
+        s.style.transform = 'none';
+      });
     }
-    window.addEventListener('scroll', function(){
-      if(ticking) return; ticking = true; window.requestAnimationFrame(sync);
-    }, {passive:true});
-    window.addEventListener('resize', sync, {passive:true});
-    sync();
+    var targets = items.concat(Array.prototype.slice.call(el.querySelectorAll('.sneh-lines')));
+    if(reduce || !('IntersectionObserver' in window)){ targets.forEach(show); return; }
+
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){ show(e.target); io.unobserve(e.target); }
+      });
+    }, {rootMargin:'0px 0px -10% 0px', threshold:0.01});
+    targets.forEach(function(t){ io.observe(t); });
   }
 
   /* ---------------- loader ------------------------------------------------ */
@@ -251,22 +298,18 @@
     document.head.appendChild(s);
   }
 
+  function go(){
+    if(window.gsap && window.ScrollTrigger){ useGsap = true; revealsWithScrollTrigger(); }
+    else { revealsPlain(); }
+    watch();
+  }
+
   function boot(){
-    var el = root();
-    if(!el || el.dataset.snehReady === '1') return;
-    el.dataset.snehReady = '1';
-
-    if(window.gsap && window.ScrollTrigger) return run(el);
-    if(window.gsap) return load(ST_URL, function(err){
-      err || !window.ScrollTrigger ? runStatic(el) : run(el);
-    });
-
+    if(window.gsap && window.ScrollTrigger) return go();
+    if(window.gsap) return load(ST_URL, function(){ go(); });
     load(GSAP_URL, function(err){
-      if(err || !window.gsap) return runStatic(el);
-      load(ST_URL, function(err2){
-        if(err2 || !window.ScrollTrigger) return runStatic(el);
-        run(el);
-      });
+      if(err || !window.gsap) return go();
+      load(ST_URL, function(){ go(); });
     });
   }
 

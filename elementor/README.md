@@ -39,12 +39,23 @@ stripped it — fall back to the paste method above.
 | "One resort, / six experiences." masked line reveal | `yPercent 118 → 0`, 1.2s, `expo.out`, 0.085s stagger, fires at `top 86%` |
 | Eyebrow fade + rise | opacity → 1 and `y 22 → 0`, 0.9s, `expo.out`, at `top 90%` |
 | Sticky image cross-fade | 0.75s `expo.out`, driven by the active row |
-| Row activation | ScrollTrigger `top 62%` / `bottom 62%`, plus hover and keyboard focus |
+| Row activation | own scroll math on the same 62% viewport line, plus hover and keyboard focus |
 | Row states | heading `d3 → d1`, body `d3 → d2`, CTA fades/slides in, 0.55s `cubic-bezier(.16,1,.3,1)` |
 
 GSAP 3.12.5 loads from jsDelivr at runtime (skipped if your site already has it). If
-the CDN is blocked, it falls back to a plain-JS version with the same look and the same
-62% trigger line — verified in both modes.
+the CDN is blocked, the reveals fall back to CSS transitions with the same timings.
+
+**Row activation deliberately does not use ScrollTrigger.** Some themes and
+smooth-scroll plugins scroll a wrapper element rather than the window, and
+ScrollTrigger's triggers then never fire — the section sticks on row 01 and only
+responds to hover. Reading element rects each frame works no matter which element is
+doing the scrolling. The loop only runs while the section is near the viewport, and
+only acts when the scroll-derived row actually changes, so hovering a row still keeps
+it active until you scroll — same feel as the source.
+
+Verified stepping 01 → 06 one row at a time in three setups: GSAP present, GSAP CDN
+blocked, and a wrapper-scrolls-instead-of-window page (which the ScrollTrigger version
+failed).
 
 **Colors** — the source's exact tokens: `#0B211F` ink, `#F2F4F1` / `.66` / `.40` text
 tiers, `#f49b7b` coral italic, `#489a8f` teal links, `rgba(242,244,241,.13)` dividers.

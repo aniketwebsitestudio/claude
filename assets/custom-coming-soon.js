@@ -26,8 +26,14 @@
     '#mobmenu a[href*="/account"]',
     '#mobmenu .quicks a',
     /* search */
-    '#mainHeader [data-open="#searchBox"]'
+    '#mainHeader [data-open="#searchBox"]',
+    /* footer menu -- same four destinations as the header */
+    '#f-links a'
   ].join(',');
+
+  /* Anchors that drive a control rather than navigate: the country and
+     language pickers are <a href="#"> handled by the theme's own JS. */
+  const FUNCTIONAL = 'localization-form, .localization-list, #languageBox, #countryBox';
 
   /* On the home page nothing may navigate away at all: product cards,
      category cards, the hero button, the footer links and the Shopify
@@ -37,10 +43,15 @@
 
   const leavesPage = (anchor) => {
     const href = anchor.getAttribute('href');
-    if (href === null) return false;
-    /* href="" reloads the current page -- the hero CTA looks broken that
-       way, so treat it as a dead end and show the popup. */
-    if (href === '') return true;
+    /* No href at all: a category card whose block has no collection
+       assigned renders as a bare <a> (see custom-shop-by-category.liquid),
+       which otherwise does nothing whatsoever when clicked. href="" merely
+       reloads the page. Both are dead ends -- show the popup. */
+    if (href === null || href === '') return true;
+    /* href="#" is a placeholder that just jumps to the top of the page --
+       treat it as a dead end too, unless it belongs to a control. A real
+       in-page anchor (#mainContent) is left alone. */
+    if (href === '#') return !anchor.closest(FUNCTIONAL);
     if (href.charAt(0) === '#') return false;
     let url;
     try {
@@ -137,15 +148,28 @@
     if (!event.target.closest) return false;
     if (event.target.closest(NOT_READY)) return true;
     if (!IS_HOME) return false;
+
+    /* The category carousel fires a click after a drag. It suppresses that
+       click itself, but in its own capture listener -- which runs after
+       this one, since this is bound on document. Read the drag distance it
+       records so a swipe scrolls the row instead of raising the popup. */
+    const slider = event.target.closest('sbc-slider');
+    if (slider && slider.moved > 6) return false;
+
     const anchor = event.target.closest('a');
     return Boolean(anchor) && leavesPage(anchor);
   };
 
-  document.addEventListener('click', (event) => {
+  const intercept = (event) => {
     if (!wanted(event)) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
     open();
-  }, true);
+  };
+
+  document.addEventListener('click', intercept, true);
+  /* Middle-click and "open in new tab" raise auxclick, not click, and would
+     otherwise sail straight past the popup into the unfinished page. */
+  document.addEventListener('auxclick', intercept, true);
 })();

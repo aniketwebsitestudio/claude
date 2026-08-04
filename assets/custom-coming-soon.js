@@ -68,19 +68,6 @@
       padding: 12px 28px;
       cursor: pointer;
     }
-    .bh-soon__close {
-      position: absolute;
-      top: 8px;
-      right: 10px;
-      appearance: none;
-      border: 0;
-      background: none;
-      color: inherit;
-      font-size: 22px;
-      line-height: 1;
-      padding: 4px 8px;
-      cursor: pointer;
-    }
   `;
 
   let dialog;
@@ -94,7 +81,6 @@
     dialog.className = 'bh-soon';
     dialog.setAttribute('aria-labelledby', 'bhSoonTitle');
     dialog.innerHTML = `
-      <button type="button" class="bh-soon__close" aria-label="Close">&times;</button>
       <div class="bh-soon__inner">
         <p class="bh-soon__title" id="bhSoonTitle">Coming soon</p>
         <p class="bh-soon__text">This page will be live soon. Thank you for your patience.</p>
@@ -103,7 +89,6 @@
     `;
     document.body.appendChild(dialog);
 
-    dialog.querySelector('.bh-soon__close').addEventListener('click', () => dialog.close());
     dialog.querySelector('.bh-soon__ok').addEventListener('click', () => dialog.close());
 
     /* Click outside the panel closes it: on a <dialog>, clicks on the

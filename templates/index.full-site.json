@@ -1,0 +1,104 @@
+{
+  "sections": {
+    "hero": {
+      "type": "gs-hero",
+      "settings": {
+        "height": "600px"
+      }
+    },
+    "featured-products": {
+      "type": "gs-featured-products",
+      "settings": {
+        "title": "Bestsellers",
+        "product_limit": 3
+      }
+    },
+    "philosophy": {
+      "type": "custom-philosophy",
+      "settings": {
+        "eyebrow": "Our Philosophy",
+        "heading": "Craftsmanship is <em>knowledge</em>",
+        "text": "<p>Each piece in our collection is the result of years of knowledge, not algorithms, not automation.</p><p>The hands behind Bhoomija have spent lifetimes understanding material, form, and function. We simply have the privilege of bringing their work to you.</p>"
+      }
+    },
+    "explore-region": {
+      "type": "custom-explore-region",
+      "blocks": {
+        "region-1": {
+          "type": "region",
+          "settings": {
+            "region_name": "West Bengal"
+          }
+        },
+        "region-2": {
+          "type": "region",
+          "settings": {
+            "region_name": "Himachal Pradesh"
+          }
+        },
+        "region-3": {
+          "type": "region",
+          "settings": {
+            "region_name": "Northeast India"
+          }
+        },
+        "region-4": {
+          "type": "region",
+          "settings": {
+            "region_name": "Bihar"
+          }
+        },
+        "region-5": {
+          "type": "region",
+          "settings": {
+            "region_name": "Odisha"
+          }
+        }
+      },
+      "settings": {
+        "eyebrow": "Explore by Region"
+      }
+    },
+    "our-values": {
+      "type": "custom-our-values",
+      "blocks": {
+        "value-1": {
+          "type": "column",
+          "settings": {
+            "position": "left",
+            "title": "Authenticity",
+            "text": "True to our roots."
+          }
+        },
+        "value-2": {
+          "type": "column",
+          "settings": {
+            "position": "center",
+            "title": "Excellence",
+            "text": "No compromises."
+          }
+        },
+        "value-3": {
+          "type": "column",
+          "settings": {
+            "position": "right",
+            "title": "Sustainability",
+            "text": "Built to last."
+          }
+        }
+      },
+      "settings": {
+        "eyebrow": "Our Values",
+        "heading": "Crafted with Purpose",
+        "tagline": "<em>Every detail matters</em>"
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "featured-products",
+    "philosophy",
+    "explore-region",
+    "our-values"
+  ]
+}

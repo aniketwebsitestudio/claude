@@ -1,0 +1,554 @@
+{%- liquid
+	assign s = section.settings
+	assign uid = section.id | replace: '_', '' | replace: '-', ''
+-%}
+
+{%- if s.hide_header_footer -%}
+	<style>
+		#shopify-section-header, header#mainHeader, .shopify-section-group-header-group,
+		#shopify-section-footer, footer, .shopify-section-group-footer-group,
+		.announcement-bar, [data-announcement] { display: none !important; }
+		body { padding-block-start: 0 !important; }
+	</style>
+{%- endif -%}
+
+<section class="coming-soon" id="ComingSoon-{{ uid }}"
+	{% unless s.global_color_scheme %}color-scheme="{{ s.color_scheme }}"{% endunless %}>
+
+	{%- if s.image != blank -%}
+		<div class="coming-soon__bg">
+			{%- liquid
+				assign width = 2400
+				assign widths = '600,900,1200,1600,2000,2400'
+				assign sizes = '100vw'
+				render 'inc-img', img: s.image, width: width, widths: widths, sizes: sizes, fallback: true
+			-%}
+		</div>
+		<div class="coming-soon__scrim"></div>
+	{%- endif -%}
+
+	<div class="coming-soon__inner">
+		{%- if s.logo != blank -%}
+			<div class="coming-soon__logo">
+				{%- liquid
+					assign width = 800
+					assign widths = '200,300,400,600,800'
+					assign sizes = '(max-width:777px) 60vw, 320px'
+					render 'inc-img', img: s.logo, width: width, widths: widths, sizes: sizes, fallback: true
+				-%}
+			</div>
+		{%- elsif s.logo_text != blank -%}
+			<div class="coming-soon__wordmark">{{ s.logo_text }}</div>
+		{%- endif -%}
+
+		{%- if s.eyebrow != blank -%}
+			<div class="coming-soon__eyebrow"><span>{{ s.eyebrow | escape }}</span></div>
+		{%- endif -%}
+
+		{%- if s.heading != blank -%}
+			<h1 class="coming-soon__heading">{{ s.heading }}</h1>
+		{%- endif -%}
+
+		{%- if s.text != blank -%}
+			<div class="coming-soon__text rte">{{ s.text }}</div>
+		{%- endif -%}
+
+		{%- if s.show_countdown and s.launch_date != blank -%}
+			<div class="coming-soon__countdown" data-countdown data-launch="{{ s.launch_date | escape }}T{{ s.launch_time | default: '00:00' | escape }}">
+				<div class="coming-soon__unit"><span data-days>--</span><small>{{ s.label_days | default: 'Days' | escape }}</small></div>
+				<div class="coming-soon__unit"><span data-hours>--</span><small>{{ s.label_hours | default: 'Hours' | escape }}</small></div>
+				<div class="coming-soon__unit"><span data-minutes>--</span><small>{{ s.label_minutes | default: 'Minutes' | escape }}</small></div>
+				<div class="coming-soon__unit"><span data-seconds>--</span><small>{{ s.label_seconds | default: 'Seconds' | escape }}</small></div>
+			</div>
+		{%- endif -%}
+
+		{%- if s.show_form -%}
+			<div class="coming-soon__signup">
+				{%- form 'customer', class: 'coming-soon__form' -%}
+					<input type="hidden" name="contact[tags]" value="newsletter,coming-soon">
+					<label class="visually-hidden" for="ComingSoonEmail-{{ uid }}">{{ s.form_label | default: 'Email' | escape }}</label>
+					<input
+						id="ComingSoonEmail-{{ uid }}"
+						type="email"
+						name="contact[email]"
+						value="{{ form.email }}"
+						placeholder="{{ s.form_placeholder | default: 'Enter your email' | escape }}"
+						autocomplete="email"
+						required>
+					<button type="submit" class="button">{{ s.form_button | default: 'Notify me' | escape }}</button>
+
+					{%- if form.posted_successfully? -%}
+						<p class="coming-soon__form-note is-success">{{ s.form_success | default: 'Thank you. We will let you know the moment we open.' }}</p>
+					{%- elsif form.errors -%}
+						<p class="coming-soon__form-note is-error">{{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}</p>
+					{%- elsif s.form_note != blank -%}
+						<p class="coming-soon__form-note">{{ s.form_note }}</p>
+					{%- endif -%}
+				{%- endform -%}
+			</div>
+		{%- endif -%}
+
+		{%- if section.blocks.size > 0 -%}
+			<ul class="coming-soon__links">
+				{%- for block in section.blocks -%}
+					{%- if block.settings.label != blank -%}
+						<li {{ block.shopify_attributes }}>
+							<a href="{{ block.settings.url | default: '#' }}"{% if block.settings.new_tab %} target="_blank" rel="noopener"{% endif %}>
+								{{ block.settings.label | escape }}
+							</a>
+						</li>
+					{%- endif -%}
+				{%- endfor -%}
+			</ul>
+		{%- endif -%}
+
+		{%- if s.footnote != blank -%}
+			<div class="coming-soon__footnote">{{ s.footnote }}</div>
+		{%- endif -%}
+	</div>
+</section>
+
+<style>
+	#ComingSoon-{{ uid }} {
+		--cs-accent: {{ s.accent }};
+		--cs-text: {{ s.text_color }};
+		position: relative;
+		display: grid;
+		place-items: center;
+		min-height: {{ s.min_height }}vh;
+		padding: clamp(48px, 8vw, 96px) 20px;
+		background-color: {{ s.background_color }};
+		color: var(--cs-text);
+		overflow: hidden;
+		text-align: center;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__bg { position: absolute; inset: 0; z-index: 0; }
+	#ComingSoon-{{ uid }} .coming-soon__bg :where(img, picture, svg) {
+		width: 100%; height: 100%; object-fit: cover; display: block;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__scrim {
+		position: absolute; inset: 0; z-index: 1;
+		background: {{ s.overlay_color }};
+		opacity: {{ s.overlay_opacity | divided_by: 100.0 }};
+	}
+	#ComingSoon-{{ uid }} .coming-soon__inner {
+		position: relative; z-index: 2;
+		width: 100%; max-width: 720px;
+		display: flex; flex-direction: column; align-items: center;
+		gap: clamp(20px, 3vw, 32px);
+	}
+	#ComingSoon-{{ uid }} .coming-soon__logo { max-width: 320px; width: 60%; }
+	#ComingSoon-{{ uid }} .coming-soon__logo :where(img, picture, svg) { display: block; width: 100%; height: auto; }
+	#ComingSoon-{{ uid }} .coming-soon__wordmark {
+		font-family: "ivypresto-display", var(--hFontFamily, serif);
+		font-size: clamp(28px, 4vw, 40px);
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__eyebrow {
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 13px; font-weight: 400;
+		text-transform: uppercase; letter-spacing: 0.22em;
+		opacity: 0.8;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__heading {
+		font-family: "ivypresto-display", var(--hFontFamily, serif);
+		font-weight: 400;
+		font-size: clamp(38px, 6.4vw, 74px);
+		line-height: 1.08;
+		letter-spacing: 0.02em;
+		text-transform: none;
+		margin: 0;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__heading em { font-style: italic; color: var(--cs-accent); }
+	#ComingSoon-{{ uid }} .coming-soon__text {
+		font-family: "IBM Plex Sans", sans-serif;
+		font-weight: 300;
+		font-size: clamp(15px, 1.4vw, 18px);
+		line-height: 1.6;
+		max-width: 46ch;
+		opacity: 0.85;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__text p { margin: 0 0 0.75em; }
+	#ComingSoon-{{ uid }} .coming-soon__text p:last-child { margin-bottom: 0; }
+
+	#ComingSoon-{{ uid }} .coming-soon__countdown {
+		display: flex; flex-wrap: wrap; justify-content: center;
+		gap: clamp(16px, 4vw, 44px);
+	}
+	#ComingSoon-{{ uid }} .coming-soon__unit { display: flex; flex-direction: column; gap: 6px; min-width: 62px; }
+	#ComingSoon-{{ uid }} .coming-soon__unit span {
+		font-family: "ivypresto-display", var(--hFontFamily, serif);
+		font-size: clamp(28px, 4vw, 44px);
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__unit small {
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 11px; text-transform: uppercase; letter-spacing: 0.16em; opacity: 0.7;
+	}
+
+	#ComingSoon-{{ uid }} .coming-soon__signup { width: 100%; max-width: 460px; }
+	#ComingSoon-{{ uid }} .coming-soon__form {
+		display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__form input[type="email"] {
+		flex: 1 1 220px;
+		min-width: 0;
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 15px;
+		padding: 13px 16px;
+		color: var(--cs-text);
+		background: transparent;
+		border: 1px solid currentColor;
+		border-radius: 0;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__form input[type="email"]::placeholder { color: currentColor; opacity: 0.6; }
+	#ComingSoon-{{ uid }} .coming-soon__form button {
+		flex: 0 0 auto;
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase;
+		padding: 13px 26px;
+		color: #fff;
+		background: var(--cs-accent);
+		border: 1px solid var(--cs-accent);
+		border-radius: 0;
+		cursor: pointer;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__form button:hover { opacity: 0.9; }
+	#ComingSoon-{{ uid }} .coming-soon__form-note {
+		flex: 1 0 100%;
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 13px; margin: 2px 0 0; opacity: 0.75;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__form-note.is-error { color: #ffb4b4; opacity: 1; }
+	#ComingSoon-{{ uid }} .coming-soon__form-note.is-success { opacity: 1; }
+
+	#ComingSoon-{{ uid }} .coming-soon__links {
+		display: flex; flex-wrap: wrap; justify-content: center;
+		gap: clamp(16px, 3vw, 32px);
+		list-style: none; margin: 0; padding: 0;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__links a {
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 13px; text-transform: uppercase; letter-spacing: 0.14em;
+		color: inherit; text-decoration: none;
+		border-block-end: 1px solid currentColor;
+		padding-block-end: 3px;
+	}
+	#ComingSoon-{{ uid }} .coming-soon__links a:hover { color: var(--cs-accent); }
+	#ComingSoon-{{ uid }} .coming-soon__footnote {
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 12px; letter-spacing: 0.06em; opacity: 0.6;
+	}
+	#ComingSoon-{{ uid }} .visually-hidden {
+		position: absolute !important; width: 1px; height: 1px;
+		margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+	}
+	@media (max-width: 777px) {
+		#ComingSoon-{{ uid }} { min-height: {{ s.min_height_mobile }}vh; padding-inline: 20px; }
+		#ComingSoon-{{ uid }} .coming-soon__form button { flex: 1 1 100%; }
+	}
+</style>
+
+{%- if s.show_countdown and s.launch_date != blank -%}
+<script>
+	(function () {
+		var root = document.querySelector('#ComingSoon-{{ uid }} [data-countdown]');
+		if (!root) return;
+
+		// Treat the merchant-entered date/time as the shop's local time.
+		var target = new Date(root.dataset.launch.replace(' ', 'T')).getTime();
+		if (isNaN(target)) return;
+
+		var out = {
+			days: root.querySelector('[data-days]'),
+			hours: root.querySelector('[data-hours]'),
+			minutes: root.querySelector('[data-minutes]'),
+			seconds: root.querySelector('[data-seconds]')
+		};
+
+		function pad(n) { return n < 10 ? '0' + n : String(n); }
+
+		function tick() {
+			var diff = target - Date.now();
+			if (diff <= 0) {
+				diff = 0;
+				clearInterval(timer);
+			}
+			var totalSeconds = Math.floor(diff / 1000);
+			out.days.textContent = Math.floor(totalSeconds / 86400);
+			out.hours.textContent = pad(Math.floor(totalSeconds % 86400 / 3600));
+			out.minutes.textContent = pad(Math.floor(totalSeconds % 3600 / 60));
+			out.seconds.textContent = pad(totalSeconds % 60);
+		}
+
+		tick();
+		var timer = setInterval(tick, 1000);
+	})();
+</script>
+{%- endif -%}
+
+{% schema %}
+{
+	"name": "Coming Soon",
+	"tag": "section",
+	"settings": [
+		{
+			"type": "image_picker",
+			"id": "logo",
+			"label": "Logo"
+		},
+		{
+			"type": "text",
+			"id": "logo_text",
+			"label": "Wordmark (used if no logo is set)",
+			"default": "Bhoomija"
+		},
+		{
+			"type": "text",
+			"id": "eyebrow",
+			"label": "Eyebrow label",
+			"default": "Launching Soon"
+		},
+		{
+			"type": "text",
+			"id": "heading",
+			"label": "Heading",
+			"info": "Basic HTML like <br> and <em> is supported.",
+			"default": "Something handmade<br>is <em>on its way</em>"
+		},
+		{
+			"type": "richtext",
+			"id": "text",
+			"label": "Text",
+			"default": "<p>We are putting the final touches on our store. Soon you will be able to bring home crafts made by artisans across India.</p>"
+		},
+		{
+			"type": "richtext",
+			"id": "footnote",
+			"label": "Footnote",
+			"default": "<p>© Bhoomija</p>"
+		},
+		{
+			"type": "header",
+			"content": "Countdown"
+		},
+		{
+			"type": "checkbox",
+			"id": "show_countdown",
+			"label": "Show countdown",
+			"default": true
+		},
+		{
+			"type": "text",
+			"id": "launch_date",
+			"label": "Launch date",
+			"info": "Format: YYYY-MM-DD (for example 2026-09-15).",
+			"default": "2026-09-15",
+			"visible_if": "{{ section.settings.show_countdown }}"
+		},
+		{
+			"type": "text",
+			"id": "launch_time",
+			"label": "Launch time",
+			"info": "24-hour format HH:MM in the visitor's local time.",
+			"default": "10:00",
+			"visible_if": "{{ section.settings.show_countdown }}"
+		},
+		{
+			"type": "text",
+			"id": "label_days",
+			"label": "Days label",
+			"default": "Days",
+			"visible_if": "{{ section.settings.show_countdown }}"
+		},
+		{
+			"type": "text",
+			"id": "label_hours",
+			"label": "Hours label",
+			"default": "Hours",
+			"visible_if": "{{ section.settings.show_countdown }}"
+		},
+		{
+			"type": "text",
+			"id": "label_minutes",
+			"label": "Minutes label",
+			"default": "Minutes",
+			"visible_if": "{{ section.settings.show_countdown }}"
+		},
+		{
+			"type": "text",
+			"id": "label_seconds",
+			"label": "Seconds label",
+			"default": "Seconds",
+			"visible_if": "{{ section.settings.show_countdown }}"
+		},
+		{
+			"type": "header",
+			"content": "Email signup"
+		},
+		{
+			"type": "checkbox",
+			"id": "show_form",
+			"label": "Show email signup",
+			"info": "Subscribers are saved as customers in Shopify, tagged 'newsletter' and 'coming-soon'.",
+			"default": true
+		},
+		{
+			"type": "text",
+			"id": "form_label",
+			"label": "Field label (screen readers)",
+			"default": "Email",
+			"visible_if": "{{ section.settings.show_form }}"
+		},
+		{
+			"type": "text",
+			"id": "form_placeholder",
+			"label": "Field placeholder",
+			"default": "Enter your email",
+			"visible_if": "{{ section.settings.show_form }}"
+		},
+		{
+			"type": "text",
+			"id": "form_button",
+			"label": "Button label",
+			"default": "Notify me",
+			"visible_if": "{{ section.settings.show_form }}"
+		},
+		{
+			"type": "richtext",
+			"id": "form_note",
+			"label": "Note below the form",
+			"default": "<p>No spam, just one email when we open.</p>",
+			"visible_if": "{{ section.settings.show_form }}"
+		},
+		{
+			"type": "richtext",
+			"id": "form_success",
+			"label": "Success message",
+			"default": "<p>Thank you. We will let you know the moment we open.</p>",
+			"visible_if": "{{ section.settings.show_form }}"
+		},
+		{
+			"type": "header",
+			"content": "Appearance"
+		},
+		{
+			"type": "image_picker",
+			"id": "image",
+			"label": "Background image"
+		},
+		{
+			"type": "color",
+			"id": "background_color",
+			"label": "Background color",
+			"default": "#151312"
+		},
+		{
+			"type": "color",
+			"id": "overlay_color",
+			"label": "Image overlay color",
+			"default": "#000000"
+		},
+		{
+			"type": "range",
+			"id": "overlay_opacity",
+			"label": "Image overlay opacity",
+			"min": 0,
+			"max": 100,
+			"step": 5,
+			"unit": "%",
+			"default": 45
+		},
+		{
+			"type": "color",
+			"id": "text_color",
+			"label": "Text color",
+			"default": "#F5F1EB"
+		},
+		{
+			"type": "color",
+			"id": "accent",
+			"label": "Accent color",
+			"default": "#7F1416"
+		},
+		{
+			"type": "range",
+			"id": "min_height",
+			"label": "Minimum height - desktop",
+			"min": 60,
+			"max": 100,
+			"step": 5,
+			"unit": "vh",
+			"default": 100
+		},
+		{
+			"type": "range",
+			"id": "min_height_mobile",
+			"label": "Minimum height - mobile",
+			"min": 60,
+			"max": 100,
+			"step": 5,
+			"unit": "vh",
+			"default": 100
+		},
+		{
+			"type": "checkbox",
+			"id": "hide_header_footer",
+			"label": "Hide header and footer",
+			"info": "Turn on for a standalone landing page with no navigation.",
+			"default": true
+		},
+		{
+			"type": "checkbox",
+			"id": "global_color_scheme",
+			"label": "Use global color scheme",
+			"default": true
+		},
+		{
+			"type": "color_scheme",
+			"id": "color_scheme",
+			"label": "Color scheme",
+			"default": "coretex-1",
+			"visible_if": "{{ section.settings.global_color_scheme == false }}"
+		}
+	],
+	"blocks": [
+		{
+			"type": "link",
+			"name": "Link",
+			"limit": 6,
+			"settings": [
+				{
+					"type": "text",
+					"id": "label",
+					"label": "Label",
+					"default": "Instagram"
+				},
+				{
+					"type": "url",
+					"id": "url",
+					"label": "Link"
+				},
+				{
+					"type": "checkbox",
+					"id": "new_tab",
+					"label": "Open in a new tab",
+					"default": true
+				}
+			]
+		}
+	],
+	"presets": [
+		{
+			"name": "Coming Soon",
+			"category": "Content",
+			"blocks": [
+				{ "type": "link", "settings": { "label": "Instagram" } },
+				{ "type": "link", "settings": { "label": "Contact us" } }
+			]
+		}
+	]
+}
+{% endschema %}

@@ -1,0 +1,229 @@
+{%- comment -%}
+	Coming soon guard.
+
+	Intercepts clicks on header/footer navigation, account/login, search and
+	cart while the store is in pre-launch mode, and shows a small closable
+	popup instead of navigating.
+
+	Usage:
+		{%- render 'inc-coming-soon-guard',
+			heading: 'Coming soon',
+			message: '<p>This page will be live soon.</p>',
+			button: 'Got it',
+			accent: '#7F1416' -%}
+
+	Anything that should stay clickable can opt out with the
+	data-coming-soon-allow attribute.
+{%- endcomment -%}
+
+<div class="cs-guard" id="ComingSoonGuard" hidden>
+	<div class="cs-guard__backdrop" data-cs-close></div>
+	<div class="cs-guard__dialog" role="dialog" aria-modal="true" aria-labelledby="ComingSoonGuardTitle">
+		<button type="button" class="cs-guard__x" data-cs-close aria-label="Close">&times;</button>
+		{%- if include.heading != blank -%}
+			<h2 class="cs-guard__title" id="ComingSoonGuardTitle">{{ include.heading | escape }}</h2>
+		{%- endif -%}
+		{%- if include.message != blank -%}
+			<div class="cs-guard__text">{{ include.message }}</div>
+		{%- endif -%}
+		<button type="button" class="cs-guard__button" data-cs-close>{{ include.button | default: 'Got it' | escape }}</button>
+	</div>
+</div>
+
+<style>
+	.cs-guard {
+		position: fixed;
+		inset: 0;
+		z-index: 2147483000;
+		display: grid;
+		place-items: center;
+		padding: 20px;
+	}
+	.cs-guard[hidden] { display: none; }
+	.cs-guard__backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.55);
+		animation: cs-guard-fade 0.18s ease-out;
+	}
+	.cs-guard__dialog {
+		--cs-guard-accent: {{ include.accent | default: '#7F1416' }};
+		position: relative;
+		width: min(100%, 380px);
+		background: {{ include.background | default: '#F5F1EB' }};
+		color: {{ include.color | default: '#151312' }};
+		text-align: center;
+		padding: 34px 28px 28px;
+		box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+		animation: cs-guard-rise 0.2s ease-out;
+	}
+	.cs-guard__x {
+		position: absolute;
+		inset-block-start: 6px;
+		inset-inline-end: 10px;
+		width: 32px;
+		height: 32px;
+		font-size: 24px;
+		line-height: 1;
+		background: none;
+		border: 0;
+		color: inherit;
+		opacity: 0.55;
+		cursor: pointer;
+	}
+	.cs-guard__x:hover { opacity: 1; }
+	.cs-guard__title {
+		font-family: "ivypresto-display", var(--hFontFamily, serif);
+		font-weight: 400;
+		font-size: 26px;
+		line-height: 1.2;
+		letter-spacing: 0.01em;
+		text-transform: none;
+		margin: 0 0 10px;
+	}
+	.cs-guard__text {
+		font-family: "IBM Plex Sans", sans-serif;
+		font-weight: 300;
+		font-size: 15px;
+		line-height: 1.55;
+		opacity: 0.85;
+	}
+	.cs-guard__text p { margin: 0 0 0.6em; }
+	.cs-guard__text p:last-child { margin-bottom: 0; }
+	.cs-guard__button {
+		margin-block-start: 22px;
+		font-family: "IBM Plex Sans", sans-serif;
+		font-size: 13px;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		padding: 12px 30px;
+		color: #fff;
+		background: var(--cs-guard-accent);
+		border: 1px solid var(--cs-guard-accent);
+		border-radius: 0;
+		cursor: pointer;
+	}
+	.cs-guard__button:hover { opacity: 0.9; }
+	@keyframes cs-guard-fade { from { opacity: 0; } to { opacity: 1; } }
+	@keyframes cs-guard-rise {
+		from { opacity: 0; transform: translateY(12px); }
+		to { opacity: 1; transform: none; }
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.cs-guard__backdrop, .cs-guard__dialog { animation: none; }
+	}
+</style>
+
+<script>
+	(function () {
+		var modal = document.getElementById('ComingSoonGuard');
+		if (!modal || modal.dataset.bound === '1') return;
+		modal.dataset.bound = '1';
+
+		var dialog = modal.querySelector('.cs-guard__dialog');
+		var lastFocus = null;
+
+		function open() {
+			if (!modal.hidden) return;
+			lastFocus = document.activeElement;
+			modal.hidden = false;
+			document.documentElement.style.overflow = 'hidden';
+			var focusable = modal.querySelector('.cs-guard__button') || dialog;
+			focusable.focus({ preventScroll: true });
+		}
+
+		function close() {
+			if (modal.hidden) return;
+			modal.hidden = true;
+			document.documentElement.style.overflow = '';
+			if (lastFocus && typeof lastFocus.focus === 'function') {
+				lastFocus.focus({ preventScroll: true });
+			}
+		}
+
+		modal.addEventListener('click', function (event) {
+			if (event.target.closest('[data-cs-close]')) close();
+		});
+
+		document.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape') close();
+			// Keep focus inside the dialog while it is open.
+			if (event.key === 'Tab' && !modal.hidden) {
+				event.preventDefault();
+				(modal.querySelector('.cs-guard__button') || dialog).focus({ preventScroll: true });
+			}
+		});
+
+		// --- What gets intercepted -------------------------------------------
+
+		var NAV_CONTAINERS = [
+			'#mainHeader',
+			'header',
+			'.shopify-section-group-header-group',
+			'#shopify-section-header',
+			'footer',
+			'sub-footer',
+			'.shopify-section-group-footer-group',
+			'#shopify-section-footer',
+			'#f-links'
+		].join(',');
+
+		function isAccountOrSearchOrCart(el) {
+			var href = (el.getAttribute('href') || '').toLowerCase();
+			if (/\/(account|challenge|cart|search)(\/|\?|$)/.test(href)) return true;
+
+			var hints = [
+				el.getAttribute('aria-label'),
+				el.getAttribute('aria-controls'),
+				el.getAttribute('data-drawer'),
+				el.getAttribute('name'),
+				typeof el.className === 'string' ? el.className : '',
+				el.id
+			].join(' ').toLowerCase();
+
+			return /search|account|login|log in|sign in|cart/.test(hints);
+		}
+
+		function shouldIntercept(el) {
+			// Explicit opt-out, and anything inside the coming soon section itself.
+			if (el.closest('[data-coming-soon-allow]')) return false;
+			if (el.closest('.coming-soon')) return false;
+			if (el.closest('.cs-guard')) return false;
+
+			var href = el.getAttribute('href') || '';
+			// Let mail, phone, and links off this store through.
+			if (/^(mailto:|tel:|https?:\/\/)/i.test(href)) {
+				if (!/^https?:\/\//i.test(href)) return false;
+				try {
+					if (new URL(href, window.location.href).host !== window.location.host) return false;
+				} catch (e) { /* fall through */ }
+			}
+
+			if (el.closest(NAV_CONTAINERS)) return true;
+			return isAccountOrSearchOrCart(el);
+		}
+
+		// Capture phase so this runs before the theme's own drawer handlers.
+		document.addEventListener('click', function (event) {
+			var el = event.target.closest('a[href], button, summary, [role="link"], [role="button"]');
+			if (!el || !shouldIntercept(el)) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+			open();
+		}, true);
+
+		// Search boxes submit without a click on a matched element.
+		document.addEventListener('submit', function (event) {
+			var form = event.target;
+			if (!form || form.closest('.coming-soon') || form.closest('[data-coming-soon-allow]')) return;
+
+			var action = (form.getAttribute('action') || '').toLowerCase();
+			if (!/\/search/.test(action) && !form.closest(NAV_CONTAINERS)) return;
+
+			event.preventDefault();
+			event.stopPropagation();
+			open();
+		}, true);
+	})();
+</script>

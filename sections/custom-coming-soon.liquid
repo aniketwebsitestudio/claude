@@ -251,6 +251,16 @@
 	}
 </style>
 
+{%- if s.enable_nav_popup -%}
+	{%- render 'inc-coming-soon-guard',
+		heading: s.popup_heading,
+		message: s.popup_message,
+		button: s.popup_button,
+		accent: s.accent,
+		background: s.popup_background,
+		color: s.popup_text_color -%}
+{%- endif -%}
+
 {%- if s.show_countdown and s.launch_date != blank -%}
 <script>
 	(function () {
@@ -432,6 +442,52 @@
 		},
 		{
 			"type": "header",
+			"content": "Navigation popup"
+		},
+		{
+			"type": "checkbox",
+			"id": "enable_nav_popup",
+			"label": "Block navigation and show a popup",
+			"info": "Menu links, login, search and cart open a small closable popup instead of the page. Turn off at launch. Requires 'Hide header and footer' to be off so the menu is visible.",
+			"default": true
+		},
+		{
+			"type": "text",
+			"id": "popup_heading",
+			"label": "Popup heading",
+			"default": "Coming soon",
+			"visible_if": "{{ section.settings.enable_nav_popup }}"
+		},
+		{
+			"type": "richtext",
+			"id": "popup_message",
+			"label": "Popup message",
+			"default": "<p>This page will be live soon. Leave your email and we will tell you the moment we open.</p>",
+			"visible_if": "{{ section.settings.enable_nav_popup }}"
+		},
+		{
+			"type": "text",
+			"id": "popup_button",
+			"label": "Popup button label",
+			"default": "Got it",
+			"visible_if": "{{ section.settings.enable_nav_popup }}"
+		},
+		{
+			"type": "color",
+			"id": "popup_background",
+			"label": "Popup background",
+			"default": "#F5F1EB",
+			"visible_if": "{{ section.settings.enable_nav_popup }}"
+		},
+		{
+			"type": "color",
+			"id": "popup_text_color",
+			"label": "Popup text color",
+			"default": "#151312",
+			"visible_if": "{{ section.settings.enable_nav_popup }}"
+		},
+		{
+			"type": "header",
 			"content": "Appearance"
 		},
 		{
@@ -497,8 +553,8 @@
 			"type": "checkbox",
 			"id": "hide_header_footer",
 			"label": "Hide header and footer",
-			"info": "Turn on for a standalone landing page with no navigation.",
-			"default": true
+			"info": "Turn on for a standalone landing page with no navigation at all. Leave off if you want the menu visible with the navigation popup.",
+			"default": false
 		},
 		{
 			"type": "checkbox",

@@ -27,13 +27,17 @@
         "eyebrow": "Launching Soon",
         "heading": "Something handmade<br>is <em>on its way</em>",
         "text": "<p>We are putting the final touches on our store. Soon you will be able to bring home crafts made by artisans across India.</p>",
-        "footnote": "<p>© Bhoomija</p>",
+        "footnote": "<p>\u00a9 Bhoomija</p>",
         "show_countdown": true,
         "launch_date": "2026-09-15",
         "launch_time": "10:00",
         "show_form": true,
         "form_button": "Notify me",
-        "hide_header_footer": true
+        "hide_header_footer": false,
+        "enable_nav_popup": true,
+        "popup_heading": "Coming soon",
+        "popup_message": "<p>This page will be live soon. Leave your email on the homepage and we will tell you the moment we open.</p>",
+        "popup_button": "Got it"
       }
     }
   },

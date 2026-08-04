@@ -29,6 +29,30 @@
     '#mainHeader [data-open="#searchBox"]'
   ].join(',');
 
+  /* On the home page nothing may navigate away at all: product cards,
+     category cards, the hero button, the footer links and the Shopify
+     credit all raise the popup instead. In-page anchors (#), and links
+     back to the home page itself, are left working. */
+  const IS_HOME = document.body.getAttribute('coretex-page') === 'index';
+
+  const leavesPage = (anchor) => {
+    const href = anchor.getAttribute('href');
+    if (href === null) return false;
+    /* href="" reloads the current page -- the hero CTA looks broken that
+       way, so treat it as a dead end and show the popup. */
+    if (href === '') return true;
+    if (href.charAt(0) === '#') return false;
+    let url;
+    try {
+      url = new URL(anchor.href, window.location.href);
+    } catch (error) {
+      return false;
+    }
+    const samePage = url.origin === window.location.origin &&
+      url.pathname === window.location.pathname;
+    return !samePage;
+  };
+
   const STYLES = `
     dialog.bh-soon {
       border: 1px solid #000;
@@ -109,9 +133,16 @@
     if (!el.open) el.showModal();
   };
 
+  const wanted = (event) => {
+    if (!event.target.closest) return false;
+    if (event.target.closest(NOT_READY)) return true;
+    if (!IS_HOME) return false;
+    const anchor = event.target.closest('a');
+    return Boolean(anchor) && leavesPage(anchor);
+  };
+
   document.addEventListener('click', (event) => {
-    const target = event.target.closest && event.target.closest(NOT_READY);
-    if (!target) return;
+    if (!wanted(event)) return;
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();

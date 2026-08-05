@@ -1,0 +1,10 @@
+/* ==========================================================================
+   Footer menu: uppercase links
+
+   Matches the header nav, which is already uppercase (see custom.css).
+   The small letter-spacing keeps caps from looking cramped at 16px.
+   ========================================================================== */
+#f-links .f-links a {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}

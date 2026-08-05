@@ -6,13 +6,15 @@
 
     /!\ Changing this file will have an impact on all payment icons on the site.
 
-    Custom: the card badges were replaced with a single UPI mark (uploaded in
-    Content > Files). Sizing is handled in custom-footer.css, because the
-    29x19 box custom.css gives .payment-icon would squash this logo.
-    To revert to Shopify's automatic icons, delete the <img> line below and restore:
+    Custom: the card badges were replaced with the UPI and Cash on Delivery
+    marks (uploaded in Content > Files). Sizing is handled in
+    custom-footer.css, because the 29x19 box custom.css gives .payment-icon
+    would squash these logos.
+    To revert to Shopify's automatic icons, delete the <img> lines below and restore:
     for type in shop.enabled_payment_types
         echo type | payment_type_svg_tag: class: 'payment-icon'
     endfor
 {%- endcomment -%}
 
 <img src="https://cdn.shopify.com/s/files/1/0774/6987/6271/files/UPI-Logo.png?v=1785928386" alt="UPI" class="payment-icon payment-icon--upi" height="22" loading="lazy">
+<img src="https://cdn.shopify.com/s/files/1/0774/6987/6271/files/cod_logo.png?v=1785928690" alt="Cash on delivery" class="payment-icon payment-icon--upi" height="22" loading="lazy">

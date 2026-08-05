@@ -16,3 +16,11 @@ sub-footer .payment-icons img.payment-icon--upi {
   width: auto;
   height: 22px;
 }
+
+/* Mobile type scale for the footer.
+   The newsletter heading needs !important because custom.css pins it to
+   32px with !important inside the same breakpoint. */
+@media (max-width: 777px) {
+  #f-newsletter p { font-size: 26px !important; }
+  #f-links .f-links a { font-size: 12px; }
+}

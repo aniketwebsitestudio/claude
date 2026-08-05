@@ -8,3 +8,11 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
+
+/* Payment mark: one UPI logo instead of the six card badges.
+   custom.css pins every .payment-icon to a 29x19 box, which distorts a
+   wordmark -- let this one keep its own aspect ratio. */
+sub-footer .payment-icons img.payment-icon--upi {
+  width: auto;
+  height: 22px;
+}

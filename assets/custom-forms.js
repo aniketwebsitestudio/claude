@@ -173,6 +173,7 @@
       box-sizing: border-box !important;
     }
     [class*="_formFieldContainer_"] {
+      position: relative !important;
       width: 100% !important;
       max-width: none !important;
       margin: 0 !important;
@@ -236,26 +237,25 @@
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
     }
-    /* While the field has focus the label lifts just above the box, so it is
-       always clear what is being typed. Absolutely positioned, so it costs
-       no layout -- it sits in the 30px gap between fields. */
-    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+    /* Our own tag, shown above the box while the field is being typed into
+       -- the app's label is gone by then. Absolutely positioned, so it costs
+       no layout: it sits in the 30px gap between fields. */
+    .bh-tag {
       position: absolute !important;
-      top: auto !important;
-      bottom: calc(100% + 4px) !important;
       left: 0 !important;
-      transform: none !important;
-      width: auto !important;
-      height: auto !important;
-      overflow: visible !important;
-      clip: auto !important;
-      clip-path: none !important;
+      bottom: calc(100% + 4px) !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 10px !important;
+      line-height: 1 !important;
       letter-spacing: 0.06em !important;
       text-transform: uppercase !important;
       color: #6b6b6b !important;
       white-space: nowrap !important;
+      pointer-events: none !important;
+      opacity: 0;
+      transition: opacity 0.12s ease;
     }
+    .bh-tag[data-show="1"] { opacity: 1; }
     [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
 
     [class*="_formSubmitButton_"] {
@@ -341,6 +341,15 @@
        block supplies the heading. */
     [class*="_formHeader_"] { display: none !important; }
     [class*="_teaser_"] { display: none !important; }
+
+    /* Everything the app renders sits on a dark photographic band, so the
+       default is white. Naming the classes one by one does not hold -- the
+       success state ("You're on the list") uses different ones again -- so
+       this is set on the whole shadow tree and overridden further down for
+       the few things that are not on the band: the inputs and the phone
+       hint, which sit on white boxes of their own. Those rules come later
+       in this sheet and match at equal specificity, so they win. */
+    :host, :host * { color: #ffffff !important; }
 
     [class*="_formContainer_"],
     [class*="_gridItem_"],
@@ -455,37 +464,26 @@
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
     }
-    /* On focus the label lifts above the box -- white here, since it lands
-       on the band rather than on the field. Absolutely positioned, so the
-       row does not move. */
-    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+    /* Our own tag, above the box while the field is being typed into --
+       white here, since it lands on the band rather than on the field.
+       Absolutely positioned, so the row does not move. */
+    .bh-tag {
       position: absolute !important;
-      top: auto !important;
-      bottom: calc(100% + 5px) !important;
       left: 0 !important;
-      transform: none !important;
-      width: auto !important;
-      height: auto !important;
-      overflow: visible !important;
-      clip: auto !important;
-      clip-path: none !important;
+      bottom: calc(100% + 5px) !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 10px !important;
+      line-height: 1 !important;
       letter-spacing: 0.06em !important;
       text-transform: uppercase !important;
-      color: rgba(255, 255, 255, 0.85) !important;
+      color: rgba(255, 255, 255, 0.9) !important;
       white-space: nowrap !important;
+      pointer-events: none !important;
+      opacity: 0;
+      transition: opacity 0.12s ease;
     }
+    .bh-tag[data-show="1"] { opacity: 1; }
     [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
-
-    /* Success state ("You're on the list") renders in the app's dark text,
-       which is invisible on the band. */
-    [class*="_textHeading_"],
-    [class*="_textBody_"],
-    [class*="_textBody_"] p,
-    [class*="_formSuccess_"],
-    [class*="_formSuccess_"] * {
-      color: #ffffff !important;
-    }
 
     .bh-phone-hint {
       position: absolute;
@@ -604,6 +602,56 @@
     sync();
   };
 
+  /* Once a field has something in it the app's own label is gone -- it is
+     the placeholder, and it is clipped as soon as the field fills, because a
+     29px strip has no room for it to float into. So while the visitor is
+     typing there is nothing naming the field.
+
+     Rather than trying to un-clip the app's label (its state classes are
+     hashed and it is re-rendered from under us), each field gets a small tag
+     of our own just above the box, shown only while that field has focus and
+     content. It is absolutely positioned and never a focus target, so it
+     costs no layout and is invisible to the tab order and the reader -- the
+     input keeps the app's label as its accessible name. */
+  const LABELS = { first_name: 'Name', last_name: 'Last name', email: 'Email', phone: 'Phone no.' };
+
+  const fieldTags = (root) => {
+    root.querySelectorAll('[class*="_formInputField_"], [class*="_formPhoneInputField_"]').forEach((input) => {
+      if (input.dataset.bhTag) return;
+      input.dataset.bhTag = '1';
+
+      const phone = /_formPhoneInputField_/.test(String(input.className));
+      const host = input.closest(phone
+        ? '[class*="_formPhoneInputContainer_"]'
+        : '[class*="_formFieldContainer_"]');
+      if (!host) return;
+
+      const label = host.querySelector('[class*="_formInputFieldLabel_"]');
+      const text = LABELS[input.id] || (label && label.textContent.trim()) || '';
+      if (!text) return;
+
+      const tag = document.createElement('span');
+      tag.className = 'bh-tag';
+      tag.setAttribute('aria-hidden', 'true');
+      tag.textContent = text;
+      host.appendChild(tag);
+
+      /* The phone field is never empty -- it carries the +91 prefix -- so
+         its content is measured in digits after the dialing code. */
+      const filled = () => (phone
+        ? input.value.replace(/^\+?\d{1,3}/, '').replace(/\D/g, '').length > 0
+        : input.value.trim().length > 0);
+
+      let focused = false;
+      const sync = () => { tag.dataset.show = focused && filled() ? '1' : '0'; };
+
+      input.addEventListener('focus', () => { focused = true; sync(); });
+      input.addEventListener('blur', () => { focused = false; sync(); });
+      input.addEventListener('input', sync);
+      sync();
+    });
+  };
+
   /* The subheading reads as one run and wraps mid-sentence. Break it after
      the first full stop so "One note, no noise." starts its own line. The
      replacement leaves no whitespace after the period, so the regex cannot
@@ -644,6 +692,7 @@
       splitBody(root);
     }
     phoneHint(root);
+    fieldTags(root);
   };
 
   const seen = new WeakSet();

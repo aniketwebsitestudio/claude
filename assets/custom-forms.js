@@ -227,8 +227,7 @@
        fills, so hide it then -- clipped rather than display:none, which
        would drop it out of the accessibility tree along with the input's
        only name. */
-    [class*="_formInputFieldLabel_"][class*="_inputFilled_"],
-    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+    [class*="_formInputFieldLabel_"][class*="_inputFilled_"] {
       position: absolute !important;
       width: 1px !important;
       height: 1px !important;
@@ -237,6 +236,27 @@
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
     }
+    /* While the field has focus the label lifts just above the box, so it is
+       always clear what is being typed. Absolutely positioned, so it costs
+       no layout -- it sits in the 30px gap between fields. */
+    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+      position: absolute !important;
+      top: auto !important;
+      bottom: calc(100% + 4px) !important;
+      left: 0 !important;
+      transform: none !important;
+      width: auto !important;
+      height: auto !important;
+      overflow: visible !important;
+      clip: auto !important;
+      clip-path: none !important;
+      font-size: 10px !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
+      color: #6b6b6b !important;
+      white-space: nowrap !important;
+    }
+    [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
 
     [class*="_formSubmitButton_"] {
       width: 100% !important;
@@ -425,9 +445,8 @@
       left: 11px !important;
     }
     /* No room for a floated label in a 29px strip -- clipped once the field
-       fills or takes focus, but kept in the accessibility tree. */
-    [class*="_formInputFieldLabel_"][class*="_inputFilled_"],
-    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+       fills, but kept in the accessibility tree. */
+    [class*="_formInputFieldLabel_"][class*="_inputFilled_"] {
       position: absolute !important;
       width: 1px !important;
       height: 1px !important;
@@ -435,6 +454,37 @@
       clip: rect(0 0 0 0) !important;
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
+    }
+    /* On focus the label lifts above the box -- white here, since it lands
+       on the band rather than on the field. Absolutely positioned, so the
+       row does not move. */
+    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+      position: absolute !important;
+      top: auto !important;
+      bottom: calc(100% + 5px) !important;
+      left: 0 !important;
+      transform: none !important;
+      width: auto !important;
+      height: auto !important;
+      overflow: visible !important;
+      clip: auto !important;
+      clip-path: none !important;
+      font-size: 10px !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      white-space: nowrap !important;
+    }
+    [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
+
+    /* Success state ("You're on the list") renders in the app's dark text,
+       which is invisible on the band. */
+    [class*="_textHeading_"],
+    [class*="_textBody_"],
+    [class*="_textBody_"] p,
+    [class*="_formSuccess_"],
+    [class*="_formSuccess_"] * {
+      color: #ffffff !important;
     }
 
     .bh-phone-hint {

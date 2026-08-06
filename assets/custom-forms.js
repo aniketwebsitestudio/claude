@@ -20,30 +20,35 @@
   const STYLE_ID = 'bhoomija-forms-style';
 
   const CSS = `
-    /* The app lays the popup out as a single column while no image is set,
-       and its own rules are specific enough to need !important throughout. */
+    /* Layout is left to the app: turning on the side image in Styling >
+       Image gives the real two-column grid. Everything here is typography,
+       colour and spacing on top of that -- all !important, because the
+       app's own rules are specific enough to win otherwise. */
     [class*="_formContainer_"] {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      align-items: stretch !important;
-      width: min(940px, 94vw) !important;
-      max-width: none !important;
+      max-width: 940px !important;
       border-radius: 0 !important;
       overflow: hidden !important;
-      padding: 0 !important;
     }
 
-    /* Left panel: photo as cover, wordmark centred on top. The logo is sized
-       in px, not %, so it cannot scale with the cell and overflow. */
-    [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
-      display: block !important;
-      min-height: 100% !important;
-      margin: 0 !important;
-      padding: 0 !important;
-      background-image: url("${LOGO}"), url("${PHOTO}");
-      background-repeat: no-repeat, no-repeat;
-      background-position: center center, center center;
-      background-size: 200px auto, cover;
+    /* White wordmark centred over the app's photo. Scoped away from the
+       content cell, which also holds an <img> (the phone country flag). */
+    [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img) {
+      position: relative !important;
+    }
+    [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("${LOGO}");
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-size: 200px auto;
+      pointer-events: none;
+    }
+    [class*="_gridItem_"]:not([class*="_gridItemContent_"]) img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
     }
 
     [class*="_gridItemContent_"] {
@@ -53,7 +58,7 @@
       justify-content: center !important;
     }
 
-    [class*="_formHeader_"] { margin: 0 0 26px !important; }
+    [class*="_formHeader_"] { margin: 0 0 28px !important; }
 
     [class*="_textHeading_"] {
       font-family: "ivypresto-display", serif !important;
@@ -79,8 +84,8 @@
       margin: 0 !important;
     }
 
-    /* Name, Email, Phone, button, disclaimer -- explicit order on every
-       sibling. Ordering only the phone field left it behind the button,
+    /* Name, Email, Phone, button, disclaimer. Every sibling gets an explicit
+       order -- ordering only the phone field left it behind the button,
        which still had the default order of 0. */
     form[class*="_formFieldset_"],
     shop-lead-capture,
@@ -100,6 +105,7 @@
     [class*="_selectToggle_"] {
       border-radius: 0 !important;
       border: 1px solid #dcdcdc !important;
+      background: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 14px !important;
       min-height: 46px !important;
@@ -140,16 +146,12 @@
       margin: 0 !important;
     }
 
-    [class*="_formCloseButton_"] { color: #000 !important; }
-
     @media (max-width: 749px) {
-      [class*="_formContainer_"] { grid-template-columns: 1fr !important; }
-      [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
-        min-height: 190px !important;
-        background-size: 150px auto, cover;
-      }
       [class*="_gridItemContent_"] { padding: 30px 24px 26px !important; }
       [class*="_textHeading_"] { font-size: 34px !important; }
+      [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
+        background-size: 150px auto;
+      }
     }
   `;
 

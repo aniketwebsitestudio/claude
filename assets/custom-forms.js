@@ -23,11 +23,7 @@
     /* Measurements come straight from the reference mock-up:
        660x445 modal, 320px media column, 54px title, 44px fields, 18px gaps,
        3px radius, #8a1c1c button. Playfair maps to IvyPresto and Inter to
-       IBM Plex, the faces this store already loads.
-
-       Layout stays the app's own two-column grid -- the column widths below
-       only apply once a side image is set, guarded by :not(_noImage_), so
-       nothing is forced onto a single-column popup. */
+       IBM Plex, the faces this store already loads. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
     /* Media column. The app renders no image (the container carries
@@ -61,8 +57,7 @@
       min-height: 445px !important;
     }
 
-    /* Left media: photo fills the column, wordmark sits 34px in, centred
-       vertically -- left-aligned, not centred, as in the mock. */
+    /* If the app ever gets its own side image, style that instead. */
     [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
       position: relative !important;
       padding: 0 !important;
@@ -196,20 +191,20 @@
     /* Reference breakpoint: stack, photo strip on top, tighter padding. */
     @media (max-width: 640px) {
       [class*="_formContainer_"],
-      [class*="_formContainer_"]:not([class*="_noImage_"]) {
+      [class*="_formContainer_"]:not([class*="_noImage_"]),
+      [class*="_formContainer_"]:has(.bh-media) {
         grid-template-columns: 1fr !important;
         max-width: 400px !important;
         min-height: 0 !important;
       }
-      [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
-        height: 190px !important;
-        min-height: 190px !important;
-      }
-      [class*="_formContainer_"]:has(.bh-media) { grid-template-columns: 1fr !important; }
       .bh-media {
         min-height: 190px !important;
         background-position: 26px center, center center;
         background-size: 135px auto, cover;
+      }
+      [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
+        height: 190px !important;
+        min-height: 190px !important;
       }
       [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
         background-position: 26px center;

@@ -31,9 +31,14 @@
        at 80% black, 11px in from the left edge. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
-    /* The "Don't miss out!" teaser tab -- turn it off in the app as well;
-       this only stops it painting. */
-    [class*="_teaser_"] { display: none !important; }
+    /* The "Don't miss out!" tab. The app calls it _teaserContainer_, which
+       [class*="_teaser_"] never matched -- the underscore after "teaser"
+       is not there -- so it was on screen the whole time. Hidden, not
+       removed: it is still the app's own opener, and the timer above
+       presses it. */
+    [class*="_teaser_"],
+    [class*="_teaserContainer_"],
+    [data-testid="form-teaser"] { display: none !important; }
 
     /* Media column. The app renders no image (the container carries
        _noImage_), so we insert our own cell and paint the photo plus the
@@ -578,8 +583,31 @@
   `;
 
   /* Two shapes of the same form: the popup owns its own layout, the footer
-     band leaves layout to the section wrapped around it. */
-  const isPopup = (root) => Boolean(root.querySelector('[class*="_overlay_"]'));
+     band leaves layout to the section wrapped around it.
+
+     Which is which is decided by where the embed sits in the page, not by
+     anything inside the app. Looking for an overlay element in the shadow
+     root was wrong: while the popup is showing its teaser tab there is no
+     overlay yet, so the popup was being read as the inline form and handed
+     the footer's stylesheet -- which is what spread its fields across the
+     whole window. Only the footer form is inside our own section, so that
+     test holds in every state the app can be in. */
+  const isPopup = (host) => !host.closest('.bh-waitlist');
+
+  /* The app can be set to open the popup from a "Don't miss out!" tab
+     instead of on a timer. The tab is hidden in CSS, and this opens the
+     form five seconds in by pressing it -- a hidden button still takes a
+     click, and going through the app's own opener keeps its rules about
+     how often a visitor is shown the form. */
+  const TEASER = '[data-testid="form-teaser"], [class*="_teaserContainer_"]';
+
+  const autoOpen = (root, host) => {
+    if (host.dataset.bhAuto) return;
+    const teaser = root.querySelector(TEASER);
+    if (!teaser) return;
+    host.dataset.bhAuto = '1';
+    setTimeout(() => { if (teaser.isConnected) teaser.click(); }, 5000);
+  };
 
   /* Give the popup its left-hand media column. Skipped entirely if the
      app ever gets a side image of its own, so turning that setting on
@@ -696,21 +724,30 @@
     }
   };
 
-  const paint = (root) => {
+  const paint = (root, host) => {
     if (!root) return;
-    const popup = isPopup(root);
+    const popup = isPopup(host);
+    const variant = popup ? 'popup' : 'inline';
 
-    if (!root.getElementById(STYLE_ID)) {
-      const style = document.createElement('style');
+    let style = root.getElementById(STYLE_ID);
+    if (!style) {
+      style = document.createElement('style');
       style.id = STYLE_ID;
-      style.textContent = popup ? CSS_POPUP : CSS_INLINE;
       root.appendChild(style);
+    }
+    /* Written on every pass where it does not already match, rather than
+       once: a form that was styled before it finished mounting must be able
+       to pick up the right sheet afterwards. */
+    if (style.dataset.variant !== variant) {
+      style.textContent = popup ? CSS_POPUP : CSS_INLINE;
+      style.dataset.variant = variant;
     }
 
     if (popup) {
       ensureMedia(root);
       splitHeading(root);
       splitBody(root);
+      autoOpen(root, host);
     }
     phoneHint(root);
     /* Footer form only. The popup keeps the in-box placeholders its Figma
@@ -724,13 +761,13 @@
     document.querySelectorAll(HOST).forEach((host) => {
       const root = host.shadowRoot;
       if (!root) return;
-      paint(root);
+      paint(root, host);
       /* The app mounts each form well after page load and re-renders it on
          open/close, which would drop our style node -- watch each shadow
          root and re-apply. */
       if (!seen.has(root)) {
         seen.add(root);
-        new MutationObserver(() => paint(root)).observe(root, { childList: true, subtree: true });
+        new MutationObserver(() => paint(root, host)).observe(root, { childList: true, subtree: true });
       }
     });
   };

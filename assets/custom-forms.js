@@ -20,10 +20,9 @@
   const STYLE_ID = 'bhoomija-forms-style';
 
   const CSS = `
-    /* Measurements come straight from the reference mock-up:
-       660x445 modal, 320px media column, 54px title, 44px fields, 18px gaps,
-       3px radius, #8a1c1c button. Playfair maps to IvyPresto and Inter to
-       IBM Plex, the faces this store already loads. */
+    /* Sizes follow the Figma: 755x444 modal, 355px media column, title at
+       54px / 100% / 2%, fields 44px, submit a 36px strip in #7F1416.
+       IvyPresto and IBM Plex stand in for Playfair and Inter. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
     /* Media column. The app renders no image (the container carries
@@ -33,28 +32,29 @@
     .bh-media {
       background-image: url("${LOGO}"), url("${PHOTO}");
       background-repeat: no-repeat, no-repeat;
-      background-position: 34px center, center center;
-      background-size: 155px auto, cover;
-      min-height: 445px;
+      background-position: center center, center center;
+      background-size: 175px auto, cover;
+      min-height: 444px;
     }
     [class*="_formContainer_"]:has(.bh-media) {
       display: grid !important;
-      grid-template-columns: 320px 1fr !important;
+      grid-template-columns: 355px 1fr !important;
       align-items: stretch !important;
-      min-height: 445px !important;
+      min-height: 444px !important;
     }
     /* The app's empty placeholder cell would otherwise sit beside ours. */
     [class*="_imageLoading_"]:not(.bh-media) { display: none !important; }
 
     [class*="_formContainer_"] {
-      max-width: 660px !important;
+      width: min(755px, 94vw) !important;
+      max-width: 755px !important;
       border-radius: 0 !important;
       overflow: hidden !important;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.30) !important;
     }
     [class*="_formContainer_"]:not([class*="_noImage_"]) {
-      grid-template-columns: 320px 1fr !important;
-      min-height: 445px !important;
+      grid-template-columns: 355px 1fr !important;
+      min-height: 444px !important;
     }
 
     /* If the app ever gets its own side image, style that instead. */
@@ -74,8 +74,8 @@
       inset: 0;
       background-image: url("${LOGO}");
       background-repeat: no-repeat;
-      background-position: 34px center;
-      background-size: 155px auto;
+      background-position: center center;
+      background-size: 175px auto;
       pointer-events: none;
     }
 
@@ -92,11 +92,11 @@
       font-family: "ivypresto-display", serif !important;
       font-weight: 400 !important;
       font-size: 54px !important;
-      line-height: 1.02 !important;
-      letter-spacing: 0.3px !important;
+      line-height: 1 !important;
+      letter-spacing: 0.02em !important;
       text-align: left !important;
       text-transform: none !important;
-      color: #1c1c1c !important;
+      color: #000 !important;
       margin: 6px 0 0 !important;
     }
     [class*="_textHeading_"] em { font-style: italic !important; }
@@ -146,7 +146,7 @@
     }
     [class*="_formInputField_"]:focus,
     [class*="_formPhoneInputField_"]:focus {
-      border-color: #8a1c1c !important;
+      border-color: #7F1416 !important;
       outline: none !important;
     }
     [class*="_formInputFieldLabel_"] {
@@ -155,22 +155,26 @@
       color: #9b9b9b !important;
     }
 
+    /* Submit reads as a thin strip, per the Figma (29px there; 36 here so
+       the label has room to breathe). */
     [class*="_formSubmitButton_"] {
       width: 100% !important;
-      height: 44px !important;
-      min-height: 44px !important;
-      margin-top: 26px !important;
+      height: 36px !important;
+      min-height: 36px !important;
+      padding: 0 !important;
+      line-height: 36px !important;
+      margin-top: 24px !important;
       border: 0 !important;
-      border-radius: 3px !important;
-      background: #8a1c1c !important;
+      border-radius: 0 !important;
+      background: #7F1416 !important;
       color: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 13px !important;
+      font-size: 11px !important;
       font-weight: 600 !important;
       letter-spacing: 1.5px !important;
       text-transform: uppercase !important;
     }
-    [class*="_formSubmitButton_"]:hover { background: #761515 !important; }
+    [class*="_formSubmitButton_"]:hover { background: #6a1012 !important; }
 
     [class*="_formDisclaimer_"],
     [class*="_formDisclaimer_"] p {
@@ -194,21 +198,27 @@
       [class*="_formContainer_"]:not([class*="_noImage_"]),
       [class*="_formContainer_"]:has(.bh-media) {
         grid-template-columns: 1fr !important;
+        width: min(400px, 94vw) !important;
         max-width: 400px !important;
         min-height: 0 !important;
       }
       .bh-media {
         min-height: 190px !important;
-        background-position: 26px center, center center;
-        background-size: 135px auto, cover;
+        background-position: center center, center center;
+        background-size: 150px auto, cover;
+      }
+      /* 36px is fine with a mouse; a thumb needs more. */
+      [class*="_formSubmitButton_"] {
+        height: 44px !important;
+        min-height: 44px !important;
+        line-height: 44px !important;
       }
       [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
         height: 190px !important;
         min-height: 190px !important;
       }
       [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
-        background-position: 26px center;
-        background-size: 135px auto;
+        background-size: 150px auto;
       }
       [class*="_gridItemContent_"] { padding: 30px 26px 32px !important; }
       [class*="_textHeading_"] { font-size: 44px !important; }

@@ -90,7 +90,7 @@
 
     [class*="_textHeading_"] {
       font-family: "ivypresto-display", serif !important;
-      font-weight: 300 !important;
+      font-weight: 100 !important;
       font-size: 54px !important;
       line-height: 1 !important;
       letter-spacing: 0.02em !important;
@@ -99,7 +99,10 @@
       color: #000 !important;
       margin: 0 !important;
     }
-    [class*="_textHeading_"] em { font-style: italic !important; }
+    [class*="_textHeading_"] em {
+      font-style: italic !important;
+      font-weight: 100 !important;
+    }
 
     [class*="_textBody_"],
     [class*="_textBody_"] p {
@@ -217,7 +220,8 @@
        fills, so hide it then -- clipped rather than display:none, which
        would drop it out of the accessibility tree along with the input's
        only name. */
-    [class*="_formInputFieldLabel_"][class*="_inputFilled_"] {
+    [class*="_formInputFieldLabel_"][class*="_inputFilled_"],
+    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
       position: absolute !important;
       width: 1px !important;
       height: 1px !important;
@@ -253,7 +257,11 @@
       line-height: 1.45 !important;
       color: #9b9b9b !important;
       text-align: left !important;
+      text-indent: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
       margin: 0 !important;
+      padding: 0 !important;
     }
 
     [class*="_formContainerCloseButtonPosition_"] {
@@ -339,6 +347,18 @@
     sync();
   };
 
+  /* The subheading reads as one run and wraps mid-sentence. Break it after
+     the first full stop so "One note, no noise." starts its own line. The
+     replacement leaves no whitespace after the period, so the regex cannot
+     match again and the observer will not loop. */
+  const splitBody = (root) => {
+    const body = root.querySelector('[class*="_textBody_"] p');
+    if (!body || body.querySelector('br')) return;
+    const text = body.textContent || '';
+    if (!/\.\s+\S/.test(text)) return;
+    body.innerHTML = text.replace(/\.\s+/, '.<br>');
+  };
+
   /* "Join the waitlist" is one plain-text field in the app, and CSS cannot
      italicise a single word inside it -- so split it here. Rewriting only
      when the text still matches exactly keeps this from looping when our
@@ -360,6 +380,7 @@
     }
     ensureMedia(root);
     splitHeading(root);
+    splitBody(root);
     phoneHint(root);
   };
 

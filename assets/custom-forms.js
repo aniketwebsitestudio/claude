@@ -141,7 +141,20 @@
     }
     .phone-country-selector,
     [class*="_selectContainer_"] { display: none !important; }
-    [class*="_formPhoneInputContainer_"] > *:last-child { flex: 1 1 100% !important; }
+    /* With the picker hidden the remaining wrapper still sizes to content,
+       which left the phone field short of the other two -- force the whole
+       chain to the full column width. */
+    [class*="_formPhoneInputContainer_"],
+    [class*="_formPhoneInputContainer_"] > *,
+    [class*="_formPhoneInputContainer_"] [class*="_formFieldContainer_"] {
+      width: 100% !important;
+      max-width: none !important;
+      flex: 1 1 100% !important;
+    }
+    [class*="_formPhoneInputField_"] {
+      width: 100% !important;
+      max-width: none !important;
+    }
 
     /* Standing in for the placeholder: the field is never empty (+91), so
        the app's own label is always in its filled state and hidden. */
@@ -162,7 +175,7 @@
       height: 29px !important;
       min-height: 29px !important;
       padding: 0 12px !important;
-      border: 1px solid #8B8B8B !important;
+      border: 0.5px solid #8B8B8B !important;
       border-radius: 0 !important;
       background: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;

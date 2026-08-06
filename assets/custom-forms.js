@@ -173,7 +173,6 @@
       box-sizing: border-box !important;
     }
     [class*="_formFieldContainer_"] {
-      position: relative !important;
       width: 100% !important;
       max-width: none !important;
       margin: 0 !important;
@@ -228,19 +227,7 @@
        fills, so hide it then -- clipped rather than display:none, which
        would drop it out of the accessibility tree along with the input's
        only name. */
-    [class*="_formInputFieldLabel_"][class*="_inputFilled_"] {
-      position: absolute !important;
-      width: 1px !important;
-      height: 1px !important;
-      overflow: hidden !important;
-      clip: rect(0 0 0 0) !important;
-      clip-path: inset(50%) !important;
-      white-space: nowrap !important;
-    }
-    /* The moment a field takes focus its label leaves the box: the app's own
-       label is clipped, and our tag appears at the top-left corner just
-       above it. The tag is absolutely positioned, so the swap costs no
-       layout -- it sits in the 30px gap between fields. */
+    [class*="_formInputFieldLabel_"][class*="_inputFilled_"],
     [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
       position: absolute !important;
       width: 1px !important;
@@ -249,46 +236,6 @@
       clip: rect(0 0 0 0) !important;
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
-    }
-    .bh-tag {
-      position: absolute !important;
-      left: 0 !important;
-      bottom: calc(100% + 4px) !important;
-      font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 10px !important;
-      line-height: 1 !important;
-      letter-spacing: 0.06em !important;
-      text-transform: uppercase !important;
-      color: #6b6b6b !important;
-      white-space: nowrap !important;
-      pointer-events: none !important;
-      opacity: 0;
-      transition: opacity 0.12s ease;
-    }
-    [class*="_formFieldContainer_"]:focus-within > .bh-tag,
-    [class*="_formPhoneInputContainer_"]:focus-within > .bh-tag { opacity: 1; }
-    [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
-
-    /* Validation messages belong under the field they are about. The phone
-       row is a flex row, so without a wrap its message is pushed out to the
-       right of the box instead of dropping below it. */
-    [class*="_formPhoneInputContainer_"] { flex-wrap: wrap !important; }
-    [class*="_formFieldContainer_"] [class*="rror"]:not([class*="_formInputField_"]):not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
-    [class*="_formPhoneInputContainer_"] > [class*="rror"]:not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
-    [class*="_formFieldContainer_"] [role="alert"],
-    [class*="_formPhoneInputContainer_"] > [role="alert"] {
-      display: block !important;
-      width: 100% !important;
-      flex: 0 0 100% !important;
-      order: 99 !important;
-      margin: 4px 0 0 !important;
-      padding: 0 !important;
-      position: static !important;
-      font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 10px !important;
-      line-height: 1.3 !important;
-      letter-spacing: 0.02em !important;
-      color: #7F1416 !important;
     }
 
     [class*="_formSubmitButton_"] {
@@ -450,6 +397,11 @@
       display: flex !important;
       flex-direction: row !important;
       flex-wrap: wrap !important;
+      /* The app spaces the picker from the number with a gap. Now that the
+         row wraps, that same gap opens up between the label line and the box
+         -- so the phone field's label sat further from its box than the
+         other two. Nothing shares the row any more, so it goes to zero. */
+      gap: 0 !important;
       position: relative !important;
       width: 100% !important;
       max-width: none !important;
@@ -761,7 +713,9 @@
       splitBody(root);
     }
     phoneHint(root);
-    fieldTags(root);
+    /* Footer form only. The popup keeps the in-box placeholders its Figma
+       frame specifies, and nothing of ours is added to it. */
+    if (!popup) fieldTags(root);
   };
 
   const seen = new WeakSet();

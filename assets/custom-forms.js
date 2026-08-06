@@ -20,103 +20,136 @@
   const STYLE_ID = 'bhoomija-forms-style';
 
   const CSS = `
+    /* The app lays the popup out as a single column while no image is set,
+       and its own rules are specific enough to need !important throughout. */
     [class*="_formContainer_"] {
-      max-width: 920px;
-      border-radius: 0;
-      overflow: hidden;
+      display: grid !important;
       grid-template-columns: 1fr 1fr !important;
+      align-items: stretch !important;
+      width: min(940px, 94vw) !important;
+      max-width: none !important;
+      border-radius: 0 !important;
+      overflow: hidden !important;
+      padding: 0 !important;
     }
 
-    /* The app has no image set, so this cell is empty and hidden. Paint the
-       photo and the white wordmark into it as two background layers -- the
-       logo sits centred on top of the cover photo. */
+    /* Left panel: photo as cover, wordmark centred on top. The logo is sized
+       in px, not %, so it cannot scale with the cell and overflow. */
     [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
       display: block !important;
-      min-height: 460px;
+      min-height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
       background-image: url("${LOGO}"), url("${PHOTO}");
       background-repeat: no-repeat, no-repeat;
       background-position: center center, center center;
-      background-size: 58% auto, cover;
+      background-size: 200px auto, cover;
     }
 
-    [class*="_gridItemContent_"] { padding: 44px 40px 32px; }
+    [class*="_gridItemContent_"] {
+      padding: 46px 44px 40px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+    }
+
+    [class*="_formHeader_"] { margin: 0 0 26px !important; }
 
     [class*="_textHeading_"] {
-      font-family: "ivypresto-display", serif;
-      font-weight: 100;
-      font-size: 46px;
-      line-height: 1.02;
-      letter-spacing: 0.02em;
-      text-align: left;
-      margin: 0 0 10px;
+      font-family: "ivypresto-display", serif !important;
+      font-weight: 100 !important;
+      font-size: 52px !important;
+      line-height: 1.04 !important;
+      letter-spacing: 0.02em !important;
+      text-align: left !important;
+      text-transform: none !important;
+      margin: 0 0 12px !important;
+      color: #000 !important;
     }
-    [class*="_textHeading_"] em { font-style: italic; }
+    [class*="_textHeading_"] em { font-style: italic !important; }
 
     [class*="_textBody_"],
     [class*="_textBody_"] p {
-      font-family: "IBM Plex Sans", sans-serif;
-      font-size: 14px;
-      line-height: 1.5;
-      letter-spacing: 0;
-      text-align: left;
-      color: #4a4a4a;
-      margin: 0;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-weight: 400 !important;
+      font-size: 14px !important;
+      line-height: 1.5 !important;
+      text-align: left !important;
+      color: #4a4a4a !important;
+      margin: 0 !important;
     }
+
+    /* Name, Email, Phone, button, disclaimer -- explicit order on every
+       sibling. Ordering only the phone field left it behind the button,
+       which still had the default order of 0. */
+    form[class*="_formFieldset_"],
+    shop-lead-capture,
+    *:has(> [class*="_formPhoneInputContainer_"]) {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
+    }
+    [class*="_formFieldContainer_"]:has(#first_name) { order: 1 !important; }
+    [class*="_formFieldContainer_"]:has(#email) { order: 2 !important; }
+    [class*="_formPhoneInputContainer_"] { order: 3 !important; margin: 0 !important; }
+    [class*="_formSubmitButton_"] { order: 4 !important; }
+    [class*="_formDisclaimer_"] { order: 5 !important; }
 
     [class*="_formInputField_"],
     [class*="_formPhoneInputField_"],
     [class*="_selectToggle_"] {
       border-radius: 0 !important;
-      border-color: #d9d9d9;
-      font-family: "IBM Plex Sans", sans-serif;
-      font-size: 14px;
-      min-height: 48px;
+      border: 1px solid #dcdcdc !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 14px !important;
+      min-height: 46px !important;
+      box-shadow: none !important;
+    }
+    [class*="_formInputField_"]:focus,
+    [class*="_formPhoneInputField_"]:focus {
+      border-color: #7F1416 !important;
+      outline: none !important;
     }
     [class*="_formInputFieldLabel_"] {
-      font-family: "IBM Plex Sans", sans-serif;
-      font-size: 14px;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 14px !important;
+      color: #8a8a8a !important;
     }
 
     [class*="_formSubmitButton_"] {
       background: #7F1416 !important;
       color: #ffffff !important;
-      border: 0;
+      border: 0 !important;
       border-radius: 0 !important;
-      min-height: 48px;
-      font-family: "IBM Plex Sans", sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      min-height: 48px !important;
+      margin-top: 10px !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
     }
 
     [class*="_formDisclaimer_"],
     [class*="_formDisclaimer_"] p {
-      font-family: "IBM Plex Sans", sans-serif;
-      font-size: 11px;
-      line-height: 1.45;
-      color: #6b6b6b;
-      text-align: left;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 11px !important;
+      line-height: 1.45 !important;
+      color: #6b6b6b !important;
+      text-align: left !important;
+      margin: 0 !important;
     }
 
-    /* Mock order is Name, Email, Phone. The app currently renders the phone
-       field second, so push it last from CSS as well -- whichever way the
-       field list is saved, the rendered order matches the design. */
-    *:has(> [class*="_formPhoneInputContainer_"]) {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    [class*="_formPhoneInputContainer_"] { order: 3; }
+    [class*="_formCloseButton_"] { color: #000 !important; }
 
     @media (max-width: 749px) {
       [class*="_formContainer_"] { grid-template-columns: 1fr !important; }
       [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
-        min-height: 170px;
-        background-size: 46% auto, cover;
+        min-height: 190px !important;
+        background-size: 150px auto, cover;
       }
-      [class*="_gridItemContent_"] { padding: 28px 22px 24px; }
-      [class*="_textHeading_"] { font-size: 32px; }
+      [class*="_gridItemContent_"] { padding: 30px 24px 26px !important; }
+      [class*="_textHeading_"] { font-size: 34px !important; }
     }
   `;
 

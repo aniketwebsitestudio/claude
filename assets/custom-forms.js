@@ -20,9 +20,11 @@
   const STYLE_ID = 'bhoomija-forms-style';
 
   const CSS = `
-    /* Sizes follow the Figma: 755x444 modal, 355px media column, title at
-       54px / 100% / 2%, fields 44px, submit a 36px strip in #7F1416.
-       IvyPresto and IBM Plex stand in for Playfair and Inter. */
+    /* Geometry straight off the Figma frame:
+         media column 354  |  content 34 + 271 + 30  =  689 wide
+         top 34 + content 376 + bottom 34            =  444 tall
+       Heading to fields gap 62, gaps inside the field stack 30,
+       every field and the button 271 x 29. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
     /* Media column. The app renders no image (the container carries
@@ -36,24 +38,20 @@
       background-size: 175px auto, cover;
       min-height: 444px;
     }
-    [class*="_formContainer_"]:has(.bh-media) {
-      display: grid !important;
-      grid-template-columns: 355px 1fr !important;
-      align-items: stretch !important;
-      min-height: 444px !important;
-    }
-    /* The app's empty placeholder cell would otherwise sit beside ours. */
     [class*="_imageLoading_"]:not(.bh-media) { display: none !important; }
 
     [class*="_formContainer_"] {
-      width: min(755px, 94vw) !important;
-      max-width: 755px !important;
+      width: min(689px, 94vw) !important;
+      max-width: 689px !important;
       border-radius: 0 !important;
       overflow: hidden !important;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.30) !important;
     }
+    [class*="_formContainer_"]:has(.bh-media),
     [class*="_formContainer_"]:not([class*="_noImage_"]) {
-      grid-template-columns: 355px 1fr !important;
+      display: grid !important;
+      grid-template-columns: 354px 1fr !important;
+      align-items: stretch !important;
       min-height: 444px !important;
     }
 
@@ -80,13 +78,14 @@
     }
 
     [class*="_gridItemContent_"] {
-      padding: 38px 36px 40px 34px !important;
+      padding: 34px 30px 34px 34px !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: flex-start !important;
     }
 
-    [class*="_formHeader_"] { margin: 0 !important; }
+    /* 62px from the heading block down to the first field. */
+    [class*="_formHeader_"] { margin: 0 0 62px !important; }
 
     [class*="_textHeading_"] {
       font-family: "ivypresto-display", serif !important;
@@ -97,7 +96,7 @@
       text-align: left !important;
       text-transform: none !important;
       color: #000 !important;
-      margin: 6px 0 0 !important;
+      margin: 0 !important;
     }
     [class*="_textHeading_"] em { font-style: italic !important; }
 
@@ -109,51 +108,52 @@
       line-height: 1.5 !important;
       text-align: left !important;
       color: #6b6b6b !important;
-      margin: 12px 0 0 !important;
+      margin: 10px 0 0 !important;
     }
 
-    /* Fields sit in the optical middle of the column, 18px apart, in the
-       order Name, Email, Phone. Every sibling needs an explicit order --
-       ordering the phone field alone left it behind the button, which still
-       had the default order of 0. */
+    /* Field stack: 30px apart, Name / Email / Phone / button. Every sibling
+       needs an explicit order -- ordering the phone field alone left it
+       behind the button, which still had the default order of 0. */
     form[class*="_formFieldset_"],
     shop-lead-capture,
     *:has(> [class*="_formPhoneInputContainer_"]) {
       display: flex !important;
       flex-direction: column !important;
-      gap: 18px !important;
+      gap: 30px !important;
+      margin: 0 !important;
     }
-    form[class*="_formFieldset_"] { margin: auto 0 !important; }
     [class*="_formFieldContainer_"]:has(#first_name) { order: 1 !important; }
     [class*="_formFieldContainer_"]:has(#email) { order: 2 !important; }
-    [class*="_formPhoneInputContainer_"] { order: 3 !important; margin: 0 !important; }
+    [class*="_formPhoneInputContainer_"] { order: 3 !important; }
     [class*="_formSubmitButton_"] { order: 4 !important; }
     [class*="_formDisclaimer_"] { order: 5 !important; }
 
-    /* The app floats each label into the top of its own field once the
-       field has a value -- so the input needs top padding, otherwise the
-       value lands on the label (the +91 country prefix showed this
-       immediately, since the phone field is never empty). */
+    /* Phone row: country picker and number field share one 29px line, so
+       neither looks taller than the other. */
+    [class*="_formPhoneInputContainer_"] {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: stretch !important;
+      gap: 8px !important;
+      margin: 0 !important;
+    }
+    [class*="_formPhoneInputContainer_"] > *:last-child { flex: 1 1 auto !important; }
+    .phone-country-selector,
+    [class*="_selectContainer_"] { flex: 0 0 auto !important; }
+
     [class*="_formInputField_"],
-    [class*="_formPhoneInputField_"] {
-      height: 52px !important;
-      min-height: 52px !important;
-      padding: 20px 16px 6px !important;
-      border: 1px solid #d9d9d9 !important;
-      border-radius: 3px !important;
+    [class*="_formPhoneInputField_"],
+    [class*="_selectToggle_"] {
+      height: 29px !important;
+      min-height: 29px !important;
+      padding: 0 12px !important;
+      border: 1px solid #8B8B8B !important;
+      border-radius: 0 !important;
       background: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 14px !important;
-      line-height: 1.2 !important;
+      font-size: 13px !important;
+      line-height: 27px !important;
       color: #333 !important;
-      box-shadow: none !important;
-    }
-    [class*="_selectToggle_"] {
-      height: 52px !important;
-      min-height: 52px !important;
-      border: 1px solid #d9d9d9 !important;
-      border-radius: 3px !important;
-      background: #fff !important;
       box-shadow: none !important;
     }
     [class*="_formInputField_"]:focus,
@@ -161,29 +161,39 @@
       border-color: #7F1416 !important;
       outline: none !important;
     }
-    /* Font size is left to the app here on purpose: it shrinks the label
-       when the field fills, and pinning a size would freeze it large. */
     [class*="_formInputFieldLabel_"] {
       font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 13px !important;
       color: #9b9b9b !important;
     }
+    /* A 29px field has no room for the app's floated label once the field
+       fills, so hide it then -- clipped rather than display:none, which
+       would drop it out of the accessibility tree along with the input's
+       only name. */
+    [class*="_formInputFieldLabel_"][class*="_inputFilled_"] {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
 
-    /* Submit reads as a thin strip, per the Figma (29px there; 36 here so
-       the label has room to breathe). */
     [class*="_formSubmitButton_"] {
       width: 100% !important;
-      height: 36px !important;
-      min-height: 36px !important;
+      height: 29px !important;
+      min-height: 29px !important;
       padding: 0 !important;
-      line-height: 36px !important;
-      margin-top: 24px !important;
+      line-height: 29px !important;
+      margin: 0 !important;
       border: 0 !important;
       border-radius: 0 !important;
       background: #7F1416 !important;
       color: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 11px !important;
-      font-weight: 600 !important;
+      font-weight: 500 !important;
       letter-spacing: 1.5px !important;
       text-transform: uppercase !important;
     }
@@ -196,7 +206,7 @@
       line-height: 1.45 !important;
       color: #9b9b9b !important;
       text-align: left !important;
-      margin: 12px 0 0 !important;
+      margin: 0 !important;
     }
 
     [class*="_formContainerCloseButtonPosition_"] {
@@ -205,7 +215,6 @@
     }
     [class*="_formCloseButton_"] { color: #2a2a2a !important; }
 
-    /* Reference breakpoint: stack, photo strip on top, tighter padding. */
     @media (max-width: 640px) {
       [class*="_formContainer_"],
       [class*="_formContainer_"]:not([class*="_noImage_"]),
@@ -217,25 +226,26 @@
       }
       .bh-media {
         min-height: 190px !important;
-        background-position: center center, center center;
         background-size: 150px auto, cover;
       }
-      /* 36px is fine with a mouse; a thumb needs more. */
+      /* 29px is fine with a mouse; a thumb needs 44. */
+      [class*="_formInputField_"],
+      [class*="_formPhoneInputField_"],
+      [class*="_selectToggle_"],
       [class*="_formSubmitButton_"] {
         height: 44px !important;
         min-height: 44px !important;
-        line-height: 44px !important;
+        line-height: 42px !important;
       }
       [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
         height: 190px !important;
         min-height: 190px !important;
       }
-      [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
-        background-size: 150px auto;
-      }
-      [class*="_gridItemContent_"] { padding: 30px 26px 32px !important; }
+      [class*="_gridItemContent_"] { padding: 30px 24px 32px !important; }
+      [class*="_formHeader_"] { margin: 0 0 32px !important; }
       [class*="_textHeading_"] { font-size: 44px !important; }
-      form[class*="_formFieldset_"] { margin: 26px 0 !important; }
+      form[class*="_formFieldset_"],
+      shop-lead-capture { gap: 20px !important; }
     }
   `;
 

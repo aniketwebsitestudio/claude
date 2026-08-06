@@ -24,7 +24,8 @@
          media column 354  |  content 34 + 271 + 30  =  689 wide
          top 34 + content 376 + bottom 34            =  444 tall
        Heading to fields gap 62, gaps inside the field stack 30,
-       every field and the button 271 x 29. */
+       every field and the button 271 x 29, placeholders IBM Plex 11/140%
+       at 80% black, 11px in from the left edge. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
     /* Media column. The app renders no image (the container carries
@@ -155,17 +156,29 @@
       width: 100% !important;
       max-width: none !important;
     }
+    /* Border-box everywhere, or the phone field's padding and border add on
+       top of its 100% and it outgrows Name and Email. */
+    [class*="_gridItemContent_"],
+    [class*="_gridItemContent_"] * {
+      box-sizing: border-box !important;
+    }
+    [class*="_formFieldContainer_"] {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+    }
 
     /* Standing in for the placeholder: the field is never empty (+91), so
        the app's own label is always in its filled state and hidden. */
     .bh-phone-hint {
       position: absolute;
-      left: 46px;
+      left: 36px;
       top: 50%;
       transform: translateY(-50%);
       font-family: "IBM Plex Sans", sans-serif;
-      font-size: 13px;
-      color: #9b9b9b;
+      font-size: 11px;
+      line-height: 140%;
+      color: rgba(0, 0, 0, 0.8);
       pointer-events: none;
     }
 
@@ -174,14 +187,16 @@
     [class*="_selectToggle_"] {
       height: 29px !important;
       min-height: 29px !important;
-      padding: 0 12px !important;
+      padding: 7px 11px 6px !important;
       border: 0.5px solid #8B8B8B !important;
       border-radius: 0 !important;
       background: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 13px !important;
-      line-height: 27px !important;
-      color: #333 !important;
+      font-weight: 400 !important;
+      font-size: 11px !important;
+      line-height: 140% !important;
+      letter-spacing: 0 !important;
+      color: rgba(0, 0, 0, 0.8) !important;
       box-shadow: none !important;
     }
     [class*="_formInputField_"]:focus,
@@ -191,8 +206,12 @@
     }
     [class*="_formInputFieldLabel_"] {
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 13px !important;
-      color: #9b9b9b !important;
+      font-weight: 400 !important;
+      font-size: 11px !important;
+      line-height: 140% !important;
+      letter-spacing: 0 !important;
+      color: rgba(0, 0, 0, 0.8) !important;
+      left: 11px !important;
     }
     /* A 29px field has no room for the app's floated label once the field
        fills, so hide it then -- clipped rather than display:none, which
@@ -269,7 +288,7 @@
         height: 190px !important;
         min-height: 190px !important;
       }
-      .bh-phone-hint { left: 50px; }
+      .bh-phone-hint { left: 38px; }
       [class*="_gridItemContent_"] { padding: 30px 24px 32px !important; }
       [class*="_formHeader_"] { margin: 0 0 32px !important; }
       [class*="_textHeading_"] { font-size: 44px !important; }

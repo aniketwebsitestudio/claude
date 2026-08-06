@@ -314,6 +314,33 @@
       [class*="_textHeading_"] { font-size: 44px !important; }
       form[class*="_formFieldset_"],
       shop-lead-capture { gap: 20px !important; }
+
+      /* Stacked, the popup is taller than a phone screen, and the panel
+         clips whatever does not fit -- which took the bottom off the
+         consent line. Cap it to the screen and let it scroll instead.
+         svh rather than vh: vh is the height with the browser's address
+         bar retracted, so it still overshoots while the bar is showing. */
+      [class*="_formContainer_"],
+      [class*="_formContainer_"]:not([class*="_noImage_"]),
+      [class*="_formContainer_"]:has(.bh-media) {
+        max-height: 88vh !important;
+        max-height: 88svh !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+      /* The image is the first thing to give up room when the screen is
+         short -- the form itself has to stay reachable. */
+      @media (max-height: 720px) {
+        .bh-media { min-height: 130px !important; background-size: 120px auto, cover; }
+        [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
+          height: 130px !important;
+          min-height: 130px !important;
+        }
+        [class*="_textHeading_"] { font-size: 36px !important; }
+        [class*="_formHeader_"] { margin: 0 0 24px !important; }
+        [class*="_gridItemContent_"] { padding: 24px 24px 26px !important; }
+      }
     }
   `;
 
@@ -595,10 +622,15 @@
   const isPopup = (host) => !host.closest('.bh-waitlist');
 
   /* The app can be set to open the popup from a "Don't miss out!" tab
-     instead of on a timer. The tab is hidden in CSS, and this opens the
-     form five seconds in by pressing it -- a hidden button still takes a
-     click, and going through the app's own opener keeps its rules about
-     how often a visitor is shown the form. */
+     instead of on a timer. The tab is hidden in CSS, and this presses it --
+     a hidden button still takes a click, and going through the app's own
+     opener keeps its rules about how often a visitor is shown the form.
+
+     The wait is the app's own: the tab does not appear until the delay set
+     in Shopify Forms has passed, and this fires as soon as it does. Adding
+     a delay of our own here would stack on top of that setting, so all
+     this leaves is a beat for the app to finish mounting the tab before it
+     is clicked. */
   const TEASER = '[data-testid="form-teaser"], [class*="_teaserContainer_"]';
 
   const autoOpen = (root, host) => {
@@ -606,7 +638,7 @@
     const teaser = root.querySelector(TEASER);
     if (!teaser) return;
     host.dataset.bhAuto = '1';
-    setTimeout(() => { if (teaser.isConnected) teaser.click(); }, 5000);
+    setTimeout(() => { if (teaser.isConnected) teaser.click(); }, 150);
   };
 
   /* Give the popup its left-hand media column. Skipped entirely if the

@@ -90,7 +90,7 @@
 
     [class*="_textHeading_"] {
       font-family: "ivypresto-display", serif !important;
-      font-weight: 400 !important;
+      font-weight: 300 !important;
       font-size: 54px !important;
       line-height: 1 !important;
       letter-spacing: 0.02em !important;
@@ -130,18 +130,30 @@
     [class*="_formSubmitButton_"] { order: 4 !important; }
     [class*="_formDisclaimer_"] { order: 5 !important; }
 
+    /* The app floats each label into the top of its own field once the
+       field has a value -- so the input needs top padding, otherwise the
+       value lands on the label (the +91 country prefix showed this
+       immediately, since the phone field is never empty). */
     [class*="_formInputField_"],
-    [class*="_formPhoneInputField_"],
-    [class*="_selectToggle_"] {
-      height: 44px !important;
-      min-height: 44px !important;
-      padding: 0 16px !important;
+    [class*="_formPhoneInputField_"] {
+      height: 52px !important;
+      min-height: 52px !important;
+      padding: 20px 16px 6px !important;
       border: 1px solid #d9d9d9 !important;
       border-radius: 3px !important;
       background: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 14px !important;
+      line-height: 1.2 !important;
       color: #333 !important;
+      box-shadow: none !important;
+    }
+    [class*="_selectToggle_"] {
+      height: 52px !important;
+      min-height: 52px !important;
+      border: 1px solid #d9d9d9 !important;
+      border-radius: 3px !important;
+      background: #fff !important;
       box-shadow: none !important;
     }
     [class*="_formInputField_"]:focus,
@@ -149,9 +161,10 @@
       border-color: #7F1416 !important;
       outline: none !important;
     }
+    /* Font size is left to the app here on purpose: it shrinks the label
+       when the field fills, and pinning a size would freeze it large. */
     [class*="_formInputFieldLabel_"] {
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 14px !important;
       color: #9b9b9b !important;
     }
 

@@ -11,29 +11,7 @@
     "type": "aside",
     "name": "Overlay",
     "sections": {
-        "waitlist": {
-            "type": "overlay-newsletter",
-            "settings": {
-                "open_trigger": "delay",
-                "delay": 5,
-                "expire": 7,
-                "dialogWidth": "90ch",
-                "dialogPosition": "center",
-                "dialogPositionMob": "center",
-                "image": "shopify://shop_images/image_76_1.png",
-                "showImageMob": true,
-                "imagePosition": "left",
-                "heading": "Join the waitlist",
-                "subheading": "",
-                "description": "",
-                "text_align": "left",
-                "backdrop": true,
-                "global_color_scheme": true,
-                "color_scheme": ""
-            }
-        }
+
     },
-    "order": [
-        "waitlist"
-    ]
+    "order": []
 }

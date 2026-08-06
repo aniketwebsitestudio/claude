@@ -20,20 +20,38 @@
   const STYLE_ID = 'bhoomija-forms-style';
 
   const CSS = `
-    /* Layout is left to the app: turning on the side image in Styling >
-       Image gives the real two-column grid. Everything here is typography,
-       colour and spacing on top of that -- all !important, because the
-       app's own rules are specific enough to win otherwise. */
+    /* Measurements come straight from the reference mock-up:
+       660x445 modal, 320px media column, 54px title, 44px fields, 18px gaps,
+       3px radius, #8a1c1c button. Playfair maps to IvyPresto and Inter to
+       IBM Plex, the faces this store already loads.
+
+       Layout stays the app's own two-column grid -- the column widths below
+       only apply once a side image is set, guarded by :not(_noImage_), so
+       nothing is forced onto a single-column popup. */
+    [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
+
     [class*="_formContainer_"] {
-      max-width: 940px !important;
+      max-width: 660px !important;
       border-radius: 0 !important;
       overflow: hidden !important;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.30) !important;
+    }
+    [class*="_formContainer_"]:not([class*="_noImage_"]) {
+      grid-template-columns: 320px 1fr !important;
+      min-height: 445px !important;
     }
 
-    /* White wordmark centred over the app's photo. Scoped away from the
-       content cell, which also holds an <img> (the phone country flag). */
-    [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img) {
+    /* Left media: photo fills the column, wordmark sits 34px in, centred
+       vertically -- left-aligned, not centred, as in the mock. */
+    [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
       position: relative !important;
+      padding: 0 !important;
+    }
+    [class*="_gridItem_"]:not([class*="_gridItemContent_"]) img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block !important;
     }
     [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
       content: "";
@@ -41,35 +59,30 @@
       inset: 0;
       background-image: url("${LOGO}");
       background-repeat: no-repeat;
-      background-position: center center;
-      background-size: 200px auto;
+      background-position: 34px center;
+      background-size: 155px auto;
       pointer-events: none;
-    }
-    [class*="_gridItem_"]:not([class*="_gridItemContent_"]) img {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
     }
 
     [class*="_gridItemContent_"] {
-      padding: 46px 44px 40px !important;
+      padding: 38px 36px 40px 34px !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
     }
 
-    [class*="_formHeader_"] { margin: 0 0 28px !important; }
+    [class*="_formHeader_"] { margin: 0 !important; }
 
     [class*="_textHeading_"] {
       font-family: "ivypresto-display", serif !important;
-      font-weight: 100 !important;
-      font-size: 52px !important;
-      line-height: 1.04 !important;
-      letter-spacing: 0.02em !important;
+      font-weight: 400 !important;
+      font-size: 54px !important;
+      line-height: 1.02 !important;
+      letter-spacing: 0.3px !important;
       text-align: left !important;
       text-transform: none !important;
-      margin: 0 0 12px !important;
-      color: #000 !important;
+      color: #1c1c1c !important;
+      margin: 6px 0 0 !important;
     }
     [class*="_textHeading_"] em { font-style: italic !important; }
 
@@ -77,23 +90,25 @@
     [class*="_textBody_"] p {
       font-family: "IBM Plex Sans", sans-serif !important;
       font-weight: 400 !important;
-      font-size: 14px !important;
+      font-size: 13px !important;
       line-height: 1.5 !important;
       text-align: left !important;
-      color: #4a4a4a !important;
-      margin: 0 !important;
+      color: #6b6b6b !important;
+      margin: 12px 0 0 !important;
     }
 
-    /* Name, Email, Phone, button, disclaimer. Every sibling gets an explicit
-       order -- ordering only the phone field left it behind the button,
-       which still had the default order of 0. */
+    /* Fields sit in the optical middle of the column, 18px apart, in the
+       order Name, Email, Phone. Every sibling needs an explicit order --
+       ordering the phone field alone left it behind the button, which still
+       had the default order of 0. */
     form[class*="_formFieldset_"],
     shop-lead-capture,
     *:has(> [class*="_formPhoneInputContainer_"]) {
       display: flex !important;
       flex-direction: column !important;
-      gap: 12px !important;
+      gap: 18px !important;
     }
+    form[class*="_formFieldset_"] { margin: auto 0 !important; }
     [class*="_formFieldContainer_"]:has(#first_name) { order: 1 !important; }
     [class*="_formFieldContainer_"]:has(#email) { order: 2 !important; }
     [class*="_formPhoneInputContainer_"] { order: 3 !important; margin: 0 !important; }
@@ -103,55 +118,80 @@
     [class*="_formInputField_"],
     [class*="_formPhoneInputField_"],
     [class*="_selectToggle_"] {
-      border-radius: 0 !important;
-      border: 1px solid #dcdcdc !important;
+      height: 44px !important;
+      min-height: 44px !important;
+      padding: 0 16px !important;
+      border: 1px solid #d9d9d9 !important;
+      border-radius: 3px !important;
       background: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 14px !important;
-      min-height: 46px !important;
+      color: #333 !important;
       box-shadow: none !important;
     }
     [class*="_formInputField_"]:focus,
     [class*="_formPhoneInputField_"]:focus {
-      border-color: #7F1416 !important;
+      border-color: #8a1c1c !important;
       outline: none !important;
     }
     [class*="_formInputFieldLabel_"] {
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 14px !important;
-      color: #8a8a8a !important;
+      color: #9b9b9b !important;
     }
 
     [class*="_formSubmitButton_"] {
-      background: #7F1416 !important;
-      color: #ffffff !important;
+      width: 100% !important;
+      height: 44px !important;
+      min-height: 44px !important;
+      margin-top: 26px !important;
       border: 0 !important;
-      border-radius: 0 !important;
-      min-height: 48px !important;
-      margin-top: 10px !important;
+      border-radius: 3px !important;
+      background: #8a1c1c !important;
+      color: #fff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 12px !important;
+      font-size: 13px !important;
       font-weight: 600 !important;
-      letter-spacing: 0.06em !important;
+      letter-spacing: 1.5px !important;
       text-transform: uppercase !important;
     }
+    [class*="_formSubmitButton_"]:hover { background: #761515 !important; }
 
     [class*="_formDisclaimer_"],
     [class*="_formDisclaimer_"] p {
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 11px !important;
+      font-size: 10px !important;
       line-height: 1.45 !important;
-      color: #6b6b6b !important;
+      color: #9b9b9b !important;
       text-align: left !important;
-      margin: 0 !important;
+      margin: 12px 0 0 !important;
     }
 
-    @media (max-width: 749px) {
-      [class*="_gridItemContent_"] { padding: 30px 24px 26px !important; }
-      [class*="_textHeading_"] { font-size: 34px !important; }
-      [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
-        background-size: 150px auto;
+    [class*="_formContainerCloseButtonPosition_"] {
+      top: 16px !important;
+      right: 18px !important;
+    }
+    [class*="_formCloseButton_"] { color: #2a2a2a !important; }
+
+    /* Reference breakpoint: stack, photo strip on top, tighter padding. */
+    @media (max-width: 640px) {
+      [class*="_formContainer_"],
+      [class*="_formContainer_"]:not([class*="_noImage_"]) {
+        grid-template-columns: 1fr !important;
+        max-width: 400px !important;
+        min-height: 0 !important;
       }
+      [class*="_gridItem_"]:not([class*="_gridItemContent_"]) {
+        height: 190px !important;
+        min-height: 190px !important;
+      }
+      [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
+        background-position: 26px center;
+        background-size: 135px auto;
+      }
+      [class*="_gridItemContent_"] { padding: 30px 26px 32px !important; }
+      [class*="_textHeading_"] { font-size: 44px !important; }
+      form[class*="_formFieldset_"] { margin: 26px 0 !important; }
     }
   `;
 

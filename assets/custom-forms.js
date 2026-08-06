@@ -237,9 +237,19 @@
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
     }
-    /* Our own tag, shown above the box while the field is being typed into
-       -- the app's label is gone by then. Absolutely positioned, so it costs
-       no layout: it sits in the 30px gap between fields. */
+    /* The moment a field takes focus its label leaves the box: the app's own
+       label is clipped, and our tag appears at the top-left corner just
+       above it. The tag is absolutely positioned, so the swap costs no
+       layout -- it sits in the 30px gap between fields. */
+    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
     .bh-tag {
       position: absolute !important;
       left: 0 !important;
@@ -255,8 +265,31 @@
       opacity: 0;
       transition: opacity 0.12s ease;
     }
-    .bh-tag[data-show="1"] { opacity: 1; }
+    [class*="_formFieldContainer_"]:focus-within > .bh-tag,
+    [class*="_formPhoneInputContainer_"]:focus-within > .bh-tag { opacity: 1; }
     [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
+
+    /* Validation messages belong under the field they are about. The phone
+       row is a flex row, so without a wrap its message is pushed out to the
+       right of the box instead of dropping below it. */
+    [class*="_formPhoneInputContainer_"] { flex-wrap: wrap !important; }
+    [class*="_formFieldContainer_"] [class*="rror"]:not([class*="_formInputField_"]):not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
+    [class*="_formPhoneInputContainer_"] > [class*="rror"]:not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
+    [class*="_formFieldContainer_"] [role="alert"],
+    [class*="_formPhoneInputContainer_"] > [role="alert"] {
+      display: block !important;
+      width: 100% !important;
+      flex: 0 0 100% !important;
+      order: 99 !important;
+      margin: 4px 0 0 !important;
+      padding: 0 !important;
+      position: static !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 10px !important;
+      line-height: 1.3 !important;
+      letter-spacing: 0.02em !important;
+      color: #7F1416 !important;
+    }
 
     [class*="_formSubmitButton_"] {
       width: 100% !important;
@@ -464,9 +497,19 @@
       clip-path: inset(50%) !important;
       white-space: nowrap !important;
     }
-    /* Our own tag, above the box while the field is being typed into --
-       white here, since it lands on the band rather than on the field.
+    /* The moment a field takes focus its label leaves the box: the app's own
+       label is clipped and our tag appears at the top-left corner just above
+       it -- white here, since it lands on the band rather than on the field.
        Absolutely positioned, so the row does not move. */
+    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
     .bh-tag {
       position: absolute !important;
       left: 0 !important;
@@ -482,8 +525,32 @@
       opacity: 0;
       transition: opacity 0.12s ease;
     }
-    .bh-tag[data-show="1"] { opacity: 1; }
+    [class*="_formFieldContainer_"]:focus-within > .bh-tag,
+    [class*="_formPhoneInputContainer_"]:focus-within > .bh-tag { opacity: 1; }
     [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
+
+    /* Validation messages belong under the field they are about. The phone
+       row is a flex row, so without a wrap its message is pushed out to the
+       right of the box -- which is where "Phone number is invalid" was
+       landing, over the band and past the button's edge. */
+    [class*="_formPhoneInputContainer_"] { flex-wrap: wrap !important; }
+    [class*="_formFieldContainer_"] [class*="rror"]:not([class*="_formInputField_"]):not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
+    [class*="_formPhoneInputContainer_"] > [class*="rror"]:not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
+    [class*="_formFieldContainer_"] [role="alert"],
+    [class*="_formPhoneInputContainer_"] > [role="alert"] {
+      display: block !important;
+      width: 100% !important;
+      flex: 0 0 100% !important;
+      order: 99 !important;
+      margin: 4px 0 0 !important;
+      padding: 0 !important;
+      position: static !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 10px !important;
+      line-height: 1.3 !important;
+      letter-spacing: 0.02em !important;
+      color: #ffb4b4 !important;
+    }
 
     .bh-phone-hint {
       position: absolute;
@@ -602,32 +669,46 @@
     sync();
   };
 
-  /* Once a field has something in it the app's own label is gone -- it is
-     the placeholder, and it is clipped as soon as the field fills, because a
-     29px strip has no room for it to float into. So while the visitor is
-     typing there is nothing naming the field.
+  /* The app's label doubles as the placeholder, and a 29px strip has no room
+     for it to float into once the field fills -- so it is clipped, and the
+     visitor is left typing into an unnamed box.
 
-     Rather than trying to un-clip the app's label (its state classes are
-     hashed and it is re-rendered from under us), each field gets a small tag
-     of our own just above the box, shown only while that field has focus and
-     content. It is absolutely positioned and never a focus target, so it
-     costs no layout and is invisible to the tab order and the reader -- the
-     input keeps the app's label as its accessible name. */
-  const LABELS = { first_name: 'Name', last_name: 'Last name', email: 'Email', phone: 'Phone no.' };
+     Each field therefore gets a small tag of our own, sitting at the
+     top-left corner just above the box. The CSS shows it (and clips the
+     app's label) for as long as the field has focus, so the name moves out
+     of the box the moment you click into it and moves back when you leave.
+     The tag is aria-hidden and absolutely positioned, so it costs no layout
+     and adds nothing to the accessibility tree -- the input keeps the app's
+     own label as its name. */
+  const LABELS = {
+    first_name: 'Name', firstName: 'Name', name: 'Name',
+    last_name: 'Last name', lastName: 'Last name',
+    email: 'Email',
+    phone: 'Phone no.', phone_number: 'Phone no.', phoneNumber: 'Phone no.'
+  };
+
+  const tagText = (input, host) => {
+    const label = host.querySelector('[class*="_formInputFieldLabel_"]');
+    return LABELS[input.id] ||
+      LABELS[input.name] ||
+      (label ? label.textContent.trim() : '') ||
+      input.getAttribute('aria-label') ||
+      input.getAttribute('placeholder') ||
+      '';
+  };
 
   const fieldTags = (root) => {
     root.querySelectorAll('[class*="_formInputField_"], [class*="_formPhoneInputField_"]').forEach((input) => {
-      if (input.dataset.bhTag) return;
-      input.dataset.bhTag = '1';
-
       const phone = /_formPhoneInputField_/.test(String(input.className));
       const host = input.closest(phone
         ? '[class*="_formPhoneInputContainer_"]'
         : '[class*="_formFieldContainer_"]');
-      if (!host) return;
+      if (!host || host.querySelector(':scope > .bh-tag')) return;
 
-      const label = host.querySelector('[class*="_formInputFieldLabel_"]');
-      const text = LABELS[input.id] || (label && label.textContent.trim()) || '';
+      /* The label can mount a beat after the input does, so this is left to
+         run again on the next observer pass rather than marked as done with
+         nothing to show. */
+      const text = tagText(input, host);
       if (!text) return;
 
       const tag = document.createElement('span');
@@ -635,20 +716,6 @@
       tag.setAttribute('aria-hidden', 'true');
       tag.textContent = text;
       host.appendChild(tag);
-
-      /* The phone field is never empty -- it carries the +91 prefix -- so
-         its content is measured in digits after the dialing code. */
-      const filled = () => (phone
-        ? input.value.replace(/^\+?\d{1,3}/, '').replace(/\D/g, '').length > 0
-        : input.value.trim().length > 0);
-
-      let focused = false;
-      const sync = () => { tag.dataset.show = focused && filled() ? '1' : '0'; };
-
-      input.addEventListener('focus', () => { focused = true; sync(); });
-      input.addEventListener('blur', () => { focused = false; sync(); });
-      input.addEventListener('input', sync);
-      sync();
     });
   };
 

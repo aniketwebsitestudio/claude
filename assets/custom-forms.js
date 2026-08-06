@@ -433,9 +433,13 @@
     [class*="_formSubmitButton_"] { grid-column: 1 / -1 !important; }
     [class*="_formDisclaimer_"] { grid-column: 1 / -1 !important; }
 
-    /* Each field keeps its own box so the label can sit inside it. */
+    /* Each field is a column: our label, then the box, then any validation
+       message. Column rather than block so the label can be ordered above
+       the input it belongs to -- it is appended after the input, since that
+       is the only place we can reliably add it. */
     [class*="_formFieldContainer_"] {
-      display: block !important;
+      display: flex !important;
+      flex-direction: column !important;
       position: relative !important;
       width: 100% !important;
       max-width: none !important;
@@ -445,6 +449,7 @@
     [class*="_formPhoneInputContainer_"] {
       display: flex !important;
       flex-direction: row !important;
+      flex-wrap: wrap !important;
       position: relative !important;
       width: 100% !important;
       max-width: none !important;
@@ -478,62 +483,47 @@
       border-color: #7F1416 !important;
       outline: none !important;
     }
+    /* The app's label doubles as the placeholder and sits inside the box,
+       where a 29px strip leaves no room for it to float once the field
+       fills -- so it disappears exactly when it is needed. It is hidden
+       here for good and replaced by our own standing label above the box.
+       Clipped rather than display:none, so the input keeps it as its
+       accessible name. */
     [class*="_formInputFieldLabel_"] {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
+    }
+    /* Standing label, top-left above each box, in the flow rather than
+       floated over it -- it reserves its own space, so nothing can end up
+       sitting behind the field above or under the heading. */
+    .bh-tag {
+      display: block !important;
+      order: -1 !important;
+      width: 100% !important;
+      flex: 0 0 auto !important;
+      margin: 0 0 5px !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-weight: 400 !important;
-      font-size: 11px !important;
-      line-height: 140% !important;
-      color: rgba(0, 0, 0, 0.8) !important;
-      left: 11px !important;
-    }
-    /* No room for a floated label in a 29px strip -- clipped once the field
-       fills, but kept in the accessibility tree. */
-    [class*="_formInputFieldLabel_"][class*="_inputFilled_"] {
-      position: absolute !important;
-      width: 1px !important;
-      height: 1px !important;
-      overflow: hidden !important;
-      clip: rect(0 0 0 0) !important;
-      clip-path: inset(50%) !important;
-      white-space: nowrap !important;
-    }
-    /* The moment a field takes focus its label leaves the box: the app's own
-       label is clipped and our tag appears at the top-left corner just above
-       it -- white here, since it lands on the band rather than on the field.
-       Absolutely positioned, so the row does not move. */
-    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
-      position: absolute !important;
-      width: 1px !important;
-      height: 1px !important;
-      overflow: hidden !important;
-      clip: rect(0 0 0 0) !important;
-      clip-path: inset(50%) !important;
-      white-space: nowrap !important;
-    }
-    .bh-tag {
-      position: absolute !important;
-      left: 0 !important;
-      bottom: calc(100% + 5px) !important;
-      font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 10px !important;
-      line-height: 1 !important;
-      letter-spacing: 0.06em !important;
+      line-height: 1.2 !important;
+      letter-spacing: 0.08em !important;
       text-transform: uppercase !important;
-      color: rgba(255, 255, 255, 0.9) !important;
+      color: #ffffff !important;
       white-space: nowrap !important;
       pointer-events: none !important;
-      opacity: 0;
-      transition: opacity 0.12s ease;
     }
-    [class*="_formFieldContainer_"]:focus-within > .bh-tag,
-    [class*="_formPhoneInputContainer_"]:focus-within > .bh-tag { opacity: 1; }
-    [class*="_formPhoneInputContainer_"]:focus-within .bh-phone-hint { display: none !important; }
+    /* The in-box "Phone no." hint stood in for a placeholder; the standing
+       label says the same thing, so the box is left clean. */
+    .bh-phone-hint { display: none !important; }
 
     /* Validation messages belong under the field they are about. The phone
-       row is a flex row, so without a wrap its message is pushed out to the
-       right of the box -- which is where "Phone number is invalid" was
-       landing, over the band and past the button's edge. */
-    [class*="_formPhoneInputContainer_"] { flex-wrap: wrap !important; }
+       row is a flex row, so without a wrap its message was pushed out to
+       the right of the box -- over the band and past the button's edge. */
     [class*="_formFieldContainer_"] [class*="rror"]:not([class*="_formInputField_"]):not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
     [class*="_formPhoneInputContainer_"] > [class*="rror"]:not([class*="_formPhoneInputField_"]):not([class*="_formFieldContainer_"]),
     [class*="_formFieldContainer_"] [role="alert"],

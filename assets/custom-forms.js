@@ -30,6 +30,26 @@
        nothing is forced onto a single-column popup. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
+    /* Media column. The app renders no image (the container carries
+       _noImage_), so we insert our own cell and paint the photo plus the
+       wordmark into it -- an element we create and name ourselves, rather
+       than trying to repurpose one of the app's. */
+    .bh-media {
+      background-image: url("${LOGO}"), url("${PHOTO}");
+      background-repeat: no-repeat, no-repeat;
+      background-position: 34px center, center center;
+      background-size: 155px auto, cover;
+      min-height: 445px;
+    }
+    [class*="_formContainer_"]:has(.bh-media) {
+      display: grid !important;
+      grid-template-columns: 320px 1fr !important;
+      align-items: stretch !important;
+      min-height: 445px !important;
+    }
+    /* The app's empty placeholder cell would otherwise sit beside ours. */
+    [class*="_imageLoading_"]:not(.bh-media) { display: none !important; }
+
     [class*="_formContainer_"] {
       max-width: 660px !important;
       border-radius: 0 !important;
@@ -185,6 +205,12 @@
         height: 190px !important;
         min-height: 190px !important;
       }
+      [class*="_formContainer_"]:has(.bh-media) { grid-template-columns: 1fr !important; }
+      .bh-media {
+        min-height: 190px !important;
+        background-position: 26px center, center center;
+        background-size: 135px auto, cover;
+      }
       [class*="_gridItem_"]:not([class*="_gridItemContent_"]):has(img)::after {
         background-position: 26px center;
         background-size: 135px auto;
@@ -194,6 +220,23 @@
       form[class*="_formFieldset_"] { margin: 26px 0 !important; }
     }
   `;
+
+  /* Give the popup its left-hand media column. Skipped entirely if the
+     app ever gets a side image of its own, so turning that setting on
+     later does not produce two images. */
+  const ensureMedia = (root) => {
+    const container = root.querySelector('[class*="_formContainer_"]');
+    if (!container || container.querySelector('.bh-media')) return;
+
+    const appImage = Array.from(container.children).some((cell) =>
+      !/_gridItemContent_/.test(String(cell.className)) && cell.querySelector('img'));
+    if (appImage) return;
+
+    const media = document.createElement('div');
+    media.className = 'bh-media';
+    media.setAttribute('aria-hidden', 'true');
+    container.prepend(media);
+  };
 
   /* "Join the waitlist" is one plain-text field in the app, and CSS cannot
      italicise a single word inside it -- so split it here. Rewriting only
@@ -214,6 +257,7 @@
       style.textContent = CSS;
       root.appendChild(style);
     }
+    ensureMedia(root);
     splitHeading(root);
   };
 

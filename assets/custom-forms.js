@@ -128,18 +128,33 @@
     [class*="_formSubmitButton_"] { order: 4 !important; }
     [class*="_formDisclaimer_"] { order: 5 !important; }
 
-    /* Phone row: country picker and number field share one 29px line, so
-       neither looks taller than the other. */
+    /* Phone row: the country picker is dropped -- its flag renders clipped
+       at 29px and it adds nothing while the form is India-only. The number
+       field takes the full 271px and keeps the +91 prefix, so the dialing
+       code is still submitted. */
     [class*="_formPhoneInputContainer_"] {
       display: flex !important;
       flex-direction: row !important;
       align-items: stretch !important;
-      gap: 8px !important;
       margin: 0 !important;
+      position: relative !important;
     }
-    [class*="_formPhoneInputContainer_"] > *:last-child { flex: 1 1 auto !important; }
     .phone-country-selector,
-    [class*="_selectContainer_"] { flex: 0 0 auto !important; }
+    [class*="_selectContainer_"] { display: none !important; }
+    [class*="_formPhoneInputContainer_"] > *:last-child { flex: 1 1 100% !important; }
+
+    /* Standing in for the placeholder: the field is never empty (+91), so
+       the app's own label is always in its filled state and hidden. */
+    .bh-phone-hint {
+      position: absolute;
+      left: 46px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 13px;
+      color: #9b9b9b;
+      pointer-events: none;
+    }
 
     [class*="_formInputField_"],
     [class*="_formPhoneInputField_"],
@@ -241,6 +256,7 @@
         height: 190px !important;
         min-height: 190px !important;
       }
+      .bh-phone-hint { left: 50px; }
       [class*="_gridItemContent_"] { padding: 30px 24px 32px !important; }
       [class*="_formHeader_"] { margin: 0 0 32px !important; }
       [class*="_textHeading_"] { font-size: 44px !important; }
@@ -266,6 +282,31 @@
     container.prepend(media);
   };
 
+  /* The phone field always carries the +91 dialing code, so its label never
+     leaves the filled state and the field would otherwise read as a bare
+     number box. Park a hint beside the prefix until real digits arrive. */
+  const phoneHint = (root) => {
+    const input = root.querySelector('[class*="_formPhoneInputField_"]');
+    if (!input || input.dataset.bhHint) return;
+    input.dataset.bhHint = '1';
+
+    const wrap = input.closest('[class*="_formPhoneInputContainer_"]');
+    if (!wrap) return;
+
+    const hint = document.createElement('span');
+    hint.className = 'bh-phone-hint';
+    hint.textContent = 'Phone no.';
+    wrap.appendChild(hint);
+
+    const sync = () => {
+      const digits = input.value.replace(/^\+?\d{1,3}/, '').replace(/\D/g, '');
+      hint.style.display = digits.length ? 'none' : 'block';
+    };
+    input.addEventListener('input', sync);
+    input.addEventListener('blur', sync);
+    sync();
+  };
+
   /* "Join the waitlist" is one plain-text field in the app, and CSS cannot
      italicise a single word inside it -- so split it here. Rewriting only
      when the text still matches exactly keeps this from looping when our
@@ -287,6 +328,7 @@
     }
     ensureMedia(root);
     splitHeading(root);
+    phoneHint(root);
   };
 
   const seen = new WeakSet();

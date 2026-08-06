@@ -357,7 +357,10 @@
       width: 100% !important;
       margin: 0 !important;
     }
-    form[class*="_formFieldset_"] > div,
+    /* Only the plain wrappers dissolve. The field containers are also divs,
+       and dissolving those strips the positioning parent their floated
+       labels rely on -- which stacked every label in the grid's corner. */
+    form[class*="_formFieldset_"] > div:not([class*="_formFieldContainer_"]):not([class*="_formPhoneInputContainer_"]),
     form[class*="_formFieldset_"] shop-lead-capture {
       display: contents !important;
     }
@@ -368,17 +371,23 @@
     [class*="_formSubmitButton_"] { grid-column: 1 / -1 !important; }
     [class*="_formDisclaimer_"] { grid-column: 1 / -1 !important; }
 
-    [class*="_formFieldContainer_"],
-    [class*="_formPhoneInputContainer_"] {
+    /* Each field keeps its own box so the label can sit inside it. */
+    [class*="_formFieldContainer_"] {
+      display: block !important;
+      position: relative !important;
       width: 100% !important;
       max-width: none !important;
       min-width: 0 !important;
       margin: 0 !important;
-      position: relative !important;
     }
     [class*="_formPhoneInputContainer_"] {
       display: flex !important;
       flex-direction: row !important;
+      position: relative !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-width: 0 !important;
+      margin: 0 !important;
     }
     .phone-country-selector,
     [class*="_selectContainer_"] { display: none !important; }

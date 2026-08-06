@@ -458,7 +458,19 @@
     }
     .phone-country-selector,
     [class*="_selectContainer_"] { display: none !important; }
-    [class*="_formPhoneInputContainer_"] > * { flex: 1 1 100% !important; width: 100% !important; }
+    /* Flatten the wrapper the app puts around the number field. It carries a
+       few pixels of its own above the box, which sat the phone field lower
+       than Name and Email; with the in-box label hidden nothing depends on
+       that wrapper any more, so it stops being a box and the input becomes a
+       row of this container directly, like the other two fields. */
+    [class*="_formPhoneInputContainer_"] [class*="_formFieldContainer_"] {
+      display: contents !important;
+    }
+    [class*="_formPhoneInputContainer_"] > *,
+    [class*="_formPhoneInputContainer_"] [class*="_formPhoneInputField_"] {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+    }
 
     /* Same 29px strip as the popup. */
     [class*="_formInputField_"],

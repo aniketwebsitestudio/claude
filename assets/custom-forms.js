@@ -31,6 +31,10 @@
        at 80% black, 11px in from the left edge. */
     [class*="_overlayBackground_"] { background: rgba(30, 20, 20, 0.55) !important; }
 
+    /* The "Don't miss out!" teaser tab -- turn it off in the app as well;
+       this only stops it painting. */
+    [class*="_teaser_"] { display: none !important; }
+
     /* Media column. The app renders no image (the container carries
        _noImage_), so we insert our own cell and paint the photo plus the
        wordmark into it -- an element we create and name ourselves, rather
@@ -313,7 +317,10 @@
      app's own heading is hidden and the fields become one row that wraps to
      a stack on narrow screens. */
   const CSS_INLINE = `
+    /* The app's own title and body are hidden -- the section around the
+       block supplies the heading. */
     [class*="_formHeader_"] { display: none !important; }
+    [class*="_teaser_"] { display: none !important; }
 
     [class*="_formContainer_"],
     [class*="_gridItem_"],
@@ -332,58 +339,66 @@
       grid-template-columns: none !important;
     }
 
-    [class*="_gridItemContent_"] *,
-    [class*="_gridItemContent_"] {
+    [class*="_gridItemContent_"],
+    [class*="_gridItemContent_"] * {
       box-sizing: border-box !important;
     }
 
-    /* Name, Email, Phone, then the button -- one row, wrapping when there is
-       no space rather than overflowing. */
-    form[class*="_formFieldset_"],
-    shop-lead-capture,
-    *:has(> [class*="_formPhoneInputContainer_"]) {
-      display: flex !important;
-      flex-direction: row !important;
-      flex-wrap: wrap !important;
-      align-items: center !important;
-      gap: 12px !important;
-      margin: 0 !important;
+    /* One grid for the whole form: three equal field columns with the
+       button and the disclaimer spanning all three. The fields sit inside
+       wrapper elements, so those wrappers are made display:contents --
+       otherwise a grid on the form would only ever see the wrappers. */
+    form[class*="_formFieldset_"] {
+      display: grid !important;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+      column-gap: 12px !important;
+      row-gap: 14px !important;
+      align-items: start !important;
       width: 100% !important;
+      margin: 0 !important;
     }
-    [class*="_formFieldContainer_"]:has(#first_name) { order: 1 !important; }
-    [class*="_formFieldContainer_"]:has(#email) { order: 2 !important; }
-    [class*="_formPhoneInputContainer_"] { order: 3 !important; }
-    [class*="_formSubmitButton_"] { order: 4 !important; }
-    [class*="_formDisclaimer_"] { order: 5 !important; }
+    form[class*="_formFieldset_"] > div,
+    form[class*="_formFieldset_"] shop-lead-capture {
+      display: contents !important;
+    }
+
+    [class*="_formFieldContainer_"]:has(#first_name) { grid-column: 1 !important; }
+    [class*="_formFieldContainer_"]:has(#email) { grid-column: 2 !important; }
+    [class*="_formPhoneInputContainer_"] { grid-column: 3 !important; }
+    [class*="_formSubmitButton_"] { grid-column: 1 / -1 !important; }
+    [class*="_formDisclaimer_"] { grid-column: 1 / -1 !important; }
 
     [class*="_formFieldContainer_"],
     [class*="_formPhoneInputContainer_"] {
-      flex: 1 1 170px !important;
-      width: auto !important;
+      width: 100% !important;
+      max-width: none !important;
       min-width: 0 !important;
       margin: 0 !important;
+      position: relative !important;
     }
     [class*="_formPhoneInputContainer_"] {
       display: flex !important;
       flex-direction: row !important;
-      position: relative !important;
     }
     .phone-country-selector,
     [class*="_selectContainer_"] { display: none !important; }
     [class*="_formPhoneInputContainer_"] > * { flex: 1 1 100% !important; width: 100% !important; }
 
+    /* Same 29px strip as the popup. */
     [class*="_formInputField_"],
     [class*="_formPhoneInputField_"] {
-      height: 44px !important;
-      min-height: 44px !important;
+      height: 29px !important;
+      min-height: 29px !important;
       width: 100% !important;
-      padding: 14px 12px 6px !important;
+      padding: 7px 11px 6px !important;
       border: 0.5px solid #8B8B8B !important;
       border-radius: 0 !important;
       background: #ffffff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 13px !important;
-      line-height: 1.4 !important;
+      font-weight: 400 !important;
+      font-size: 11px !important;
+      line-height: 140% !important;
+      letter-spacing: 0 !important;
       color: rgba(0, 0, 0, 0.8) !important;
       box-shadow: none !important;
     }
@@ -394,33 +409,45 @@
     }
     [class*="_formInputFieldLabel_"] {
       font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 13px !important;
-      color: rgba(0, 0, 0, 0.7) !important;
-      left: 12px !important;
+      font-weight: 400 !important;
+      font-size: 11px !important;
+      line-height: 140% !important;
+      color: rgba(0, 0, 0, 0.8) !important;
+      left: 11px !important;
     }
+    /* No room for a floated label in a 29px strip -- clipped once the field
+       fills or takes focus, but kept in the accessibility tree. */
     [class*="_formInputFieldLabel_"][class*="_inputFilled_"],
     [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
-      font-size: 10px !important;
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      overflow: hidden !important;
+      clip: rect(0 0 0 0) !important;
+      clip-path: inset(50%) !important;
+      white-space: nowrap !important;
     }
 
     .bh-phone-hint {
       position: absolute;
-      left: 40px;
+      left: 36px;
       top: 50%;
       transform: translateY(-50%);
       font-family: "IBM Plex Sans", sans-serif;
-      font-size: 13px;
-      color: rgba(0, 0, 0, 0.55);
+      font-size: 11px;
+      line-height: 140%;
+      color: rgba(0, 0, 0, 0.8);
       pointer-events: none;
     }
 
+    /* Button spans the full three columns, so its left edge lines up with
+       Name and its right edge with the phone field. */
     [class*="_formSubmitButton_"] {
-      flex: 0 0 132px !important;
-      width: 132px !important;
-      height: 44px !important;
-      min-height: 44px !important;
+      width: 100% !important;
+      height: 29px !important;
+      min-height: 29px !important;
       padding: 0 !important;
-      line-height: 44px !important;
+      line-height: 29px !important;
       margin: 0 !important;
       border: 0 !important;
       border-radius: 0 !important;
@@ -428,17 +455,15 @@
       color: #ffffff !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 11px !important;
-      font-weight: 600 !important;
+      font-weight: 500 !important;
       letter-spacing: 1.5px !important;
       text-transform: uppercase !important;
       cursor: pointer !important;
     }
     [class*="_formSubmitButton_"]:hover { background: #6a1012 !important; }
 
-    /* Disclaimer drops to its own full-width line under the row. */
     [class*="_formDisclaimer_"],
     [class*="_formDisclaimer_"] p {
-      flex: 1 1 100% !important;
       width: 100% !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 10px !important;
@@ -450,19 +475,27 @@
     }
 
     @media (max-width: 900px) {
-      form[class*="_formFieldset_"],
-      shop-lead-capture,
-      *:has(> [class*="_formPhoneInputContainer_"]) {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 14px !important;
+      form[class*="_formFieldset_"] {
+        grid-template-columns: 1fr !important;
+        row-gap: 12px !important;
       }
-      [class*="_formFieldContainer_"],
+      [class*="_formFieldContainer_"]:has(#first_name),
+      [class*="_formFieldContainer_"]:has(#email),
       [class*="_formPhoneInputContainer_"],
-      [class*="_formSubmitButton_"] {
-        flex: 1 1 auto !important;
-        width: 100% !important;
+      [class*="_formSubmitButton_"],
+      [class*="_formDisclaimer_"] {
+        grid-column: 1 !important;
       }
+      /* 29px is fine with a mouse; a thumb needs 44. */
+      [class*="_formInputField_"],
+      [class*="_formPhoneInputField_"],
+      [class*="_formSubmitButton_"] {
+        height: 44px !important;
+        min-height: 44px !important;
+        line-height: 42px !important;
+      }
+      [class*="_formInputField_"],
+      [class*="_formPhoneInputField_"] { padding: 14px 12px 6px !important; }
     }
   `;
 

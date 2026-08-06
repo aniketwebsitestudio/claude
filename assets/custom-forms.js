@@ -1,17 +1,20 @@
 /* ==========================================================================
-   Bhoomija styling for the Shopify Forms waitlist popup.
+   Bhoomija styling for the Shopify Forms waitlist forms.
 
    The app renders inside <shopify-forms-embed>'s shadow root, so a normal
    stylesheet cannot reach it -- that is why the accent colour set in the
    app never reached the button. The shadow root is open, so we inject a
    <style> into it instead.
 
+   Two variants: the popup (its own 689x444 layout) and the inline block in
+   the footer band (layout comes from sections/custom-waitlist.liquid).
+
    Class names inside the app are hashed CSS modules
    (_formSubmitButton_jnbzb_106). The hash changes whenever Shopify rebuilds
    the app, so every selector matches on the stable middle segment via
    [class*="_name_"]. This is unsupported territory: if Shopify renames
-   these internals the popup quietly reverts to its default look. Nothing
-   breaks -- it just stops being branded.
+   these internals the forms quietly revert to their default look. Nothing
+   breaks -- they just stop being branded.
    ========================================================================== */
 (() => {
   const HOST = 'shopify-forms-embed';
@@ -19,7 +22,7 @@
   const LOGO = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/White_Bhoomija_Unit.png?v=1785257087';
   const STYLE_ID = 'bhoomija-forms-style';
 
-  const CSS = `
+  const CSS_POPUP = `
     /* Geometry straight off the Figma frame:
          media column 354  |  content 34 + 271 + 30  =  689 wide
          top 34 + content 376 + bottom 34            =  444 tall
@@ -305,6 +308,168 @@
     }
   `;
 
+  /* Inline variant -- the Shopify Forms block placed in the footer band.
+     The section around it supplies the heading and the background, so the
+     app's own heading is hidden and the fields become one row that wraps to
+     a stack on narrow screens. */
+  const CSS_INLINE = `
+    [class*="_formHeader_"] { display: none !important; }
+
+    [class*="_formContainer_"],
+    [class*="_gridItem_"],
+    [class*="_gridItemContent_"],
+    [class*="_appEmbed_"],
+    [class*="_container_"] {
+      display: block !important;
+      width: 100% !important;
+      max-width: none !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      grid-template-columns: none !important;
+    }
+
+    [class*="_gridItemContent_"] *,
+    [class*="_gridItemContent_"] {
+      box-sizing: border-box !important;
+    }
+
+    /* Name, Email, Phone, then the button -- one row, wrapping when there is
+       no space rather than overflowing. */
+    form[class*="_formFieldset_"],
+    shop-lead-capture,
+    *:has(> [class*="_formPhoneInputContainer_"]) {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+    [class*="_formFieldContainer_"]:has(#first_name) { order: 1 !important; }
+    [class*="_formFieldContainer_"]:has(#email) { order: 2 !important; }
+    [class*="_formPhoneInputContainer_"] { order: 3 !important; }
+    [class*="_formSubmitButton_"] { order: 4 !important; }
+    [class*="_formDisclaimer_"] { order: 5 !important; }
+
+    [class*="_formFieldContainer_"],
+    [class*="_formPhoneInputContainer_"] {
+      flex: 1 1 170px !important;
+      width: auto !important;
+      min-width: 0 !important;
+      margin: 0 !important;
+    }
+    [class*="_formPhoneInputContainer_"] {
+      display: flex !important;
+      flex-direction: row !important;
+      position: relative !important;
+    }
+    .phone-country-selector,
+    [class*="_selectContainer_"] { display: none !important; }
+    [class*="_formPhoneInputContainer_"] > * { flex: 1 1 100% !important; width: 100% !important; }
+
+    [class*="_formInputField_"],
+    [class*="_formPhoneInputField_"] {
+      height: 44px !important;
+      min-height: 44px !important;
+      width: 100% !important;
+      padding: 14px 12px 6px !important;
+      border: 0.5px solid #8B8B8B !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 13px !important;
+      line-height: 1.4 !important;
+      color: rgba(0, 0, 0, 0.8) !important;
+      box-shadow: none !important;
+    }
+    [class*="_formInputField_"]:focus,
+    [class*="_formPhoneInputField_"]:focus {
+      border-color: #7F1416 !important;
+      outline: none !important;
+    }
+    [class*="_formInputFieldLabel_"] {
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 13px !important;
+      color: rgba(0, 0, 0, 0.7) !important;
+      left: 12px !important;
+    }
+    [class*="_formInputFieldLabel_"][class*="_inputFilled_"],
+    [class*="_formFieldContainer_"]:focus-within [class*="_formInputFieldLabel_"] {
+      font-size: 10px !important;
+    }
+
+    .bh-phone-hint {
+      position: absolute;
+      left: 40px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: "IBM Plex Sans", sans-serif;
+      font-size: 13px;
+      color: rgba(0, 0, 0, 0.55);
+      pointer-events: none;
+    }
+
+    [class*="_formSubmitButton_"] {
+      flex: 0 0 132px !important;
+      width: 132px !important;
+      height: 44px !important;
+      min-height: 44px !important;
+      padding: 0 !important;
+      line-height: 44px !important;
+      margin: 0 !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: #7F1416 !important;
+      color: #ffffff !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      letter-spacing: 1.5px !important;
+      text-transform: uppercase !important;
+      cursor: pointer !important;
+    }
+    [class*="_formSubmitButton_"]:hover { background: #6a1012 !important; }
+
+    /* Disclaimer drops to its own full-width line under the row. */
+    [class*="_formDisclaimer_"],
+    [class*="_formDisclaimer_"] p {
+      flex: 1 1 100% !important;
+      width: 100% !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 10px !important;
+      line-height: 1.45 !important;
+      color: rgba(255, 255, 255, 0.75) !important;
+      text-align: left !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    @media (max-width: 900px) {
+      form[class*="_formFieldset_"],
+      shop-lead-capture,
+      *:has(> [class*="_formPhoneInputContainer_"]) {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 14px !important;
+      }
+      [class*="_formFieldContainer_"],
+      [class*="_formPhoneInputContainer_"],
+      [class*="_formSubmitButton_"] {
+        flex: 1 1 auto !important;
+        width: 100% !important;
+      }
+    }
+  `;
+
+  /* Two shapes of the same form: the popup owns its own layout, the footer
+     band leaves layout to the section wrapped around it. */
+  const isPopup = (root) => Boolean(root.querySelector('[class*="_overlay_"]'));
+
   /* Give the popup its left-hand media column. Skipped entirely if the
      app ever gets a side image of its own, so turning that setting on
      later does not produce two images. */
@@ -372,15 +537,20 @@
 
   const paint = (root) => {
     if (!root) return;
+    const popup = isPopup(root);
+
     if (!root.getElementById(STYLE_ID)) {
       const style = document.createElement('style');
       style.id = STYLE_ID;
-      style.textContent = CSS;
+      style.textContent = popup ? CSS_POPUP : CSS_INLINE;
       root.appendChild(style);
     }
-    ensureMedia(root);
-    splitHeading(root);
-    splitBody(root);
+
+    if (popup) {
+      ensureMedia(root);
+      splitHeading(root);
+      splitBody(root);
+    }
     phoneHint(root);
   };
 
@@ -391,7 +561,7 @@
       const root = host.shadowRoot;
       if (!root) return;
       paint(root);
-      /* The app mounts the popup well after page load and re-renders it on
+      /* The app mounts each form well after page load and re-renders it on
          open/close, which would drop our style node -- watch each shadow
          root and re-apply. */
       if (!seen.has(root)) {

@@ -1,0 +1,108 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "Footer",
+  "sections": {
+    "waitlist": {
+      "type": "custom-waitlist",
+      "settings": {
+        "eyebrow": "The Waitlist",
+        "heading": "Join the <em>waitlist<\/em>",
+        "subheading": "Be the first to know when we open. One note, no noise.",
+        "background_image": "shopify:\/\/shop_images\/image_55_1.png",
+        "padding_top": 60,
+        "padding_bottom": 60
+      }
+    },
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "motto": {
+          "type": "motto",
+          "settings": {
+            "motto": "<p>Our Newsletter<\/p>",
+            "fullwidth": true
+          }
+        },
+        "newsletter": {
+          "type": "newsletter",
+          "settings": {
+            "footerNewsletterTitle": "Get 10% off your next purchase.<br><em>Subscribe to our newsletter.<\/em>",
+            "fullwidth": true
+          }
+        },
+        "menu": {
+          "type": "menu",
+          "settings": {
+            "menu": "footer-menu",
+            "fullwidth": true,
+            "multicolumn": false,
+            "show_nested": false,
+            "alignment_desktop": "center",
+            "alignment_mobile": "center"
+          }
+        }
+      },
+      "block_order": [
+        "menu"
+      ],
+      "settings": {
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    },
+    "sub-footer": {
+      "type": "footer-bottom",
+      "blocks": {
+        "payments": {
+          "type": "payments",
+          "settings": {
+            "monochrome": false,
+            "text_alignment": "left",
+            "fullwidth": false
+          }
+        },
+        "selectors": {
+          "type": "selectors",
+          "settings": {
+            "country_name_format": "flag",
+            "show_country": true,
+            "show_language": true,
+            "text_alignment": "right",
+            "fullwidth": false
+          }
+        },
+        "copyright": {
+          "type": "copyright",
+          "settings": {
+            "copyright": "",
+            "text_alignment": "left",
+            "fullwidth": true
+          }
+        }
+      },
+      "block_order": [
+        "payments",
+        "selectors",
+        "copyright"
+      ],
+      "settings": {
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    }
+  },
+  "order": [
+    "waitlist",
+    "footer",
+    "sub-footer"
+  ]
+}

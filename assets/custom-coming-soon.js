@@ -35,11 +35,14 @@
      language pickers are <a href="#"> handled by the theme's own JS. */
   const FUNCTIONAL = 'localization-form, .localization-list, #languageBox, #countryBox';
 
-  /* Pages that are written and must stay reachable, wherever they are
-     linked from -- the footer menu included, and on the home page, which
-     otherwise lets nothing through. Anyone verifying the business needs to
-     be able to open these; a "Coming soon" panel in their place would fail
-     the check. Everything under /policies/ is Shopify's own set. */
+  /* Pages that are written and stay reachable from body copy -- one policy
+     page linking to another, or a link inside a section on the home page,
+     which otherwise lets nothing through. Everything under /policies/ is
+     Shopify's own set.
+
+     This does NOT override the lists above: a header or footer menu link is
+     held back whatever it points at, so the navigation reads as uniformly
+     unfinished rather than half-open. */
   const READY_PATHS = [
     '/pages/privacy-policy',
     '/pages/terms-and-conditions',
@@ -172,12 +175,16 @@
   const wanted = (event) => {
     if (!event.target.closest) return false;
 
-    /* Checked before anything else, so a finished page stays reachable even
-       from a list that is otherwise held back. */
+    /* The header and footer menus are held back first and unconditionally,
+       on every page and whatever the link points at. Sitting above the ready
+       check means the navigation never has one live entry among the held
+       ones, which is what made it read as broken rather than unfinished. */
+    if (event.target.closest(NOT_READY)) return true;
+
+    /* Everywhere else, a finished page opens normally. */
     const link = event.target.closest('a[href]');
     if (link && isReady(link)) return false;
 
-    if (event.target.closest(NOT_READY)) return true;
     if (!IS_HOME) return false;
 
     /* The category carousel fires a click after a drag. It suppresses that

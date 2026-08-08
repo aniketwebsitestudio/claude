@@ -1,0 +1,31 @@
+/* ==========================================================================
+   Content pages (Privacy, Terms, Shipping, Contact)
+
+   sections/t-page.liquid puts the page title in its own column as an <h1>,
+   which picks up the theme's default heading face. On this store that reads
+   as a different voice from the rest of the site, so it is matched to the
+   home page's "Shop by category" heading: IvyPresto Display at its thinnest
+   weight, tight leading, 2% tracking, and no uppercasing.
+
+   Kept left-aligned -- "Shop by category" is centred because it sits above a
+   full-width row; here the title shares a two-column layout with the copy.
+   ========================================================================== */
+.general-page h1 {
+  margin: 0;
+  font-family: var(--hFontFamily);
+  font-weight: 100;
+  font-size: 32px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.general-page h1 em {
+  font-style: italic;
+}
+
+@media (min-width: 778px) {
+  .general-page h1 {
+    font-size: 48px;
+  }
+}

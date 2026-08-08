@@ -35,6 +35,31 @@
      language pickers are <a href="#"> handled by the theme's own JS. */
   const FUNCTIONAL = 'localization-form, .localization-list, #languageBox, #countryBox';
 
+  /* Pages that are written and must stay reachable, wherever they are
+     linked from -- the footer menu included, and on the home page, which
+     otherwise lets nothing through. Anyone verifying the business needs to
+     be able to open these; a "Coming soon" panel in their place would fail
+     the check. Everything under /policies/ is Shopify's own set. */
+  const READY_PATHS = [
+    '/pages/privacy-policy',
+    '/pages/terms-and-conditions',
+    '/pages/shipping-policy',
+    '/pages/contact-us'
+  ];
+
+  const isReady = (anchor) => {
+    let url;
+    try {
+      url = new URL(anchor.href, window.location.href);
+    } catch (error) {
+      return false;
+    }
+    /* Locale-prefixed paths (/en-in/pages/...) end in the same handle. */
+    const path = url.pathname.replace(/\/$/, '');
+    if (path.indexOf('/policies/') !== -1) return true;
+    return READY_PATHS.some((ready) => path.endsWith(ready));
+  };
+
   /* On the home page nothing may navigate away at all: product cards,
      category cards, the hero button, the footer links and the Shopify
      credit all raise the popup instead. In-page anchors (#), and links
@@ -146,6 +171,12 @@
 
   const wanted = (event) => {
     if (!event.target.closest) return false;
+
+    /* Checked before anything else, so a finished page stays reachable even
+       from a list that is otherwise held back. */
+    const link = event.target.closest('a[href]');
+    if (link && isReady(link)) return false;
+
     if (event.target.closest(NOT_READY)) return true;
     if (!IS_HOME) return false;
 

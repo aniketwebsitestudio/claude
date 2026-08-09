@@ -51,6 +51,25 @@
 	border-block-start: var(--globalBorder);
 }
 
+/* The country picker's list is the app's own, and it sizes itself to the
+   room it can find. Nothing in this band may clip it or cap its height, or
+   it comes out one row deep -- which is the difference between here and the
+   popup, where it opens into an overlay with the whole window to use. */
+.bh-waitlist,
+.bh-waitlist__band,
+.bh-waitlist__inner,
+.bh-waitlist__form,
+.bh-waitlist__form * {
+	overflow: visible;
+}
+
+/* Room beneath the fields for the list to open into, rather than the band
+   ending just under the button. */
+.bh-waitlist__form {
+	position: relative;
+	z-index: 2;
+}
+
 .bh-waitlist__eyebrow {
 	padding: 10px var(--mardding);
 	border-block-end: var(--globalBorder);

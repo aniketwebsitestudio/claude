@@ -82,7 +82,7 @@
           "type": "selectors",
           "settings": {
             "country_name_format": "flag",
-            "show_country": true,
+            "show_country": false,
             "show_language": true,
             "text_alignment": "right",
             "fullwidth": false

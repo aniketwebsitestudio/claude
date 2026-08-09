@@ -204,23 +204,23 @@
     /* The flag is what made this unusable at 29px: at its natural size it
        overflowed the strip and was cut off top and bottom. The caret beside
        it comes in far too heavy for an 11px row. */
-    .phone-country-selector img,
-    [class*="_selectContainer_"] img {
+    /* Flag and caret, on the closed control only. Nothing here reaches the
+       list: sizing that is what collapsed the form when it opened. */
+    [class*="_selectToggle_"] img,
+    .phone-country-selector > button img {
       width: 20px !important;
       height: 14px !important;
       min-width: 20px !important;
       min-height: 14px !important;
       max-height: none !important;
       object-fit: contain !important;
-      object-position: center !important;
       align-self: center !important;
       display: block !important;
     }
-    /* The flag was coming through cut in half: the app wraps it in a span
-       shorter than the flag itself, which clipped what stuck out. Whatever
-       that wrapper is, it stops cropping and centres its contents. */
-    .phone-country-selector *:has(> img),
-    [class*="_selectContainer_"] *:has(> img) {
+    /* The app wraps the flag in a span shorter than the flag, which cropped
+       it. Direct children of the toggle only. */
+    [class*="_selectToggle_"] > *,
+    .phone-country-selector > button > * {
       display: flex !important;
       align-items: center !important;
       height: auto !important;
@@ -229,8 +229,8 @@
       overflow: visible !important;
       line-height: 1 !important;
     }
-    .phone-country-selector svg,
-    [class*="_selectContainer_"] svg {
+    [class*="_selectToggle_"] svg,
+    .phone-country-selector > button svg {
       width: 8px !important;
       height: 8px !important;
       opacity: 0.55 !important;
@@ -566,23 +566,23 @@
       line-height: 1 !important;
       color: rgba(0, 0, 0, 0.8) !important;
     }
-    .phone-country-selector img,
-    [class*="_selectContainer_"] img {
+    /* Flag and caret, on the closed control only. Nothing here reaches the
+       list: sizing that is what collapsed the form when it opened. */
+    [class*="_selectToggle_"] img,
+    .phone-country-selector > button img {
       width: 20px !important;
       height: 14px !important;
       min-width: 20px !important;
       min-height: 14px !important;
       max-height: none !important;
       object-fit: contain !important;
-      object-position: center !important;
       align-self: center !important;
       display: block !important;
     }
-    /* The flag was coming through cut in half: the app wraps it in a span
-       shorter than the flag itself, which clipped what stuck out. Whatever
-       that wrapper is, it stops cropping and centres its contents. */
-    .phone-country-selector *:has(> img),
-    [class*="_selectContainer_"] *:has(> img) {
+    /* The app wraps the flag in a span shorter than the flag, which cropped
+       it. Direct children of the toggle only. */
+    [class*="_selectToggle_"] > *,
+    .phone-country-selector > button > * {
       display: flex !important;
       align-items: center !important;
       height: auto !important;
@@ -591,12 +591,19 @@
       overflow: visible !important;
       line-height: 1 !important;
     }
-    .phone-country-selector svg,
-    [class*="_selectContainer_"] svg {
+    [class*="_selectToggle_"] svg,
+    .phone-country-selector > button svg {
       width: 8px !important;
       height: 8px !important;
       opacity: 0.55 !important;
     }
+    /* Nothing here sizes or positions the list. Forcing a height on it --
+       and on the app's wrappers around it, to find whichever one scrolls --
+       is what made the form disappear the moment the picker was opened. Its
+       depth is the app's, and a working form is worth more than a taller
+       list. Colour is the one exception: it has to be overridden, because
+       this sheet's white default would otherwise leave the list white on
+       white, and colour cannot affect layout. */
     /* The white default this sheet sets for the dark band was reaching the
        country list too, which opens on its own white panel -- "India +91"
        was white on white. The picker and its list are the one part of the
@@ -610,44 +617,6 @@
     [role="option"],
     [role="option"] * {
       color: rgba(0, 0, 0, 0.8) !important;
-    }
-    /* Depth of the list. Two countries at a time is not enough to pick from,
-       and sizing [role="listbox"] alone did nothing -- the element that
-       actually scrolls is one of the app's own wrappers, and it carries its
-       height itself. So the height is released across the whole chain and
-       the cap put on each candidate: whichever one is the scroller, it gets
-       the depth, and the others simply grow to their content.
-
-       Capped against the viewport as well, so a short phone screen cannot
-       end up with a list taller than the window. */
-    [class*="_selectContainer_"] [role="listbox"],
-    [class*="_selectContainer_"] ul,
-    [class*="_selectContainer_"] [class*="_menu"],
-    [class*="_selectContainer_"] [class*="_list"],
-    [class*="_selectContainer_"] [class*="_dropdown"],
-    [class*="_selectContainer_"] [class*="_options"],
-    .phone-country-selector [role="listbox"],
-    .phone-country-selector ul {
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: min(380px, 55vh) !important;
-      overflow-y: auto !important;
-      font-family: "IBM Plex Sans", sans-serif !important;
-      font-size: 12px !important;
-    }
-    /* Whatever sits between the picker and that list must not impose a
-       height of its own, or the cap above never gets the room to apply. */
-    [class*="_selectContainer_"] > div,
-    .phone-country-selector > div {
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
-    }
-    [role="option"] {
-      padding: 6px 10px !important;
-      border-radius: 0 !important;
-      font-size: 12px !important;
-      line-height: 1.3 !important;
     }
     /* The number takes what the picker leaves. A 0% basis rather than auto:
        an input sizes itself off its size attribute, which is wider than the

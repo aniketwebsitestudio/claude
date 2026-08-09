@@ -24,3 +24,86 @@ sub-footer .payment-icons img.payment-icon--upi {
   #f-newsletter p { font-size: 26px !important; }
   #f-links .f-links a { font-size: 12px; }
 }
+
+/* ==========================================================================
+   Currency selector (converter app)
+
+   The theme's country/region selector is off -- it lists Shopify markets,
+   and this store sells in one currency, so it offered a choice checkout
+   could not honour. The converter app mounts into .buckscc-currency-box,
+   rendered in its place by sections/footer-bottom.liquid.
+
+   The app ships its own look, which does not belong next to the language
+   chip beside it. What follows dresses the mount point to match that chip
+   -- frame, type and caret -- and leaves the app's own behaviour alone.
+   Sitting at the bottom of the page, any list it opens is flipped upward
+   so it is not drawn off the end of the document.
+   ========================================================================== */
+sub-footer .selector-currency .buckscc-currency-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border: var(--globalBorder, 1px solid currentColor);
+  border-radius: 0;
+  background: transparent;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: inherit;
+}
+
+/* Whatever control the app renders inside -- a select, a button -- loses
+   its own frame and takes the type of the chip around it. */
+sub-footer .selector-currency .buckscc-currency-box select,
+sub-footer .selector-currency .buckscc-currency-box button,
+sub-footer .selector-currency .buckscc-currency-box > div {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+  padding: 0 18px 0 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* The caret the theme draws on its own selectors, so the two chips match.
+   Only painted when the app has not drawn one of its own. */
+sub-footer .selector-currency .buckscc-currency-box::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin-top: -5px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+sub-footer .selector-currency .buckscc-currency-box:has(svg)::after,
+sub-footer .selector-currency .buckscc-currency-box:has(.caret)::after {
+  display: none;
+}
+
+/* Bottom of the page: an absolutely positioned list opens upward. */
+sub-footer .selector-currency .buckscc-currency-box ul,
+sub-footer .selector-currency .buckscc-currency-box [class*="list"],
+sub-footer .selector-currency .buckscc-currency-box [class*="dropdown"],
+sub-footer .selector-currency .buckscc-currency-box [role="listbox"] {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+@media (max-width: 777px) {
+  sub-footer .selector-currency .buckscc-currency-box { font-size: 12px; }
+}

@@ -198,11 +198,28 @@
        it comes in far too heavy for an 11px row. */
     .phone-country-selector img,
     [class*="_selectContainer_"] img {
-      width: 19px !important;
-      height: 13px !important;
-      min-width: 19px !important;
-      object-fit: cover !important;
+      width: 20px !important;
+      height: 14px !important;
+      min-width: 20px !important;
+      min-height: 14px !important;
+      max-height: none !important;
+      object-fit: contain !important;
+      object-position: center !important;
+      align-self: center !important;
       display: block !important;
+    }
+    /* The flag was coming through cut in half: the app wraps it in a span
+       shorter than the flag itself, which clipped what stuck out. Whatever
+       that wrapper is, it stops cropping and centres its contents. */
+    .phone-country-selector *:has(> img),
+    [class*="_selectContainer_"] *:has(> img) {
+      display: flex !important;
+      align-items: center !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      line-height: 1 !important;
     }
     .phone-country-selector svg,
     [class*="_selectContainer_"] svg {
@@ -544,11 +561,28 @@
     }
     .phone-country-selector img,
     [class*="_selectContainer_"] img {
-      width: 19px !important;
-      height: 13px !important;
-      min-width: 19px !important;
-      object-fit: cover !important;
+      width: 20px !important;
+      height: 14px !important;
+      min-width: 20px !important;
+      min-height: 14px !important;
+      max-height: none !important;
+      object-fit: contain !important;
+      object-position: center !important;
+      align-self: center !important;
       display: block !important;
+    }
+    /* The flag was coming through cut in half: the app wraps it in a span
+       shorter than the flag itself, which clipped what stuck out. Whatever
+       that wrapper is, it stops cropping and centres its contents. */
+    .phone-country-selector *:has(> img),
+    [class*="_selectContainer_"] *:has(> img) {
+      display: flex !important;
+      align-items: center !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
+      overflow: visible !important;
+      line-height: 1 !important;
     }
     .phone-country-selector svg,
     [class*="_selectContainer_"] svg {
@@ -574,7 +608,10 @@
        29px field. Type and height only -- where it opens is left to the app. */
     [class*="_selectContainer_"] [role="listbox"],
     .phone-country-selector [role="listbox"] {
-      max-height: 190px !important;
+      /* Twice the app's own depth, so more than two countries show at a
+         time -- capped against the viewport so a short phone screen cannot
+         end up with a list taller than the window. */
+      max-height: min(380px, 55vh) !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 12px !important;
     }

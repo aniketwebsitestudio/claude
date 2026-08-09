@@ -23,6 +23,11 @@ sub-footer .payment-icons img.payment-icon--upi {
 @media (max-width: 777px) {
   #f-newsletter p { font-size: 26px !important; }
   #f-links .f-links a { font-size: 12px; }
+
+  /* Payment marks, off on phones. The row collapses to a single narrow
+     cell there and the mark reads as a stray swatch beside the currency
+     and language chips rather than as payment information. */
+  sub-footer .payment-icons { display: none; }
 }
 
 

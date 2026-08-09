@@ -144,10 +144,10 @@
     [class*="_formSubmitButton_"] { order: 4 !important; }
     [class*="_formDisclaimer_"] { order: 5 !important; }
 
-    /* Phone row: country picker on the left, number filling the rest. The
-       two read as one control -- the picker carries the box's left, top and
-       bottom edges and drops its right one, so the single line between them
-       is the number field's left border rather than two borders touching. */
+    /* Phone row: country picker on the left, number filling the rest. They
+       are two closed boxes with a small gap, not one merged control -- the
+       app leaves space between them, and a picker missing its right edge
+       across that gap just read as an unfinished box. */
     [class*="_formPhoneInputContainer_"] {
       display: flex !important;
       flex-direction: row !important;
@@ -193,7 +193,6 @@
       padding: 0 7px !important;
       gap: 5px !important;
       border: 0.5px solid #8B8B8B !important;
-      border-right: 0 !important;
       border-radius: 0 !important;
       background: #ffffff !important;
       box-shadow: none !important;
@@ -521,7 +520,8 @@
          error message -- above the box as well, sitting the phone label
          further from its field than the other two. The picker's own border
          does the separating instead. */
-      gap: 0 !important;
+      column-gap: 6px !important;
+      row-gap: 0 !important;
       position: relative !important;
       width: 100% !important;
       max-width: none !important;
@@ -542,9 +542,8 @@
       width: 100% !important;
     }
     /* Country picker: same frame as the popup, and the same restraint --
-       the app's own control, given the box's left, top and bottom edges
-       with its right one dropped, and otherwise left to lay itself out and
-       open its own list. */
+       the app's own control, given a closed box of its own, and otherwise
+       left to lay itself out and open its own list. */
     .phone-country-selector,
     [class*="_selectContainer_"] {
       flex: 0 0 auto !important;
@@ -559,7 +558,6 @@
       padding: 0 7px !important;
       gap: 5px !important;
       border: 0.5px solid #8B8B8B !important;
-      border-right: 0 !important;
       border-radius: 0 !important;
       background: #ffffff !important;
       box-shadow: none !important;

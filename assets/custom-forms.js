@@ -164,6 +164,15 @@
       max-width: none !important;
       flex: 1 1 100% !important;
     }
+    /* ...and so is the wrapper around the number. At a full 100% it was as
+       wide as the whole row on its own, so with the picker beside it the row
+       overran its column and the number's right border ended up outside the
+       panel, which clips. It takes what the picker leaves instead. */
+    [class*="_formPhoneInputContainer_"] [class*="_formFieldContainer_"] {
+      flex: 1 1 0% !important;
+      width: auto !important;
+      min-width: 0 !important;
+    }
     /* Only the frame is ours. The picker is the app's own control and it
        opens its own list -- restyling its insides is what stopped it
        opening, so nothing here touches how it is laid out internally or
@@ -604,16 +613,37 @@
     [role="option"] * {
       color: rgba(0, 0, 0, 0.8) !important;
     }
-    /* The list comes in at the app's own size, which is oversized next to a
-       29px field. Type and height only -- where it opens is left to the app. */
+    /* Depth of the list. Two countries at a time is not enough to pick from,
+       and sizing [role="listbox"] alone did nothing -- the element that
+       actually scrolls is one of the app's own wrappers, and it carries its
+       height itself. So the height is released across the whole chain and
+       the cap put on each candidate: whichever one is the scroller, it gets
+       the depth, and the others simply grow to their content.
+
+       Capped against the viewport as well, so a short phone screen cannot
+       end up with a list taller than the window. */
     [class*="_selectContainer_"] [role="listbox"],
-    .phone-country-selector [role="listbox"] {
-      /* Twice the app's own depth, so more than two countries show at a
-         time -- capped against the viewport so a short phone screen cannot
-         end up with a list taller than the window. */
+    [class*="_selectContainer_"] ul,
+    [class*="_selectContainer_"] [class*="_menu"],
+    [class*="_selectContainer_"] [class*="_list"],
+    [class*="_selectContainer_"] [class*="_dropdown"],
+    [class*="_selectContainer_"] [class*="_options"],
+    .phone-country-selector [role="listbox"],
+    .phone-country-selector ul {
+      height: auto !important;
+      min-height: 0 !important;
       max-height: min(380px, 55vh) !important;
+      overflow-y: auto !important;
       font-family: "IBM Plex Sans", sans-serif !important;
       font-size: 12px !important;
+    }
+    /* Whatever sits between the picker and that list must not impose a
+       height of its own, or the cap above never gets the room to apply. */
+    [class*="_selectContainer_"] > div,
+    .phone-country-selector > div {
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none !important;
     }
     [role="option"] {
       padding: 6px 10px !important;

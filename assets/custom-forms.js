@@ -181,7 +181,8 @@
     .phone-country-selector > button {
       height: 29px !important;
       min-height: 29px !important;
-      padding: 0 6px !important;
+      padding: 0 7px !important;
+      gap: 5px !important;
       border: 0.5px solid #8B8B8B !important;
       border-right: 0 !important;
       border-radius: 0 !important;
@@ -197,9 +198,11 @@
        it comes in far too heavy for an 11px row. */
     .phone-country-selector img,
     [class*="_selectContainer_"] img {
-      height: 11px !important;
-      width: auto !important;
-      object-fit: contain !important;
+      width: 19px !important;
+      height: 13px !important;
+      min-width: 19px !important;
+      object-fit: cover !important;
+      display: block !important;
     }
     .phone-country-selector svg,
     [class*="_selectContainer_"] svg {
@@ -446,12 +449,11 @@
        otherwise a grid on the form would only ever see the wrappers. */
     form[class*="_formFieldset_"] {
       display: grid !important;
-      /* Two columns, not three. The phone field carries a country picker
-         beside its number, so a third of the row left it the narrowest
-         field with the most in it -- it now takes a row of its own, the
-         full width of Name and Email above it. */
-      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-      column-gap: 12px !important;
+      /* All three on one line. The phone field carries a picker as well as
+         a number, so its column is given more room than the other two
+         rather than an equal third -- 1fr 1fr 1.35fr. */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.35fr) !important;
+      column-gap: 10px !important;
       row-gap: 14px !important;
       align-items: start !important;
       width: 100% !important;
@@ -467,7 +469,7 @@
 
     [class*="_formFieldContainer_"]:has(#first_name) { grid-column: 1 !important; }
     [class*="_formFieldContainer_"]:has(#email) { grid-column: 2 !important; }
-    [class*="_formPhoneInputContainer_"] { grid-column: 1 / -1 !important; }
+    [class*="_formPhoneInputContainer_"] { grid-column: 3 !important; }
     [class*="_formSubmitButton_"] { grid-column: 1 / -1 !important; }
     [class*="_formDisclaimer_"] { grid-column: 1 / -1 !important; }
 
@@ -528,7 +530,8 @@
     .phone-country-selector > button {
       height: 29px !important;
       min-height: 29px !important;
-      padding: 0 6px !important;
+      padding: 0 7px !important;
+      gap: 5px !important;
       border: 0.5px solid #8B8B8B !important;
       border-right: 0 !important;
       border-radius: 0 !important;
@@ -541,15 +544,45 @@
     }
     .phone-country-selector img,
     [class*="_selectContainer_"] img {
-      height: 11px !important;
-      width: auto !important;
-      object-fit: contain !important;
+      width: 19px !important;
+      height: 13px !important;
+      min-width: 19px !important;
+      object-fit: cover !important;
+      display: block !important;
     }
     .phone-country-selector svg,
     [class*="_selectContainer_"] svg {
       width: 8px !important;
       height: 8px !important;
       opacity: 0.55 !important;
+    }
+    /* The white default this sheet sets for the dark band was reaching the
+       country list too, which opens on its own white panel -- "India +91"
+       was white on white. The picker and its list are the one part of the
+       form that is not on the band, so the text goes back to dark. */
+    .phone-country-selector,
+    .phone-country-selector *,
+    [class*="_selectContainer_"],
+    [class*="_selectContainer_"] *,
+    [role="listbox"],
+    [role="listbox"] *,
+    [role="option"],
+    [role="option"] * {
+      color: rgba(0, 0, 0, 0.8) !important;
+    }
+    /* The list comes in at the app's own size, which is oversized next to a
+       29px field. Type and height only -- where it opens is left to the app. */
+    [class*="_selectContainer_"] [role="listbox"],
+    .phone-country-selector [role="listbox"] {
+      max-height: 190px !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 12px !important;
+    }
+    [role="option"] {
+      padding: 6px 10px !important;
+      border-radius: 0 !important;
+      font-size: 12px !important;
+      line-height: 1.3 !important;
     }
     /* The number takes what the picker leaves. A 0% basis rather than auto:
        an input sizes itself off its size attribute, which is wider than the

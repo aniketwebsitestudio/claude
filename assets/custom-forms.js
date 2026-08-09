@@ -21,6 +21,8 @@
   const PHOTO = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/image_76_1.png?v=1785950178';
   const LOGO = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/White_Bhoomija_Unit.png?v=1785257087';
   const STYLE_ID = 'bhoomija-forms-style';
+  /* Four countries in view rather than one. */
+  const LIST_MAX = 180;
 
   const CSS_POPUP = `
     /* Geometry straight off the Figma frame:
@@ -597,14 +599,14 @@
       height: 8px !important;
       opacity: 0.55 !important;
     }
-    /* The list's depth. The app measures the room it thinks it has and
-       writes the result inline on its dropdown -- max-height: 60px, which is
-       one country. That inline value carries no !important, so this beats
-       it, and because it names the one element that actually scrolls it
-       reaches nothing else: releasing the height across the app's wrappers
-       to find that element is what collapsed the form before. */
-    [class*="_dropdownContainer_"] {
-      max-height: 180px !important;
+    /* The list's depth -- see listDepth() below, which is what actually
+       carries this. The rule is kept as a floor for the case where the app
+       has not written its own value yet, and is given three attribute
+       selectors so it outranks the app's own class rule: its stylesheet is
+       adopted by the shadow root, and adopted sheets are applied after the
+       <style> we inject, so a tie on specificity goes to the app. */
+    [class*="_formPhoneInputContainer_"] [class*="_selectContainer_"] [class*="_dropdownContainer_"] {
+      max-height: ${LIST_MAX}px !important;
     }
 
     /* Nothing else here sizes or positions the list. Forcing a height on it --
@@ -823,6 +825,25 @@
      is clicked. */
   const TEASER = '[data-testid="form-teaser"], [class*="_teaserContainer_"]';
 
+  /* The country list opens one row deep because the app measures the room it
+     thinks it has and writes the answer straight onto the element:
+     style="max-height: 60px". A stylesheet cannot be relied on to beat that
+     here -- the app's own styles are adopted by the shadow root, and adopted
+     sheets are applied after the <style> we inject, so anything it declares
+     with equal weight wins. Setting the property on the element itself, with
+     priority, sits above all of it.
+
+     Re-run on every pass, because the app rewrites its value each time the
+     list opens; the guard makes reapplying a no-op once ours is in place, so
+     watching for the change cannot feed itself. */
+  const listDepth = (root) => {
+    root.querySelectorAll('[class*="_dropdownContainer_"]').forEach((list) => {
+      if (list.style.getPropertyPriority('max-height') === 'important' &&
+        list.style.maxHeight === LIST_MAX + 'px') return;
+      list.style.setProperty('max-height', LIST_MAX + 'px', 'important');
+    });
+  };
+
   /* The app closes the popup when the dark area around it is clicked. With a
      form to fill in that is easy to do by accident -- one stray click and
      whatever was typed is gone -- so only the close button dismisses it now.
@@ -1005,7 +1026,10 @@
     phoneHint(root);
     /* Footer form only. The popup keeps the in-box placeholders its Figma
        frame specifies, and nothing of ours is added to it. */
-    if (!popup) fieldTags(root);
+    if (!popup) {
+      fieldTags(root);
+      listDepth(root);
+    }
   };
 
   const seen = new WeakSet();
@@ -1017,10 +1041,18 @@
       paint(root, host);
       /* The app mounts each form well after page load and re-renders it on
          open/close, which would drop our style node -- watch each shadow
-         root and re-apply. */
+         root and re-apply. Attributes are watched too, narrowed to style:
+         the country list's height is written there, and it is rewritten
+         each time the list opens. Every pass is a no-op once our values are
+         in place, so our own writes cannot keep the observer running. */
       if (!seen.has(root)) {
         seen.add(root);
-        new MutationObserver(() => paint(root, host)).observe(root, { childList: true, subtree: true });
+        new MutationObserver(() => paint(root, host)).observe(root, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['style']
+        });
       }
     });
   };

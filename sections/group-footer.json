@@ -13,11 +13,33 @@
   "sections": {
     "waitlist": {
       "type": "custom-waitlist",
+      "blocks": {
+        "forms_inline_etTpCK": {
+          "type": "shopify://apps/forms/blocks/inline/8744a304-fcb1-4347-b211-bb6b4759a76a",
+          "settings": {
+            "form_id": "1101466",
+            "text_color": "#202020",
+            "button_background_color": "#202020",
+            "button_label_color": "#FFFFFF",
+            "links_color": "#1878B9",
+            "errors_color": "#E02229",
+            "text_alignment": "center",
+            "form_alignment": "center",
+            "padding_top": 0,
+            "padding_bottom": 24,
+            "padding_right": 0,
+            "padding_left": 0
+          }
+        }
+      },
+      "block_order": [
+        "forms_inline_etTpCK"
+      ],
       "settings": {
         "eyebrow": "The Waitlist",
-        "heading": "Join the <em>waitlist<\/em>",
-        "subheading": "Be the first to know when we open. One note, no noise.",
-        "background_image": "shopify:\/\/shop_images\/image_55_1.png",
+        "heading": "Join the <em>waitlist</em>",
+        "subheading": "Be the first to know when we open. Details coming soon.",
+        "background_image": "shopify://shop_images/image_55_1.png",
         "padding_top": 60,
         "padding_bottom": 60
       }
@@ -25,20 +47,6 @@
     "footer": {
       "type": "footer",
       "blocks": {
-        "motto": {
-          "type": "motto",
-          "settings": {
-            "motto": "<p>Our Newsletter<\/p>",
-            "fullwidth": true
-          }
-        },
-        "newsletter": {
-          "type": "newsletter",
-          "settings": {
-            "footerNewsletterTitle": "Get 10% off your next purchase.<br><em>Subscribe to our newsletter.<\/em>",
-            "fullwidth": true
-          }
-        },
         "menu": {
           "type": "menu",
           "settings": {

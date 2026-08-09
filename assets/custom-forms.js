@@ -597,7 +597,17 @@
       height: 8px !important;
       opacity: 0.55 !important;
     }
-    /* Nothing here sizes or positions the list. Forcing a height on it --
+    /* The list's depth. The app measures the room it thinks it has and
+       writes the result inline on its dropdown -- max-height: 60px, which is
+       one country. That inline value carries no !important, so this beats
+       it, and because it names the one element that actually scrolls it
+       reaches nothing else: releasing the height across the app's wrappers
+       to find that element is what collapsed the form before. */
+    [class*="_dropdownContainer_"] {
+      max-height: 180px !important;
+    }
+
+    /* Nothing else here sizes or positions the list. Forcing a height on it --
        and on the app's wrappers around it, to find whichever one scrolls --
        is what made the form disappear the moment the picker was opened. Its
        depth is the app's, and a working form is worth more than a taller

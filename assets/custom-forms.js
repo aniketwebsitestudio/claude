@@ -21,6 +21,10 @@
   const PHOTO = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/image_76_1.png?v=1785950178';
   const LOGO = 'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/White_Bhoomija_Unit.png?v=1785257087';
   const STYLE_ID = 'bhoomija-forms-style';
+  /* Width of the country picker. Fixed rather than content-sized so the
+     number field's left edge is predictable -- the "Phone no." hint is
+     positioned off it. */
+  const SELECTOR_W = 58;
 
   const CSS_POPUP = `
     /* Geometry straight off the Figma frame:
@@ -144,10 +148,10 @@
     [class*="_formSubmitButton_"] { order: 4 !important; }
     [class*="_formDisclaimer_"] { order: 5 !important; }
 
-    /* Phone row: the country picker is dropped -- its flag renders clipped
-       at 29px and it adds nothing while the form is India-only. The number
-       field takes the full 271px and keeps the +91 prefix, so the dialing
-       code is still submitted. */
+    /* Phone row: country picker on the left, number filling the rest. The
+       two read as one control -- the picker carries the box's left, top and
+       bottom edges and drops its right one, so the single line between them
+       is the number field's left border rather than two borders touching. */
     [class*="_formPhoneInputContainer_"] {
       display: flex !important;
       flex-direction: row !important;
@@ -155,11 +159,8 @@
       margin: 0 !important;
       position: relative !important;
     }
-    .phone-country-selector,
-    [class*="_selectContainer_"] { display: none !important; }
-    /* With the picker hidden the remaining wrapper still sizes to content,
-       which left the phone field short of the other two -- force the whole
-       chain to the full column width. */
+    /* The whole chain fills the column; the picker is the one part sized to
+       its own content, so it is pulled back out of that rule below. */
     [class*="_formPhoneInputContainer_"],
     [class*="_formPhoneInputContainer_"] > *,
     [class*="_formPhoneInputContainer_"] [class*="_formFieldContainer_"] {
@@ -167,9 +168,76 @@
       max-width: none !important;
       flex: 1 1 100% !important;
     }
+    .phone-country-selector,
+    [class*="_selectContainer_"] {
+      display: flex !important;
+      align-items: stretch !important;
+      flex: 0 0 ${SELECTOR_W}px !important;
+      width: ${SELECTOR_W}px !important;
+      max-width: ${SELECTOR_W}px !important;
+      min-width: 0 !important;
+      position: relative !important;
+    }
+    [class*="_selectToggle_"],
+    .phone-country-selector button,
+    .phone-country-selector select {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      width: 100% !important;
+      height: 29px !important;
+      min-height: 29px !important;
+      padding: 0 6px !important;
+      border: 0.5px solid #8B8B8B !important;
+      border-right: 0 !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-weight: 400 !important;
+      font-size: 11px !important;
+      line-height: 1 !important;
+      letter-spacing: 0 !important;
+      color: rgba(0, 0, 0, 0.8) !important;
+      cursor: pointer !important;
+    }
+    /* The flag is what made this unusable at 29px: left at its natural size
+       it overflowed the strip and was cut off top and bottom. */
+    .phone-country-selector img,
+    .phone-country-selector svg,
+    [class*="_selectContainer_"] img,
+    [class*="_selectContainer_"] svg {
+      height: 11px !important;
+      width: auto !important;
+      max-width: 16px !important;
+      flex: 0 0 auto !important;
+      object-fit: contain !important;
+      display: block !important;
+    }
+    /* The country list itself: the app drops it into the row, where the
+       29px strip would clip it. */
+    [class*="_selectContainer_"] [class*="_selectMenu_"],
+    [class*="_selectContainer_"] [role="listbox"],
+    .phone-country-selector [role="listbox"] {
+      position: absolute !important;
+      top: calc(100% + 2px) !important;
+      left: 0 !important;
+      z-index: 5 !important;
+      width: max-content !important;
+      min-width: 200px !important;
+      max-height: 220px !important;
+      overflow-y: auto !important;
+      border: 0.5px solid #8B8B8B !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 11px !important;
+    }
     [class*="_formPhoneInputField_"] {
       width: 100% !important;
       max-width: none !important;
+      flex: 1 1 auto !important;
     }
     /* Border-box everywhere, or the phone field's padding and border add on
        top of its 100% and it outgrows Name and Email. */
@@ -184,10 +252,11 @@
     }
 
     /* Standing in for the placeholder: the field is never empty (+91), so
-       the app's own label is always in its filled state and hidden. */
+       the app's own label is always in its filled state and hidden. Sits
+       clear of the country picker and the dialing code beside it. */
     .bh-phone-hint {
       position: absolute;
-      left: 36px;
+      left: ${SELECTOR_W + 36}px;
       top: 50%;
       transform: translateY(-50%);
       font-family: "IBM Plex Sans", sans-serif;
@@ -197,9 +266,11 @@
       pointer-events: none;
     }
 
+    /* The country picker is deliberately not in this list: it is a 58px
+       strip with its own centring and no right border, and the shared
+       padding here would push its flag off centre. */
     [class*="_formInputField_"],
-    [class*="_formPhoneInputField_"],
-    [class*="_selectToggle_"] {
+    [class*="_formPhoneInputField_"] {
       height: 29px !important;
       min-height: 29px !important;
       padding: 7px 11px 6px !important;
@@ -308,7 +379,12 @@
         height: 190px !important;
         min-height: 190px !important;
       }
-      .bh-phone-hint { left: 38px; }
+      /* line-height belongs to the text fields; on the picker it would
+         push the flag down out of the middle of the taller strip. */
+      [class*="_selectToggle_"],
+      .phone-country-selector button,
+      .phone-country-selector select { line-height: 1 !important; }
+      .bh-phone-hint { left: ${SELECTOR_W + 38}px; }
       [class*="_gridItemContent_"] { padding: 30px 24px 32px !important; }
       [class*="_formHeader_"] { margin: 0 0 32px !important; }
       [class*="_textHeading_"] { font-size: 44px !important; }
@@ -429,10 +505,11 @@
       display: flex !important;
       flex-direction: row !important;
       flex-wrap: wrap !important;
-      /* The app spaces the picker from the number with a gap. Now that the
-         row wraps, that same gap opens up between the label line and the box
-         -- so the phone field's label sat further from its box than the
-         other two. Nothing shares the row any more, so it goes to zero. */
+      /* The app's own gap here would show up twice over: between the picker
+         and the number, and -- because the row wraps for the label and the
+         error message -- above the box as well, sitting the phone label
+         further from its field than the other two. The picker's own border
+         does the separating instead. */
       gap: 0 !important;
       position: relative !important;
       width: 100% !important;
@@ -440,8 +517,6 @@
       min-width: 0 !important;
       margin: 0 !important;
     }
-    .phone-country-selector,
-    [class*="_selectContainer_"] { display: none !important; }
     /* Flatten the wrapper the app puts around the number field. It carries a
        few pixels of its own above the box, which sat the phone field lower
        than Name and Email; with the in-box label hidden nothing depends on
@@ -454,6 +529,80 @@
     [class*="_formPhoneInputContainer_"] [class*="_formPhoneInputField_"] {
       flex: 1 1 100% !important;
       width: 100% !important;
+    }
+    /* Country picker, same strip as the popup: sized to itself, carrying the
+       box's left, top and bottom edges, dropping its right one so the number
+       field's left border is the only line between them. */
+    .phone-country-selector,
+    [class*="_selectContainer_"] {
+      display: flex !important;
+      align-items: stretch !important;
+      flex: 0 0 ${SELECTOR_W}px !important;
+      width: ${SELECTOR_W}px !important;
+      max-width: ${SELECTOR_W}px !important;
+      min-width: 0 !important;
+      position: relative !important;
+    }
+    [class*="_selectToggle_"],
+    .phone-country-selector button,
+    .phone-country-selector select {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      width: 100% !important;
+      height: 29px !important;
+      min-height: 29px !important;
+      padding: 0 6px !important;
+      border: 0.5px solid #8B8B8B !important;
+      border-right: 0 !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-weight: 400 !important;
+      font-size: 11px !important;
+      line-height: 1 !important;
+      letter-spacing: 0 !important;
+      color: rgba(0, 0, 0, 0.8) !important;
+      cursor: pointer !important;
+    }
+    .phone-country-selector img,
+    .phone-country-selector svg,
+    [class*="_selectContainer_"] img,
+    [class*="_selectContainer_"] svg {
+      height: 11px !important;
+      width: auto !important;
+      max-width: 16px !important;
+      flex: 0 0 auto !important;
+      object-fit: contain !important;
+      display: block !important;
+    }
+    /* The list opens over the band rather than inside the 29px strip. */
+    [class*="_selectContainer_"] [class*="_selectMenu_"],
+    [class*="_selectContainer_"] [role="listbox"],
+    .phone-country-selector [role="listbox"] {
+      position: absolute !important;
+      top: calc(100% + 2px) !important;
+      left: 0 !important;
+      z-index: 5 !important;
+      width: max-content !important;
+      min-width: 200px !important;
+      max-height: 220px !important;
+      overflow-y: auto !important;
+      border: 0.5px solid #8B8B8B !important;
+      border-radius: 0 !important;
+      background: #ffffff !important;
+      color: rgba(0, 0, 0, 0.8) !important;
+      font-family: "IBM Plex Sans", sans-serif !important;
+      font-size: 11px !important;
+    }
+    /* The number takes what the picker leaves, rather than a full row of
+       its own -- the container wraps, so a 100% basis would drop it below. */
+    [class*="_formPhoneInputContainer_"] > [class*="_formPhoneInputField_"],
+    [class*="_formPhoneInputContainer_"] [class*="_formPhoneInputField_"] {
+      flex: 1 1 auto !important;
+      width: auto !important;
     }
 
     /* Same 29px strip as the popup. */
@@ -633,6 +782,32 @@
      is clicked. */
   const TEASER = '[data-testid="form-teaser"], [class*="_teaserContainer_"]';
 
+  /* The app closes the popup when the dark area around it is clicked. With a
+     form to fill in that is easy to do by accident -- one stray click and
+     whatever was typed is gone -- so only the close button dismisses it now.
+
+     The click is caught on the way down and stopped before the app's own
+     handler sees it, but only when it landed on the backdrop itself: a click
+     inside the panel, or on any button or link (the close control included),
+     is left alone. mousedown is covered as well, since a backdrop handler
+     often fires on press rather than on click. */
+  const lockClose = (root, host) => {
+    if (host.dataset.bhLock) return;
+    host.dataset.bhLock = '1';
+
+    const guard = (event) => {
+      const target = event.composedPath()[0];
+      if (!target || target.nodeType !== 1 || !target.closest) return;
+      if (target.closest('[class*="_formContainer_"]')) return;
+      if (target.closest('button, a, [role="button"], input, select, textarea')) return;
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+    };
+
+    root.addEventListener('mousedown', guard, true);
+    root.addEventListener('click', guard, true);
+  };
+
   const autoOpen = (root, host) => {
     if (host.dataset.bhAuto) return;
     const teaser = root.querySelector(TEASER);
@@ -780,6 +955,7 @@
       splitHeading(root);
       splitBody(root);
       autoOpen(root, host);
+      lockClose(root, host);
     }
     phoneHint(root);
     /* Footer form only. The popup keeps the in-box placeholders its Figma

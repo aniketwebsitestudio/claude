@@ -50,7 +50,16 @@
     '/pages/contact-us'
   ];
 
-  const isReady = (anchor) => {
+  /* The two the menus are allowed to open. Deliberately narrower than the
+     list above: the footer has to carry a working route to the policies for
+     the business to be verifiable, but the rest of the navigation stays
+     held back. Add a handle here to let another menu entry through. */
+  const MENU_READY = [
+    '/pages/privacy-policy',
+    '/pages/terms-and-conditions'
+  ];
+
+  const isReady = (anchor, paths) => {
     let url;
     try {
       url = new URL(anchor.href, window.location.href);
@@ -60,7 +69,7 @@
     /* Locale-prefixed paths (/en-in/pages/...) end in the same handle. */
     const path = url.pathname.replace(/\/$/, '');
     if (path.indexOf('/policies/') !== -1) return true;
-    return READY_PATHS.some((ready) => path.endsWith(ready));
+    return paths.some((ready) => path.endsWith(ready));
   };
 
   /* On the home page nothing may navigate away at all: product cards,
@@ -175,15 +184,17 @@
   const wanted = (event) => {
     if (!event.target.closest) return false;
 
-    /* The header and footer menus are held back first and unconditionally,
-       on every page and whatever the link points at. Sitting above the ready
-       check means the navigation never has one live entry among the held
-       ones, which is what made it read as broken rather than unfinished. */
-    if (event.target.closest(NOT_READY)) return true;
-
-    /* Everywhere else, a finished page opens normally. */
     const link = event.target.closest('a[href]');
-    if (link && isReady(link)) return false;
+
+    /* The header and footer menus are held back on every page, whatever the
+       link points at -- with the policy pages as the one exception, since
+       the footer has to be a working route to them. */
+    if (event.target.closest(NOT_READY)) {
+      return !(link && isReady(link, MENU_READY));
+    }
+
+    /* Everywhere else, any finished page opens normally. */
+    if (link && isReady(link, READY_PATHS)) return false;
 
     if (!IS_HOME) return false;
 

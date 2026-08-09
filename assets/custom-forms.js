@@ -392,33 +392,24 @@
          the white panel, where its dark mark all but disappears. White on
          phones only -- on desktop it is over the panel and correct as it is.
 
-         Cast wide on purpose: naming the control by one class fragment did
-         not reach it, and its mark may be drawn as a fill or as a stroke,
-         so both are set, on the button, its icon and the icon's own shapes.
-         Only buttons sitting directly on the panel or the overlay are
-         included, which is the close control and nothing else -- the submit
-         button is several levels further in. */
-      [class*="_formContainer_"] > button,
-      [class*="_formContainer_"] > button *,
-      [class*="_overlay"] > button,
-      [class*="_overlay"] > button *,
-      [class*="_appEmbed"] > button,
-      [class*="_appEmbed"] > button *,
-      button[aria-label*="lose"],
-      button[aria-label*="lose"] *,
-      [class*="_close"],
-      [class*="_close"] * {
+         It is a <span role="button">, not a <button>, and its class is
+         _formCloseButton_ with a capital C: attribute matching is
+         case-sensitive, so [class*="_close"] never matched it either. The
+         mark is a <path> with no fill of its own, so the fill is set there
+         rather than inherited. */
+      [class*="_formCloseButton_"],
+      [class*="_formContainerCloseButtonPosition_"],
+      [role="button"][aria-label*="Close"] {
+        color: #ffffff !important;
+        opacity: 1 !important;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)) !important;
+      }
+      [class*="_formCloseButton_"] svg,
+      [class*="_formCloseButton_"] path,
+      [role="button"][aria-label*="Close"] svg,
+      [role="button"][aria-label*="Close"] path {
         color: #ffffff !important;
         fill: #ffffff !important;
-        stroke: #ffffff !important;
-        opacity: 1 !important;
-      }
-      [class*="_formContainer_"] > button,
-      [class*="_overlay"] > button,
-      [class*="_appEmbed"] > button,
-      button[aria-label*="lose"],
-      [class*="_close"] {
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)) !important;
       }
 
       /* line-height belongs to the text fields; on the picker it would

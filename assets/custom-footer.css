@@ -52,28 +52,26 @@ sub-footer .selector-currency .buckscc-currency-box {
   line-height: 1;
 }
 
-/* The app's own box: stripped of the floating look and given the same chip
-   as the language selector beside it. Position is reset because in floating
-   mode it places itself against the window. */
-sub-footer .selector-currency .buckscc-currency-box > * {
+/* The app's own box is left to look like itself -- no frame of ours around
+   it, which only ever read as a second box. What is set is position, so it
+   stops placing itself against the window as it does when floating, and the
+   height and type of the language chip beside it, so the two sit as a pair.
+   Applied down one more level as well: the app nests its visible pill
+   inside a wrapper, and the height has to reach the pill to take. */
+sub-footer .selector-currency .buckscc-currency-box > *,
+sub-footer .selector-currency .buckscc-currency-box > * > * {
   position: static !important;
   inset: auto !important;
   margin: 0 !important;
-  padding: 0 10px !important;
-  min-height: 34px !important;
+  border: 0 !important;
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  border: var(--globalBorder, 1px solid currentColor) !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  min-height: 34px !important;
   font-family: "IBM Plex Sans", var(--fontFamily), sans-serif !important;
   font-size: 12px !important;
   line-height: 1 !important;
   letter-spacing: 0.02em !important;
   text-transform: uppercase !important;
-  color: inherit !important;
 }
 
 /* Flag to the same scale as the one on the country picker. */

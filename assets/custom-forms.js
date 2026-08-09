@@ -390,19 +390,35 @@
       }
       /* Stacked, the close control sits over the photograph rather than on
          the white panel, where its dark mark all but disappears. White on
-         phones only -- on desktop it is over the panel and correct as it
-         is. The shadow keeps it legible over the lighter parts of the
-         image. */
+         phones only -- on desktop it is over the panel and correct as it is.
+
+         Cast wide on purpose: naming the control by one class fragment did
+         not reach it, and its mark may be drawn as a fill or as a stroke,
+         so both are set, on the button, its icon and the icon's own shapes.
+         Only buttons sitting directly on the panel or the overlay are
+         included, which is the close control and nothing else -- the submit
+         button is several levels further in. */
+      [class*="_formContainer_"] > button,
+      [class*="_formContainer_"] > button *,
+      [class*="_overlay"] > button,
+      [class*="_overlay"] > button *,
+      [class*="_appEmbed"] > button,
+      [class*="_appEmbed"] > button *,
+      button[aria-label*="lose"],
+      button[aria-label*="lose"] *,
       [class*="_close"],
-      button[aria-label*="lose"] {
+      [class*="_close"] * {
         color: #ffffff !important;
-        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)) !important;
+        fill: #ffffff !important;
+        stroke: #ffffff !important;
+        opacity: 1 !important;
       }
-      [class*="_close"] svg,
-      button[aria-label*="lose"] svg {
-        color: #ffffff !important;
-        fill: currentColor !important;
-        stroke: currentColor !important;
+      [class*="_formContainer_"] > button,
+      [class*="_overlay"] > button,
+      [class*="_appEmbed"] > button,
+      button[aria-label*="lose"],
+      [class*="_close"] {
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)) !important;
       }
 
       /* line-height belongs to the text fields; on the picker it would

@@ -388,6 +388,23 @@
         height: 190px !important;
         min-height: 190px !important;
       }
+      /* Stacked, the close control sits over the photograph rather than on
+         the white panel, where its dark mark all but disappears. White on
+         phones only -- on desktop it is over the panel and correct as it
+         is. The shadow keeps it legible over the lighter parts of the
+         image. */
+      [class*="_close"],
+      button[aria-label*="lose"] {
+        color: #ffffff !important;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)) !important;
+      }
+      [class*="_close"] svg,
+      button[aria-label*="lose"] svg {
+        color: #ffffff !important;
+        fill: currentColor !important;
+        stroke: currentColor !important;
+      }
+
       /* line-height belongs to the text fields; on the picker it would
          push the flag down out of the middle of the taller strip. */
       [class*="_selectToggle_"],

@@ -19,7 +19,7 @@
 html[data-darkreader-scheme="dark"] #mainHeader .bogo a img.logo,
 html[nighteye="active"] #mainHeader .bogo a img.logo,
 html[data-dark-mode="true"] #mainHeader .bogo a img.logo {
-  content: url("https://cdn.shopify.com/s/files/1/0774/6987/6271/files/White_Bhoomija_Unit.png?v=1785257087");
+  content: url("https://cdn.shopify.com/s/files/1/0774/6987/6271/files/Bhoomija_with_tm_Bhoomija_beige_logo.png?v=1786374521");
   object-fit: contain;
   filter: none !important; /* keep the extension from re-inverting the swap */
 }

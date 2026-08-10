@@ -50,15 +50,6 @@
     '/pages/contact-us'
   ];
 
-  /* The two the menus are allowed to open. Deliberately narrower than the
-     list above: the footer has to carry a working route to the policies for
-     the business to be verifiable, but the rest of the navigation stays
-     held back. Add a handle here to let another menu entry through. */
-  const MENU_READY = [
-    '/pages/privacy-policy',
-    '/pages/terms-and-conditions'
-  ];
-
   const isReady = (anchor, paths) => {
     let url;
     try {
@@ -187,11 +178,10 @@
     const link = event.target.closest('a[href]');
 
     /* The header and footer menus are held back on every page, whatever the
-       link points at -- with the policy pages as the one exception, since
-       the footer has to be a working route to them. */
-    if (event.target.closest(NOT_READY)) {
-      return !(link && isReady(link, MENU_READY));
-    }
+       link points at -- the policy pages included. They stay reachable by
+       their own URLs, which is what a verifier is given; from the menu the
+       navigation reads as uniformly unfinished rather than half-open. */
+    if (event.target.closest(NOT_READY)) return true;
 
     /* Everywhere else, any finished page opens normally. */
     if (link && isReady(link, READY_PATHS)) return false;

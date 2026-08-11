@@ -1,0 +1,64 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "custom-about",
+      "blocks": {
+        "journey_1": {
+          "type": "journey_image",
+          "settings": {
+            "image": "shopify://shop_images/Rectangle_94.png"
+          }
+        },
+        "journey_image_wFajF4": {
+          "type": "journey_image",
+          "settings": {
+            "image": "shopify://shop_images/Rectangle_94.png"
+          }
+        },
+        "journey_image_xBkFq6": {
+          "type": "journey_image",
+          "settings": {
+            "image": "shopify://shop_images/Rectangle_94.png"
+          }
+        }
+      },
+      "block_order": [
+        "journey_1",
+        "journey_image_wFajF4",
+        "journey_image_xBkFq6"
+      ],
+      "settings": {
+        "hero_heading": "Our roots run deep",
+        "origin_image": "shopify://shop_images/Rectangle_93.png",
+        "origin_text": "<p>We noticed something the world stopped noticing, the hands still making things the old way. This is us, paying attention.</p>",
+        "origin_eyebrow": "The Origin",
+        "from_heading": "W<em>here we come from</em>",
+        "from_text_1": "<p>Bhoomija was born from a simple, stubborn belief, that the craftsman who has spent a lifetime learning his trade deserves more than a shrinking market and an invisible name.</p>",
+        "from_text_2": "<p>We watched extraordinary skill go unrecognised. We watched handmade become a marketing word rather than a meaningful one. We watched the gap between maker and market grow wider every year. So we closed it.</p>",
+        "name_eyebrow": "The Name",
+        "name_heading": "What the name means",
+        "name_wordmark": "shopify://shop_images/Group_1.png",
+        "name_text": "<p>Bhoomija means born from the earth.</p><p>It is the name of Sita, daughter of the soil, raised from the ground up. In her story is ours: that what grows from the earth, slowly and deliberately, carries more strength and more grace than anything hurried into existence.</p><p>Our craft is our ground. Our artisans are our roots. Everything else grows from there.</p>",
+        "mission_heading": "What are we here for?",
+        "mission_text": "<p>Our Mission To create a meaningful platform for local artisans, one that values skill, dignity, and fair opportunity.</p><p>We work closely with craftsmen to bring their work to a wider audience through thoughtful design and ethical practices. The platform is not ours. It belongs to the makers it was built for.</p>",
+        "vision_heading": "What we are building toward",
+        "vision_text": "<p>Our Vision To make local craft globally relevant.</p><p>We envision a world where artisanal work from our communities stands shoulder to shoulder with the world's most respected brands, not because it has been packaged to look global, but because the people who understand quality recognise it regardless of where it was made.</p>",
+        "journey_heading": "The journey that brought Bhoomija alive",
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

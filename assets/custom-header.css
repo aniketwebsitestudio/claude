@@ -1,0 +1,48 @@
+/* ==========================================================================
+   Desktop header: keep the menu on one line
+
+   #headerGrid is an x-grid with columns="3", i.e. three equal 1fr tracks.
+   The menu therefore only ever gets a third of the header width, and once
+   the effective viewport drops below roughly 1300px -- a small laptop, or
+   any laptop at 125% browser zoom -- COLLECTIONS / CRAFT / ABOUT / FAQ no
+   longer fit and FAQ wraps onto a second row.
+
+   Fix: size the middle track to its content and let the two outer tracks
+   share what is left. 1fr auto 1fr keeps the menu optically centred (both
+   side tracks stay equal) while giving it exactly the width it needs. The
+   gap and the header padding then tighten as the window narrows, so the
+   row keeps fitting instead of breaking.
+   ========================================================================== */
+@media (min-width: 778px) {
+  header#mainHeader #headerGrid {
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  /* The logo and utility tracks may shrink; grid items default to
+     min-width:auto, which would otherwise refuse to go below content size. */
+  header#mainHeader #headerGrid > .bogo,
+  header#mainHeader #headerGrid > .utility {
+    min-width: 0;
+  }
+
+  /* One line, always */
+  #mainHeader .menu nav,
+  #mainHeader .menu ul[menu-list="1"] {
+    flex-wrap: nowrap;
+  }
+  #mainHeader .menu ul[menu-list="1"] > li > a,
+  #mainHeader .menu ul[menu-list="1"] > li > details > summary {
+    white-space: nowrap;
+  }
+}
+
+/* Narrow desktops / zoomed laptops: scale the gap and the 48px side padding
+   down with the viewport instead of holding them fixed. */
+@media (min-width: 778px) and (max-width: 1300px) {
+  #mainHeader .menu ul[menu-list="1"] {
+    gap: clamp(18px, 2.4vw, 36px);
+  }
+  header#mainHeader #headerGrid {
+    padding: 0 clamp(20px, 2.6vw, 48px);
+  }
+}

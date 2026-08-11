@@ -1,0 +1,209 @@
+{%- comment -%}
+    Footer waitlist band.
+
+    The band, the heading and the responsive layout live here; the form
+    itself is a Shopify Forms app block dropped into the slot below. That
+    split is deliberate: the app owns the fields, the consent checkboxes and
+    the customer record (a Liquid form cannot capture a phone number), while
+    the theme owns how it looks.
+
+    Add the form: Customize > Footer > Waitlist > Add block > Forms.
+{%- endcomment -%}
+
+{%- liquid
+    assign img = section.settings.background_image
+-%}
+
+<section class="bh-waitlist" style="--bh-wl-pt:{{ section.settings.padding_top }}px;--bh-wl-pb:{{ section.settings.padding_bottom }}px;">
+    {%- if section.settings.eyebrow != blank -%}
+        <div class="bh-waitlist__eyebrow"><span>{{ section.settings.eyebrow }}</span></div>
+    {%- endif -%}
+
+    <div class="bh-waitlist__band"{% if img %} style="background-image:linear-gradient(rgba(25,8,8,0.42),rgba(25,8,8,0.42)),url('{{ img | image_url: width: 2000 }}');"{% endif %}>
+        <div class="bh-waitlist__inner">
+            <div class="bh-waitlist__copy">
+                {%- if section.settings.heading != blank -%}
+                    <p class="bh-waitlist__heading">{{ section.settings.heading }}</p>
+                {%- endif -%}
+                {%- if section.settings.subheading != blank -%}
+                    <p class="bh-waitlist__sub">{{ section.settings.subheading | replace: ". ", ".<br>" }}</p>
+                {%- endif -%}
+            </div>
+
+            <div class="bh-waitlist__form">
+                {%- for block in section.blocks -%}
+                    {%- case block.type -%}
+                        {%- when '@app' -%}
+                            {%- render block -%}
+                    {%- endcase -%}
+                {%- endfor -%}
+
+                {%- if section.blocks.size == 0 and request.design_mode -%}
+                    <p class="bh-waitlist__empty">Add block &rarr; Forms, then pick the footer waitlist form.</p>
+                {%- endif -%}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% stylesheet %}
+.bh-waitlist {
+	border-block-start: var(--globalBorder);
+}
+
+/* The country picker's list is the app's own, and it sizes itself to the
+   room it can find. Nothing in this band may clip it or cap its height, or
+   it comes out one row deep -- which is the difference between here and the
+   popup, where it opens into an overlay with the whole window to use. */
+.bh-waitlist,
+.bh-waitlist__band,
+.bh-waitlist__inner,
+.bh-waitlist__form,
+.bh-waitlist__form * {
+	overflow: visible;
+}
+
+/* Room beneath the fields for the list to open into, rather than the band
+   ending just under the button. */
+.bh-waitlist__form {
+	position: relative;
+	z-index: 2;
+}
+
+.bh-waitlist__eyebrow {
+	padding: 10px var(--mardding);
+	border-block-end: var(--globalBorder);
+	text-align: center;
+	font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+	font-weight: 400;
+	font-size: 12px;
+	line-height: 1.4;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.bh-waitlist__band {
+	background-color: #2b0f0f;
+	background-size: cover;
+	background-position: center;
+	color: #ffffff;
+	padding-block: var(--bh-wl-pt, 60px) var(--bh-wl-pb, 60px);
+	padding-inline: clamp(1.25rem, 4.17vw, 60px);
+}
+
+/* Copy left, form right; the form column is capped so the fields keep a
+   sensible measure on wide screens instead of stretching to the edge. */
+.bh-waitlist__inner {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 640px);
+	align-items: center;
+	gap: clamp(1.5rem, 5.4vw, 78px);
+	max-width: 1440px;
+	margin-inline: auto;
+}
+
+.bh-waitlist__heading {
+	font-family: "ivypresto-display", serif;
+	font-weight: 100;
+	font-size: clamp(2.1rem, 4.45vw, 64px);
+	line-height: 1;
+	letter-spacing: 0.02em;
+	margin: 0;
+}
+.bh-waitlist__heading em { font-style: italic; }
+
+.bh-waitlist__sub {
+	font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+	margin: 14px 0 0;
+	max-width: 46ch;
+	opacity: 0.85;
+}
+
+.bh-waitlist__empty {
+	font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+	font-size: 13px;
+	padding: 18px;
+	border: 1px dashed rgba(255, 255, 255, 0.5);
+	margin: 0;
+}
+
+@media (max-width: 900px) {
+	.bh-waitlist__inner {
+		grid-template-columns: 1fr;
+		gap: 28px;
+	}
+	.bh-waitlist__sub { max-width: none; }
+}
+
+@media (max-width: 777px) {
+	.bh-waitlist__band { padding-inline: var(--mardding, 20px); }
+	.bh-waitlist__heading { font-size: 32px; letter-spacing: 0.02em; }
+	.bh-waitlist__sub { font-size: 12px; }
+}
+{% endstylesheet %}
+
+{% schema %}
+{
+	"name": "Waitlist",
+	"tag": "section",
+	"enabled_on": { "groups": ["footer"] },
+	"settings": [
+		{
+			"type": "paragraph",
+			"content": "The form comes from the Shopify Forms app: Add block > Forms. Name, email and phone are configured there."
+		},
+		{
+			"type": "text",
+			"id": "eyebrow",
+			"label": "Eyebrow",
+			"default": "The Waitlist"
+		},
+		{
+			"type": "inline_richtext",
+			"id": "heading",
+			"label": "Heading",
+			"default": "Join the <em>waitlist</em>",
+			"info": "Use italics for the accent word."
+		},
+		{
+			"type": "text",
+			"id": "subheading",
+			"label": "Subheading",
+			"default": "Be the first to know when we open. One note, no noise."
+		},
+		{
+			"type": "image_picker",
+			"id": "background_image",
+			"label": "Background image"
+		},
+		{
+			"type": "range",
+			"id": "padding_top",
+			"label": "Padding top",
+			"min": 0,
+			"max": 140,
+			"step": 4,
+			"default": 60,
+			"unit": "px"
+		},
+		{
+			"type": "range",
+			"id": "padding_bottom",
+			"label": "Padding bottom",
+			"min": 0,
+			"max": 140,
+			"step": 4,
+			"default": 60,
+			"unit": "px"
+		}
+	],
+	"blocks": [
+		{ "type": "@app" }
+	],
+	"presets": [
+		{ "name": "Waitlist" }
+	]
+}
+{% endschema %}

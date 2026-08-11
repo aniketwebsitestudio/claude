@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Dark-mode header logo (browser extensions)
+
+   Bullet has no dark mode of its own: the storefront always renders the
+   coretex-1 scheme (white background), so `prefers-color-scheme: dark` is
+   NOT a usable signal here -- it would put the white logo on a white
+   header. What IS reliable is the markup a dark-mode extension leaves
+   behind once it has actually darkened the page:
+
+     Dark Reader  ->  <html data-darkreader-scheme="dark">
+     Night Eye    ->  <html nighteye="active">
+     others       ->  <html data-dark-mode="true">
+
+   In those cases the header background really is dark, so swap the black
+   mark for the white one. `content: url()` replaces the image the <img>
+   paints while keeping the element itself -- so the logo block's
+   --logoImageSize sizing, the alt text and the home link are untouched.
+   ========================================================================== */
+html[data-darkreader-scheme="dark"] #mainHeader .bogo a img.logo,
+html[nighteye="active"] #mainHeader .bogo a img.logo,
+html[data-dark-mode="true"] #mainHeader .bogo a img.logo {
+  content: url("https://cdn.shopify.com/s/files/1/0774/6987/6271/files/Bhoomija_with_tm_Bhoomija_beige_logo.png?v=1786374521");
+  object-fit: contain;
+  filter: none !important; /* keep the extension from re-inverting the swap */
+}

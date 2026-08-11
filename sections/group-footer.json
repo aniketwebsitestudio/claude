@@ -1,0 +1,116 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "Footer",
+  "sections": {
+    "waitlist": {
+      "type": "custom-waitlist",
+      "blocks": {
+        "forms_inline_etTpCK": {
+          "type": "shopify://apps/forms/blocks/inline/8744a304-fcb1-4347-b211-bb6b4759a76a",
+          "settings": {
+            "form_id": "1101466",
+            "text_color": "#202020",
+            "button_background_color": "#202020",
+            "button_label_color": "#FFFFFF",
+            "links_color": "#1878B9",
+            "errors_color": "#E02229",
+            "text_alignment": "center",
+            "form_alignment": "center",
+            "padding_top": 0,
+            "padding_bottom": 24,
+            "padding_right": 0,
+            "padding_left": 0
+          }
+        }
+      },
+      "block_order": [
+        "forms_inline_etTpCK"
+      ],
+      "settings": {
+        "eyebrow": "The Waitlist",
+        "heading": "Join the <em>waitlist</em>",
+        "subheading": "Be the first to know when we open. Details coming soon.",
+        "background_image": "shopify://shop_images/image_55_1.png",
+        "padding_top": 60,
+        "padding_bottom": 60
+      }
+    },
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "menu": {
+          "type": "menu",
+          "settings": {
+            "menu": "footer-menu",
+            "fullwidth": true,
+            "multicolumn": false,
+            "show_nested": false,
+            "alignment_desktop": "center",
+            "alignment_mobile": "center"
+          }
+        }
+      },
+      "block_order": [
+        "menu"
+      ],
+      "settings": {
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    },
+    "sub-footer": {
+      "type": "footer-bottom",
+      "blocks": {
+        "payments": {
+          "type": "payments",
+          "settings": {
+            "monochrome": false,
+            "text_alignment": "left",
+            "fullwidth": false
+          }
+        },
+        "selectors": {
+          "type": "selectors",
+          "settings": {
+            "country_name_format": "flag",
+            "show_country": false,
+            "show_language": true,
+            "text_alignment": "right",
+            "fullwidth": false
+          }
+        },
+        "copyright": {
+          "type": "copyright",
+          "settings": {
+            "copyright": "",
+            "text_alignment": "left",
+            "fullwidth": true
+          }
+        }
+      },
+      "block_order": [
+        "payments",
+        "selectors",
+        "copyright"
+      ],
+      "settings": {
+        "global_color_scheme": true,
+        "color_scheme": ""
+      }
+    }
+  },
+  "order": [
+    "waitlist",
+    "footer",
+    "sub-footer"
+  ]
+}

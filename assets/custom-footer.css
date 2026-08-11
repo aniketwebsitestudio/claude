@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Footer menu: uppercase links
+
+   Matches the header nav, which is already uppercase (see custom.css).
+   The small letter-spacing keeps caps from looking cramped at 16px.
+   ========================================================================== */
+#f-links .f-links a {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Payment mark: one UPI logo instead of the six card badges.
+   custom.css pins every .payment-icon to a 29x19 box, which distorts a
+   wordmark -- let this one keep its own aspect ratio. */
+sub-footer .payment-icons img.payment-icon--upi {
+  width: auto;
+  height: 22px;
+}
+
+/* Mobile type scale for the footer.
+   The newsletter heading needs !important because custom.css pins it to
+   32px with !important inside the same breakpoint. */
+@media (max-width: 777px) {
+  #f-newsletter p { font-size: 26px !important; }
+  #f-links .f-links a { font-size: 12px; }
+
+  /* Payment marks, off on phones. The row collapses to a single narrow
+     cell there and the mark reads as a stray swatch beside the currency
+     and language chips rather than as payment information. */
+  sub-footer .payment-icons { display: none; }
+}
+
+
+/* ==========================================================================
+   Currency selector (converter app)
+
+   The theme's country/region selector is off -- it lists Shopify markets,
+   and this store sells in one currency, so it offered a choice checkout
+   could not honour. The converter app is set to Custom position and mounts
+   inside .buckscc-currency-box, which sections/footer-bottom.liquid renders
+   in its place.
+
+   Our div is a bare anchor: it draws no frame of its own, or the app's box
+   sits inside a second box. The frame goes on whatever the app renders,
+   which arrives wearing the styling for its floating mode -- pill, shadow
+   and its own placement -- none of which belongs in a footer row.
+   ========================================================================== */
+sub-footer .selector-currency,
+sub-footer .selector-currency .buckscc-currency-box {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  line-height: 1;
+}
+
+/* The app's own box is left to look like itself -- no frame of ours around
+   it, which only ever read as a second box. What is set is position, so it
+   stops placing itself against the window as it does when floating, and the
+   height and type of the language chip beside it, so the two sit as a pair.
+   Applied down one more level as well: the app nests its visible pill
+   inside a wrapper, and the height has to reach the pill to take. */
+sub-footer .selector-currency .buckscc-currency-box > *,
+sub-footer .selector-currency .buckscc-currency-box > * > * {
+  position: static !important;
+  inset: auto !important;
+  margin: 0 !important;
+  border: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  min-height: 34px !important;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: uppercase !important;
+}
+
+/* Flag to the same scale as the one on the country picker. */
+sub-footer .selector-currency .buckscc-currency-box img {
+  width: 20px !important;
+  height: 14px !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+}
+
+/* Bottom of the page: anything the app opens goes upward rather than off
+   the end of the document. */
+sub-footer .selector-currency .buckscc-currency-box ul,
+sub-footer .selector-currency .buckscc-currency-box [class*="list"],
+sub-footer .selector-currency .buckscc-currency-box [class*="dropdown"],
+sub-footer .selector-currency .buckscc-currency-box [role="listbox"] {
+  top: auto;
+  bottom: calc(100% + 4px);
+}

@@ -86,49 +86,61 @@ the real store with real data — which is where problems actually show up.
 
 ## The daily loop
 
-    git checkout main && git pull
-    git checkout -b feature/footer-tweak
+Working alone, there is no one to review a branch and no one whose edits you
+have to merge with, so most of the ceremony is overhead. What is left:
 
+    git pull                                    # if you work on two machines
     shopify theme dev --store bhoomija-2.myshopify.com
 
 `theme dev` serves the theme from your machine at <http://127.0.0.1:9292>
-with hot reload, against live products and settings. **It does not write to
-any theme.** Edit in your IDE, watch it update.
+with hot reload, against live products and settings. **It writes to no
+theme.** Edit in your IDE, watch it update. This is where you will spend
+almost all of your time.
 
-When it looks right:
+When it is right:
 
-    # 1. take on anything the theme editor changed while you were working
-    shopify theme pull --store bhoomija-2.myshopify.com --theme <LIVE_ID> \
-      --only config --only templates --only sections
-    git add -A && git commit -m "Sync theme editor changes from live"
-
-    # 2. put your work on staging and look at it properly
-    shopify theme push --store bhoomija-2.myshopify.com --theme <STAGING_ID>
-
-    # 3. commit, push, merge
+    npm run sync     # take on anything you changed in the theme editor
     git add -A && git commit -m "Footer: ..."
-    git push -u origin feature/footer-tweak
+    npm run live     # push to the live theme
+    git push
 
-Step 1 is the one that saves you. If it brings down changes you did not make,
-that is someone's work in admin — keep it.
+Commit straight to `main`. A branch buys nothing when nobody is reviewing it
+— unless the change is big enough that you might want to walk away from it
+half-finished, in which case branch and merge when it works.
 
-### Going live
+**Do not skip `npm run sync`.** Even alone, you are two authors: you in the
+IDE, and you in the theme editor changing a setting or moving a section.
+That has already bitten this store more than once -- `custom.css` and
+`group-footer.json` both drifted in exactly this way.
 
-    git checkout main && git merge feature/footer-tweak && git push
-    shopify theme push --store bhoomija-2.myshopify.com --theme <LIVE_ID>
+### Staging, and when it is worth it
 
-Then tag it, so the state of the live store is recoverable by name:
+Small, visual, reversible -- copy, colours, spacing -- go straight to live
+from `theme dev`. You will see a mistake and fix it in a minute.
 
-    git tag -a live-2026-08-10 -m "Footer waitlist copy" && git push --tags
+Push to STAGING first when the change could break something you would not
+notice: anything touching **cart, product pages or checkout**, anything in
+`layout/theme.liquid`, an app being added or removed, or a change you want to
+test on a real phone rather than a narrow window.
 
-Prefer `shopify theme push` to the live theme over `shopify theme publish`:
-publishing swaps which theme is live and loses the settings the live theme
-carries. Pushing updates the theme that is already live.
+    npm run stage    # then open the preview URL from admin, on your phone
 
-If a change is large or you want a second pair of eyes, publish from admin
-instead: preview STAGING, then Themes → STAGING → **Publish**.
+### Scripts
 
----
+Put this in `package.json` in the theme repository, with your two theme ids
+filled in once. It stops the flags being the thing you get wrong at 1am:
+
+```json
+{
+  "scripts": {
+    "dev":   "shopify theme dev --store bhoomija-2.myshopify.com",
+    "sync":  "shopify theme pull --store bhoomija-2.myshopify.com --theme LIVE_ID --only config --only templates --only sections",
+    "stage": "shopify theme push --store bhoomija-2.myshopify.com --theme STAGING_ID",
+    "live":  "shopify theme push --store bhoomija-2.myshopify.com --theme LIVE_ID",
+    "backup": "shopify theme push --store bhoomija-2.myshopify.com --unpublished --theme BACKUP-manual"
+  }
+}
+```
 
 ## Getting back
 

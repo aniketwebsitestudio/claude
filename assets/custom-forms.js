@@ -1084,3 +1084,79 @@
   scan();
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
+/* ==========================================================================
+   Dark-mode close control on the waitlist popup.
+
+   Dark-mode extensions invert the page, and they reach into the form's
+   shadow root as well -- which turns the popup's close mark dark again at
+   the very moment the panel behind it has gone dark, leaving it invisible.
+
+   A stylesheet cannot settle this. The extension writes its own !important
+   rules into that shadow root, and rules injected there cannot see the
+   attribute on <html> that says dark mode is on. So the state is read from
+   the document and the value set on the element itself, with priority,
+   which sits above both. Cleared again when the extension is switched off,
+   so the stylesheet goes back to deciding.
+   ========================================================================== */
+(() => {
+  const HOST = 'shopify-forms-embed';
+  const CLOSE = '[class*="_formCloseButton_"], [role="button"][aria-label*="Close"]';
+  /* What each extension leaves on <html> once it has darkened the page. */
+  const MARKS = ['data-darkreader-scheme', 'nighteye', 'data-dark-mode'];
+
+  const isDark = () => {
+    const html = document.documentElement;
+    return html.getAttribute('data-darkreader-scheme') === 'dark' ||
+      html.getAttribute('nighteye') === 'active' ||
+      html.getAttribute('data-dark-mode') === 'true';
+  };
+
+  const paintClose = (root) => {
+    const dark = isDark();
+    root.querySelectorAll(CLOSE).forEach((button) => {
+      const parts = [button].concat(Array.from(button.querySelectorAll('svg, path')));
+      parts.forEach((node) => {
+        if (dark) {
+          node.style.setProperty('color', '#ffffff', 'important');
+          node.style.setProperty('fill', '#ffffff', 'important');
+          /* Or the extension inverts the swap straight back. */
+          node.style.setProperty('filter', 'none', 'important');
+        } else {
+          node.style.removeProperty('color');
+          node.style.removeProperty('fill');
+          node.style.removeProperty('filter');
+        }
+      });
+    });
+  };
+
+  const seen = new WeakSet();
+
+  const scan = () => {
+    document.querySelectorAll(HOST).forEach((host) => {
+      const root = host.shadowRoot;
+      if (!root) return;
+      paintClose(root);
+      /* The popup is built and torn down as it opens and closes. */
+      if (!seen.has(root)) {
+        seen.add(root);
+        new MutationObserver(() => paintClose(root)).observe(root, {
+          childList: true,
+          subtree: true
+        });
+      }
+    });
+  };
+
+  scan();
+  /* Watches for the form mounting and for dark mode being switched on or
+     off mid-visit. The attribute filter is those marks only, so our own
+     style writes cannot feed this back to itself. */
+  new MutationObserver(scan).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: MARKS
+  });
+})();

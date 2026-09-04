@@ -566,16 +566,19 @@ section.philosophy .philosophy__media img {
   }
 }
 
-/* ===== Collection page: force product card title + price to black =====
-   The collection template inherits a card scheme whose text is white on
-   the page background, making titles and prices unreadable. Pin them
-   black on collection pages. */
-body[coretex-page="collection"] product-card .title,
-body[coretex-page="collection"] product-card .title a,
-body[coretex-page="collection"] product-card .title h2,
-body[coretex-page="collection"] product-card .price,
-body[coretex-page="collection"] product-card .price *,
-body[coretex-page="collection"] product-card price-list,
-body[coretex-page="collection"] product-card price-list * {
+/* ===== Collection page: force product card title, vendor + price to black =====
+   The collection template inherits a card color scheme whose text renders
+   white on the page background, making title/vendor/price unreadable in
+   the grid. The theme already scopes card typography under `.listing-page
+   .product-grid` — pin color on the same scope. */
+.listing-page .product-grid .title,
+.listing-page .product-grid .title a,
+.listing-page .product-grid .title h2,
+.listing-page .product-grid .vendor,
+.listing-page .product-grid .vendor a,
+.listing-page .product-grid .price,
+.listing-page .product-grid .price *,
+.listing-page .product-grid price-list,
+.listing-page .product-grid price-list * {
   color: #000 !important;
 }

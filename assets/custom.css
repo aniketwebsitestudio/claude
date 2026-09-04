@@ -565,3 +565,17 @@ section.philosophy .philosophy__media img {
     text-align: left !important;
   }
 }
+
+/* ===== Collection page: force product card title + price to black =====
+   The collection template inherits a card scheme whose text is white on
+   the page background, making titles and prices unreadable. Pin them
+   black on collection pages. */
+body[coretex-page="collection"] product-card .title,
+body[coretex-page="collection"] product-card .title a,
+body[coretex-page="collection"] product-card .title h2,
+body[coretex-page="collection"] product-card .price,
+body[coretex-page="collection"] product-card .price *,
+body[coretex-page="collection"] product-card price-list,
+body[coretex-page="collection"] product-card price-list * {
+  color: #000 !important;
+}

@@ -1,0 +1,164 @@
+{%- comment -%}
+  Mega menu — hover panel for any top-level link that has children.
+
+  Usage:
+    {%- render 'mega-menu', linklist: linklists['main-menu'] -%}
+
+  Structure it consumes:
+    Main menu (top-level)
+      ├─ Home
+      │   ├─ Home — Lamps
+      │   ├─ Home — Figurines
+      │   └─ ...
+      └─ Wearables
+          ├─ Wearables — Stoles
+          └─ ...
+
+  Any top-level link with child links becomes a mega panel; leaf links stay
+  as plain links. The featured tile pulls the parent collection's image.
+{%- endcomment -%}
+
+{%- assign menu = linklist | default: linklists['main-menu'] -%}
+
+<nav class="mm" aria-label="Primary">
+  <ul class="mm__top">
+    {%- for link in menu.links -%}
+      {%- assign has_panel = false -%}
+      {%- if link.links.size > 0 -%}{%- assign has_panel = true -%}{%- endif -%}
+
+      <li class="mm__item{% if has_panel %} mm__item--has-panel{% endif %}"
+          {% if has_panel %}data-mm-item{% endif %}>
+        <a class="mm__trigger" href="{{ link.url }}"
+           {% if has_panel %}aria-haspopup="true" aria-expanded="false"{% endif %}>
+          {{ link.title }}
+        </a>
+
+        {%- if has_panel -%}
+          {%- assign parent_collection = link.object -%}
+          <div class="mm__panel" role="menu" aria-label="{{ link.title }}" hidden>
+            <div class="mm__panel-inner">
+
+              {%- comment -%} Column 1: sub-category list {%- endcomment -%}
+              <ul class="mm__col mm__col--list" role="none">
+                {%- for sub in link.links -%}
+                  <li role="none">
+                    <a class="mm__sub" href="{{ sub.url }}" role="menuitem"
+                       data-mm-sub
+                       data-featured="{{ sub.object.featured_image | image_url: width: 900 | default: '' }}"
+                       data-title="{{ sub.title | escape }}"
+                       data-price="{% if sub.object.products_count and sub.object.products_count > 0 %}{{ sub.object.products.first.price | money }}{% endif %}"
+                       data-product="{{ sub.object.products.first.title | default: '' | escape }}">
+                      {{ sub.title | remove: link.title | remove: '—' | strip }}
+                    </a>
+                  </li>
+                {%- endfor -%}
+                <li class="mm__all" role="none">
+                  <a href="{{ link.url }}" role="menuitem">Shop all {{ link.title }} →</a>
+                </li>
+              </ul>
+
+              {%- comment -%} Column 2: editorial tile (parent collection image) {%- endcomment -%}
+              <div class="mm__col mm__col--promo">
+                {%- if parent_collection and parent_collection.image -%}
+                  <a href="{{ link.url }}" class="mm__promo">
+                    <img src="{{ parent_collection.image | image_url: width: 900 }}"
+                         alt="{{ parent_collection.image.alt | escape }}" loading="lazy">
+                    <span class="mm__promo-caption">{{ link.title }}</span>
+                  </a>
+                {%- else -%}
+                  <div class="mm__promo mm__promo--empty" aria-hidden="true"></div>
+                {%- endif -%}
+              </div>
+
+              {%- comment -%} Column 3: featured product card (swaps with hover) {%- endcomment -%}
+              <div class="mm__col mm__col--feature" data-mm-feature>
+                <div class="mm__feature">
+                  <div class="mm__feature-media">
+                    <img data-mm-feature-img src="" alt="" loading="lazy">
+                  </div>
+                  <div class="mm__feature-meta">
+                    <p class="mm__feature-eyebrow" data-mm-feature-title></p>
+                    <p class="mm__feature-name" data-mm-feature-product></p>
+                    <p class="mm__feature-price" data-mm-feature-price></p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        {%- endif -%}
+      </li>
+    {%- endfor -%}
+  </ul>
+</nav>
+
+<script>
+(function () {
+  var items = document.querySelectorAll('[data-mm-item]');
+  if (!items.length) return;
+
+  function closeAll(except) {
+    items.forEach(function (i) {
+      if (i === except) return;
+      var p = i.querySelector('.mm__panel');
+      var t = i.querySelector('.mm__trigger');
+      if (p) p.hidden = true;
+      if (t) t.setAttribute('aria-expanded', 'false');
+      i.classList.remove('is-open');
+    });
+  }
+
+  function updateFeature(panel, sub) {
+    var wrap = panel.querySelector('[data-mm-feature]');
+    if (!wrap) return;
+    var img = wrap.querySelector('[data-mm-feature-img]');
+    var eyebrow = wrap.querySelector('[data-mm-feature-title]');
+    var name = wrap.querySelector('[data-mm-feature-product]');
+    var price = wrap.querySelector('[data-mm-feature-price]');
+    var url = sub.getAttribute('data-featured');
+    if (url) { img.src = url; img.alt = sub.getAttribute('data-title') || ''; }
+    if (eyebrow) eyebrow.textContent = sub.getAttribute('data-title') || '';
+    if (name) name.textContent = sub.getAttribute('data-product') || '';
+    if (price) price.textContent = sub.getAttribute('data-price') || '';
+    wrap.hidden = !url;
+  }
+
+  items.forEach(function (item) {
+    var trigger = item.querySelector('.mm__trigger');
+    var panel = item.querySelector('.mm__panel');
+    if (!trigger || !panel) return;
+
+    // Preselect first sub on open so the feature column isn't empty
+    var firstSub = panel.querySelector('[data-mm-sub]');
+    if (firstSub) updateFeature(panel, firstSub);
+
+    var open = function () {
+      closeAll(item);
+      panel.hidden = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      item.classList.add('is-open');
+    };
+    var close = function () {
+      panel.hidden = true;
+      trigger.setAttribute('aria-expanded', 'false');
+      item.classList.remove('is-open');
+    };
+
+    item.addEventListener('mouseenter', open);
+    item.addEventListener('mouseleave', close);
+    trigger.addEventListener('focus', open);
+    item.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { close(); trigger.focus(); }
+    });
+
+    panel.querySelectorAll('[data-mm-sub]').forEach(function (sub) {
+      sub.addEventListener('mouseenter', function () { updateFeature(panel, sub); });
+      sub.addEventListener('focus', function () { updateFeature(panel, sub); });
+    });
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.mm')) closeAll(null);
+  });
+})();
+</script>

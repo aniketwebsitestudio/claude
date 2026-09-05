@@ -802,3 +802,24 @@ header nav ul[menu-list="3"]::-webkit-scrollbar,
   flex: 1 1 12.5rem;
   overflow: visible;
 }
+
+/* Mega menu — turn the 7 columns into a real grid with hairline dividers,
+   using the theme's own --globalBorder token so it matches product-card
+   grid lines elsewhere. Column-head row gets a bottom border too. */
+[menu-type="mega"] [menu-list="2"] {
+  border-block-start: var(--globalBorder);
+}
+[menu-type="mega"] [menu-list="2"] > li {
+  padding-inline: 16px;
+  padding-block: 16px 20px;
+}
+[menu-type="mega"] [menu-list="2"] > li + li {
+  border-inline-start: var(--globalBorder);
+}
+[menu-type="mega"] [menu-list="2"] > li > a,
+[menu-type="mega"] [menu-list="2"] > li > details > summary {
+  padding-block-end: 12px;
+  margin-block-end: 8px;
+  border-block-end: var(--globalBorder);
+  font-weight: 500;
+}

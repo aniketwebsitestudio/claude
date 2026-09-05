@@ -750,3 +750,55 @@ section.philosophy .philosophy__media img {
 @media (max-width: 900px) {
   .mm { display: none; }
 }
+
+/* ===== Built-in mega menu — fit sub-labels, kill per-column scroll =====
+   The Bullet mega panel gives each level-2 column a fixed width and lets
+   level-3 lists scroll horizontally when labels are longer than the box
+   ("PA[INTINGS]" gets clipped, a mini scrollbar appears). Tighten the
+   sub-label type and let labels wrap or breathe — no scrollbars, no
+   truncated words. */
+header nav ul[menu-list="2"],
+header nav ul[menu-list="3"],
+[menu-type="mega"] [menu-list="2"],
+[menu-type="mega"] [menu-list="3"] {
+  overflow: visible !important;
+  scrollbar-width: none;
+}
+header nav ul[menu-list="2"]::-webkit-scrollbar,
+header nav ul[menu-list="3"]::-webkit-scrollbar,
+[menu-type="mega"] [menu-list="2"]::-webkit-scrollbar,
+[menu-type="mega"] [menu-list="3"]::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+/* Column heads (level 2) */
+[menu-type="mega"] [menu-list="2"] > li > a,
+[menu-type="mega"] [menu-list="2"] > li > details > summary {
+  font-size: 13px;
+  letter-spacing: 0;
+  white-space: normal;
+}
+
+/* Sub-links (level 3) — smaller, wrap-friendly, no clipping */
+[menu-type="mega"] [menu-list="3"] {
+  padding-right: 8px;
+}
+[menu-type="mega"] [menu-list="3"] > li > a {
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;      /* let long labels wrap instead of clipping */
+  overflow: visible !important;
+  text-overflow: clip !important;
+  padding: 6px 8px 6px 0;
+  min-width: 0;
+}
+
+/* Make each column at least wide enough for the longest label in it
+   (Embroidered Wall Hangers, Table-top Frames, etc.) so wrap is rare */
+[menu-type="mega"] [menu-list="2"] > li {
+  min-width: 12.5rem;
+  flex: 1 1 12.5rem;
+  overflow: visible;
+}

@@ -101,20 +101,41 @@ function onOpen() {
  * then blank them out again so the token isn't left sitting in the file.
  */
 function setCredentialsDirect() {
-  var SHOP_DOMAIN = '';   // e.g. 'bhoomija.myshopify.com'
-  var ADMIN_TOKEN = '';   // e.g. 'shpat_xxxxxxxxxxxxxxxx'
+  var SHOP_DOMAIN = '';     // e.g. 'bhoomija.myshopify.com'
 
-  if (!SHOP_DOMAIN || !ADMIN_TOKEN) {
-    Logger.log('Fill in SHOP_DOMAIN and ADMIN_TOKEN inside setCredentialsDirect() first.');
+  // ── Option A: Dev Dashboard app (what Shopify gives you from 2026 onward) ──
+  // dev.shopify.com/dashboard → your app → Settings → Client ID / Client secret.
+  // The script exchanges these for a 24h token and refreshes it automatically.
+  var CLIENT_ID     = '';
+  var CLIENT_SECRET = '';
+
+  // ── Option B: legacy custom app created in store admin before Jan 2026 ──
+  // A static token starting with shpat_. Leave blank if using Option A.
+  var ADMIN_TOKEN = '';
+
+  if (!SHOP_DOMAIN) {
+    Logger.log('Fill in SHOP_DOMAIN inside setCredentialsDirect() first.');
+    return;
+  }
+  if (!ADMIN_TOKEN && !(CLIENT_ID && CLIENT_SECRET)) {
+    Logger.log('Fill in either CLIENT_ID + CLIENT_SECRET (Dev Dashboard app) ' +
+               'or ADMIN_TOKEN (legacy shpat_ token).');
     return;
   }
 
-  PropertiesService.getScriptProperties().setProperties({
-    SHOP_DOMAIN: SHOP_DOMAIN.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''),
-    ADMIN_TOKEN: ADMIN_TOKEN.trim()
-  });
+  var props = {
+    SHOP_DOMAIN: SHOP_DOMAIN.trim().replace(/^https?:\/\//, '').replace(/\/$/, '')
+  };
+  if (ADMIN_TOKEN)   props.ADMIN_TOKEN   = ADMIN_TOKEN.trim();
+  if (CLIENT_ID)     props.CLIENT_ID     = CLIENT_ID.trim();
+  if (CLIENT_SECRET) props.CLIENT_SECRET = CLIENT_SECRET.trim();
 
-  Logger.log('Saved. Now clear the two values above, then run testConnectionDirect().');
+  var store = PropertiesService.getScriptProperties();
+  clearAuthProperties(store);
+  store.setProperties(props);
+
+  Logger.log('Saved (%s). Now clear the values above, then run testConnectionDirect().',
+    ADMIN_TOKEN ? 'static token' : 'client credentials');
 }
 
 /** Editor-safe connection test — logs instead of opening a dialog. */
@@ -137,18 +158,46 @@ function setCredentials() {
     'e.g. bhoomija.myshopify.com  (not bhoomija.in)', ui.ButtonSet.OK_CANCEL);
   if (d.getSelectedButton() !== ui.Button.OK) return;
 
-  var t = ui.prompt('Admin API access token',
-    'Admin → Settings → Apps and sales channels → Develop apps → your app → ' +
-    'API credentials → Admin API access token (starts with shpat_)',
+  var id = ui.prompt('Client ID',
+    'dev.shopify.com/dashboard → your app → Settings → Client ID.\n\n' +
+    'If you have a legacy shpat_ token instead, leave this blank and paste the ' +
+    'token on the next screen.',
     ui.ButtonSet.OK_CANCEL);
-  if (t.getSelectedButton() !== ui.Button.OK) return;
+  if (id.getSelectedButton() !== ui.Button.OK) return;
 
-  PropertiesService.getScriptProperties().setProperties({
-    SHOP_DOMAIN: d.getResponseText().trim().replace(/^https?:\/\//, '').replace(/\/$/, ''),
-    ADMIN_TOKEN: t.getResponseText().trim()
-  });
+  var props = {
+    SHOP_DOMAIN: d.getResponseText().trim().replace(/^https?:\/\//, '').replace(/\/$/, '')
+  };
+
+  if (id.getResponseText().trim()) {
+    var secret = ui.prompt('Client secret',
+      'Same page as the Client ID.', ui.ButtonSet.OK_CANCEL);
+    if (secret.getSelectedButton() !== ui.Button.OK) return;
+    props.CLIENT_ID = id.getResponseText().trim();
+    props.CLIENT_SECRET = secret.getResponseText().trim();
+  } else {
+    var t = ui.prompt('Admin API access token',
+      'Legacy custom app token, starts with shpat_', ui.ButtonSet.OK_CANCEL);
+    if (t.getSelectedButton() !== ui.Button.OK) return;
+    if (!t.getResponseText().trim()) { ui.alert('Nothing entered — cancelled.'); return; }
+    props.ADMIN_TOKEN = t.getResponseText().trim();
+  }
+
+  var store = PropertiesService.getScriptProperties();
+  clearAuthProperties(store);
+  store.setProperties(props);
 
   ui.alert('Saved. Now run Setup → Test connection.');
+}
+
+/**
+ * Wipes every stored auth value before saving new ones, so switching between a
+ * static shpat_ token and Dev Dashboard client credentials can't leave a stale
+ * token behind that getAccessToken() would keep preferring.
+ */
+function clearAuthProperties(store) {
+  ['ADMIN_TOKEN', 'CLIENT_ID', 'CLIENT_SECRET', 'CACHED_TOKEN', 'CACHED_TOKEN_EXPIRY']
+    .forEach(function (k) { store.deleteProperty(k); });
 }
 
 function testConnection() {
@@ -629,11 +678,65 @@ function previewText(products, problems, ctx) {
 // Shopify GraphQL transport
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Returns a usable Admin API access token.
+ *
+ * Legacy custom apps (created in store admin before Jan 2026) have a static
+ * shpat_ token. Dev Dashboard apps instead hand you a client ID + secret, which
+ * are exchanged here for a token that Shopify expires after 24 hours; the token
+ * is cached in Script Properties and re-fetched a minute before it lapses.
+ */
+function getAccessToken() {
+  var props = PropertiesService.getScriptProperties();
+
+  var staticToken = props.getProperty('ADMIN_TOKEN');
+  if (staticToken) return staticToken;
+
+  var clientId = props.getProperty('CLIENT_ID');
+  var clientSecret = props.getProperty('CLIENT_SECRET');
+  var domain = props.getProperty('SHOP_DOMAIN');
+  if (!clientId || !clientSecret) {
+    throw new Error('Shopify credentials not set. Run Setup → Set Shopify credentials.');
+  }
+
+  var cached = props.getProperty('CACHED_TOKEN');
+  var expiry = Number(props.getProperty('CACHED_TOKEN_EXPIRY') || 0);
+  if (cached && Date.now() < expiry - 60000) return cached;
+
+  var res = UrlFetchApp.fetch('https://' + domain + '/admin/oauth/access_token', {
+    method: 'post',
+    contentType: 'application/json',
+    payload: JSON.stringify({
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'client_credentials'
+    }),
+    muteHttpExceptions: true
+  });
+
+  if (res.getResponseCode() !== 200) {
+    throw new Error('Token exchange failed (HTTP ' + res.getResponseCode() + '): ' +
+                    res.getContentText().slice(0, 300));
+  }
+
+  var json = JSON.parse(res.getContentText());
+  if (!json.access_token) {
+    throw new Error('Token exchange returned no access_token: ' +
+                    res.getContentText().slice(0, 300));
+  }
+
+  props.setProperties({
+    CACHED_TOKEN: json.access_token,
+    CACHED_TOKEN_EXPIRY: String(Date.now() + (json.expires_in || 86399) * 1000)
+  });
+  return json.access_token;
+}
+
 function gql(query, variables) {
   var props = PropertiesService.getScriptProperties();
   var domain = props.getProperty('SHOP_DOMAIN');
-  var token = props.getProperty('ADMIN_TOKEN');
-  if (!domain || !token) throw new Error('Shopify credentials not set.');
+  if (!domain) throw new Error('Shopify credentials not set.');
+  var token = getAccessToken();
 
   var url = 'https://' + domain + '/admin/api/' + CONFIG.API_VERSION + '/graphql.json';
 

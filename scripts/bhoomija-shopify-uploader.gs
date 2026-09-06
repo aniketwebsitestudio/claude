@@ -26,6 +26,18 @@ var CONFIG = {
   // Change to 'ACTIVE' once you trust the mapping.
   PRODUCT_STATUS: 'DRAFT',
 
+  // productCreate does NOT put a product on any sales channel, so even an
+  // ACTIVE product renders as "no products found" on the storefront until it
+  // is published. Publish every new product to the Online Store channel.
+  PUBLISH_TO_ONLINE_STORE: true,
+
+  // Shopify hides a product with no image behind a grey placeholder tile, and
+  // the sheet only carries Drive links that Shopify cannot fetch. Until real
+  // photography lands, attach this so the grid looks intentional. Set to ''
+  // to leave image-less products bare instead.
+  PLACEHOLDER_IMAGE_URL:
+    'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/dummy_630x840_ffffff_cccccc.png?v=1788714657',
+
   // Pause between products (ms). Shopify throttles bursts; 600ms is safe.
   THROTTLE_MS: 600
 };
@@ -374,7 +386,8 @@ function buildContext() {
     width: width,
     cols: cols,
     shopDomain: shopDomain,
-    locationId: null   // resolved lazily on first upload
+    locationId: null,     // resolved lazily on first upload
+    publicationId: null   // Online Store channel, resolved lazily
   };
 }
 
@@ -486,11 +499,25 @@ function buildSku(row) {
   return n ? 'Bhoomija' + n : '';
 }
 
+/**
+ * Real image URLs from the sheet's optional "Image URLs" column.
+ * Drive links are dropped — Shopify's media importer cannot fetch them.
+ */
 function buildImageUrls(row) {
   if (!row.imageUrls) return [];
   return row.imageUrls.split(/[,\s]+/)
     .map(function (u) { return u.trim(); })
     .filter(function (u) { return /^https:\/\//i.test(u) && u.indexOf('drive.google.com') === -1; });
+}
+
+/** What actually gets attached: real images, else the placeholder. */
+function resolveImageUrls(row) {
+  var real = buildImageUrls(row);
+  if (real.length) return { urls: real, isPlaceholder: false };
+  if (CONFIG.PLACEHOLDER_IMAGE_URL) {
+    return { urls: [CONFIG.PLACEHOLDER_IMAGE_URL], isPlaceholder: true };
+  }
+  return { urls: [], isPlaceholder: false };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -547,20 +574,21 @@ function createProduct(row, ctx) {
     { productId: product.id, variants: [variantInput] });
   throwOnErrors(variantUpdate.productVariantsBulkUpdate.userErrors, 'variant update');
 
-  // 3. Images (only real public HTTPS URLs — Drive links are skipped)
-  var images = buildImageUrls(row);
-  if (images.length) {
+  // 3. Images — real URLs from the sheet, else the configured placeholder
+  var imageResult = resolveImageUrls(row);
+  if (imageResult.urls.length) {
     var media = gql(
       'mutation($productId: ID!, $media: [CreateMediaInput!]!) {' +
       '  productCreateMedia(productId:$productId, media:$media) {' +
       '    mediaUserErrors { field message }' +
       '  } }',
       { productId: product.id,
-        media: images.map(function (u) {
+        media: imageResult.urls.map(function (u) {
           return { originalSource: u, alt: title, mediaContentType: 'IMAGE' };
         }) });
     var mediaErrs = media.productCreateMedia.mediaUserErrors;
     if (mediaErrs.length) notes.push('image warning: ' + mediaErrs[0].message);
+    else if (imageResult.isPlaceholder) notes.push('placeholder image');
   } else {
     notes.push('no image');
   }
@@ -596,7 +624,35 @@ function createProduct(row, ctx) {
     }
   }
 
+  // 6. Publish to the Online Store sales channel. Without this a product is
+  //    invisible on the storefront no matter its status.
+  if (CONFIG.PUBLISH_TO_ONLINE_STORE) {
+    try {
+      publishToOnlineStore(ctx, product.id);
+    } catch (e) {
+      notes.push('publish warning: ' + e.message);
+    }
+  }
+
   return { id: product.id, handle: product.handle, sku: sku, notes: notes.join('; ') };
+}
+
+function publishToOnlineStore(ctx, productId) {
+  if (!ctx.publicationId) {
+    var pubs = gql('{ publications(first: 25) { nodes { id name } } }', {});
+    var online = null;
+    pubs.publications.nodes.forEach(function (p) {
+      if (p.name === 'Online Store') online = p.id;
+    });
+    if (!online) throw new Error('Online Store channel not found');
+    ctx.publicationId = online;
+  }
+
+  var res = gql(
+    'mutation($id: ID!, $input: [PublicationInput!]!) {' +
+    '  publishablePublish(id:$id, input:$input) { userErrors { field message } } }',
+    { id: productId, input: [{ publicationId: ctx.publicationId }] });
+  throwOnErrors(res.publishablePublish.userErrors, 'publish');
 }
 
 function setInventory(ctx, inventoryItemId, qty) {
@@ -648,6 +704,7 @@ function previewText(products, problems, ctx) {
   var lines = ['PREVIEW — nothing was sent to Shopify', ''];
   lines.push('Store: ' + ctx.shopDomain);
   lines.push('Status products would get: ' + CONFIG.PRODUCT_STATUS);
+  lines.push('Publish to Online Store: ' + (CONFIG.PUBLISH_TO_ONLINE_STORE ? 'yes' : 'no'));
   lines.push('Ready to upload: ' + products.length);
   lines.push('');
 
@@ -660,7 +717,10 @@ function previewText(products, problems, ctx) {
     lines.push('   Vendor: ' + (r.region || 'Bhoomija') +
                '   Type: ' + (r.subCategory || r.category));
     lines.push('   Tags: ' + buildTags(r).join(', '));
-    lines.push('   Images: ' + (buildImageUrls(r).length || 'none'));
+    var img = resolveImageUrls(r);
+    lines.push('   Images: ' + (img.urls.length
+      ? (img.isPlaceholder ? 'placeholder' : img.urls.length + ' from sheet')
+      : 'none'));
     lines.push('');
   });
   if (products.length > 6) lines.push('...and ' + (products.length - 6) + ' more');

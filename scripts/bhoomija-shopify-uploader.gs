@@ -91,6 +91,45 @@ function onOpen() {
 // Setup
 // ─────────────────────────────────────────────────────────────
 
+/**
+ * Editor-safe alternative to setCredentials().
+ *
+ * setCredentials() opens a popup, and popups only work when launched from the
+ * spreadsheet's Bhoomija menu — pressing Run on it inside the Apps Script
+ * editor hangs forever with no dialog. If that happens, use this instead:
+ * fill in the two values below, press Run once, check the log says "Saved",
+ * then blank them out again so the token isn't left sitting in the file.
+ */
+function setCredentialsDirect() {
+  var SHOP_DOMAIN = '';   // e.g. 'bhoomija.myshopify.com'
+  var ADMIN_TOKEN = '';   // e.g. 'shpat_xxxxxxxxxxxxxxxx'
+
+  if (!SHOP_DOMAIN || !ADMIN_TOKEN) {
+    Logger.log('Fill in SHOP_DOMAIN and ADMIN_TOKEN inside setCredentialsDirect() first.');
+    return;
+  }
+
+  PropertiesService.getScriptProperties().setProperties({
+    SHOP_DOMAIN: SHOP_DOMAIN.trim().replace(/^https?:\/\//, '').replace(/\/$/, ''),
+    ADMIN_TOKEN: ADMIN_TOKEN.trim()
+  });
+
+  Logger.log('Saved. Now clear the two values above, then run testConnectionDirect().');
+}
+
+/** Editor-safe connection test — logs instead of opening a dialog. */
+function testConnectionDirect() {
+  try {
+    var r = gql('{ shop { name myshopifyDomain currencyCode } ' +
+                '  locations(first:1) { nodes { id name } } }', {});
+    Logger.log('Connected to %s (%s, %s). Location: %s',
+      r.shop.name, r.shop.myshopifyDomain, r.shop.currencyCode,
+      r.locations.nodes[0].name);
+  } catch (e) {
+    Logger.log('Connection failed: %s', e.message);
+  }
+}
+
 function setCredentials() {
   var ui = SpreadsheetApp.getUi();
 

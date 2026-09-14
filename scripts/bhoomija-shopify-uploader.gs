@@ -1,15 +1,16 @@
 /**
- * Bhoomija — Sheet → Shopify product uploader
+ * Bhoomija — Sheet → Shopify product uploader (with Drive images)
  *
- * Paste this into Extensions → Apps Script on the product sheet, save, reload
- * the sheet, then use the "Bhoomija" menu.
+ * Paste into Extensions → Apps Script on the product sheet, save, reload the
+ * sheet, then use the "Bhoomija" menu.
  *
- * First run: Bhoomija → Setup → Set Shopify credentials.
- * Then: select any cells covering the rows you want, and
- *       Bhoomija → Upload selected rows.
+ * Images: column AD holds comma-separated filenames, column AE is a link to
+ * the Drive folder holding them. The script reads that folder as you, pulls
+ * each file's bytes, pushes them to Shopify via staged uploads, and attaches
+ * them in sheet order. Drive stays private — nothing is made public.
  *
- * Columns are found by their header text in row 2, so inserting or moving
- * columns will not break this.
+ * Columns are resolved by their header text in row 2, so moving or inserting
+ * columns will not break anything.
  */
 
 // ─────────────────────────────────────────────────────────────
@@ -18,66 +19,94 @@
 
 var CONFIG = {
   SHEET_NAME: 'Main Product Sheet | Aniket',
-  HEADER_ROW: 2,          // row holding the field names
+  HEADER_ROW: 2,
   FIRST_DATA_ROW: 3,
   API_VERSION: '2025-01',
 
-  // Products are created as DRAFT so a bad run never hits the live store.
-  // Change to 'ACTIVE' once you trust the mapping.
+  // Products land as DRAFT so a bad run can't hit the live storefront.
+  // Flip to 'ACTIVE' once you've checked a batch.
   PRODUCT_STATUS: 'DRAFT',
 
-  // productCreate does NOT put a product on any sales channel, so even an
-  // ACTIVE product renders as "no products found" on the storefront until it
-  // is published. Publish every new product to the Online Store channel.
+  // productCreate attaches a product to no sales channel, so even an ACTIVE
+  // product is invisible until published.
   PUBLISH_TO_ONLINE_STORE: true,
 
-  // Shopify hides a product with no image behind a grey placeholder tile, and
-  // the sheet only carries Drive links that Shopify cannot fetch. Until real
-  // photography lands, attach this so the grid looks intentional. Set to ''
-  // to leave image-less products bare instead.
+  // Used when a row has no usable image (all-RAW, no filename, or no match).
   PLACEHOLDER_IMAGE_URL:
     'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/dummy_630x840_ffffff_cccccc.png?v=1788714657',
 
-  // Pause between products (ms). Shopify throttles bursts; 600ms is safe.
-  THROTTLE_MS: 600
+  // Shopify's media pipeline accepts these. RAW camera files (.CR3/.NEF) are
+  // rejected, so they're skipped and reported rather than failing the row.
+  ACCEPTED_IMAGE_EXT: ['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'],
+
+  MAX_IMAGES_PER_PRODUCT: 10,
+
+  // Apps Script kills a run at 6 minutes. Stop cleanly at 4.5 so the rows
+  // already done get written back to the sheet.
+  TIME_BUDGET_MS: 4.5 * 60 * 1000,
+
+  THROTTLE_MS: 400
 };
 
-/** Sheet header text → internal field name. Match is case/space-insensitive. */
+/** Sheet header text → internal field name (case/space-insensitive match). */
 var COLUMN_MAP = {
-  'S. No.':                                                'serial',
-  'Categories':                                            'category',
-  'Sub Category':                                          'subCategory',
-  'Brief Product Description':                             'briefDescription',
-  'Unit / Qty':                                            'quantity',
-  'Region':                                                'region',
-  'Bhoomija Selling Price':                                'price',
+  'S. No.':                                                   'serial',
+  'Categories':                                               'category',
+  'Sub Category':                                             'subCategory',
+  'Brief Product Description':                                'briefDescription',
+  'Unit / Qty':                                               'quantity',
+  'Region':                                                   'region',
+  'Bhoomija Selling Price':                                   'price',
+  'Notes':                                                    'sheetNotes',
   'Product Title - only if different from Brief Description': 'title',
-  'Product Description (50-70 words)':                     'description',
-  'Key Features (separate with | )':                       'keyFeatures',
-  'Craft / Technique':                                     'craft',
-  'Material':                                              'material',
-  'Care Instructions':                                     'care',
-  'Artisan / Cluster Name':                                'artisan',
-  'Tags / Search Keywords':                                'keywords',
-  'MRP (Rs)':                                              'mrp',
-  'HSN Code':                                              'hsn',
-  'Weight - packed (grams)':                               'weight',
-  'SKU Code':                                              'sku',
-  'Shopify Handle / URL':                                  'handle',
-  'Listing Status':                                        'status',
-  'Developer Notes':                                       'notes',
-  // Optional — add this column yourself and fill with public HTTPS image URLs
-  // (comma separated). Google Drive links do NOT work; Shopify cannot read them.
-  'Image URLs':                                            'imageUrls'
+  'Product Description (50-70 words)':                        'description',
+  'Key Features (separate with | )':                          'keyFeatures',
+  'Craft / Technique':                                        'craft',
+  'Material':                                                 'material',
+  'Care Instructions':                                        'care',
+  'Artisan / Cluster Name':                                   'artisan',
+  'Tags / Search Keywords':                                   'keywords',
+  'MRP (Rs)':                                                 'mrp',
+  'HSN Code':                                                 'hsn',
+  'Weight - packed (grams)':                                  'weight',
+  'Length (cm)':                                              'length',
+  'Width (cm)':                                               'width',
+  'Height (cm)':                                              'height',
+  'Product Images - Drive folder link':                       'imageNames',
+  'SKU Code':                                                 'sku',
+  'Shopify Handle / URL':                                     'handle',
+  'Listing Status':                                           'status',
+  'Developer Notes':                                          'notes'
 };
 
-/** Product metafields written under the `custom` namespace. */
+/**
+ * The Drive-link column has no header text in row 2 (its label sits in the
+ * merged row-1 banner), so it's located by position: the column immediately
+ * right of the image-names column.
+ */
+var DRIVE_LINK_OFFSET = 1;
+
+/**
+ * Sub-category spellings in the sheet that differ from the tag the existing
+ * smart collections match on. Keyed "Category|Sub Category" because the same
+ * sheet value can mean different things under different parents — "Wall
+ * Hanger" is its own collection under Gift Ideas but is "Embroidered Wall
+ * Hanger" under Wall Art Forms.
+ */
+var SUBCATEGORY_ALIAS = {
+  'Home|Durrie':                      'Durrie / Throw',
+  'Wearables|Mekhela Chador':         'Mekhla Chador',
+  'Wall Art Forms|Wall Hanger':       'Embroidered Wall Hanger'
+};
+
+/** Product metafields, all under the `custom` namespace. */
 var METAFIELDS = [
-  { key: 'craft_technique',  name: 'Craft / Technique',  field: 'craft' },
-  { key: 'material',         name: 'Material',           field: 'material' },
-  { key: 'care_instructions',name: 'Care Instructions',  field: 'care' },
-  { key: 'region',           name: 'Region',             field: 'region' },
-  { key: 'artisan_cluster',  name: 'Artisan / Cluster',  field: 'artisan' }
+  { key: 'craft_technique',   name: 'Craft / Technique',  field: 'craft' },
+  { key: 'material',          name: 'Material',           field: 'material' },
+  { key: 'care_instructions', name: 'Care Instructions',  field: 'care' },
+  { key: 'region',            name: 'Region',             field: 'region' },
+  { key: 'artisan_cluster',   name: 'Artisan / Cluster',  field: 'artisan' },
+  { key: 'dimensions',        name: 'Dimensions',         field: '_dimensions' }
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -85,17 +114,18 @@ var METAFIELDS = [
 // ─────────────────────────────────────────────────────────────
 
 function onOpen() {
-  SpreadsheetApp.getUi()
-    .createMenu('Bhoomija')
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Bhoomija')
     .addItem('Preview selected rows', 'previewSelectedRows')
     .addItem('Upload selected rows', 'uploadSelectedRows')
     .addSeparator()
     .addItem('Re-upload selected (ignore "Uploaded")', 'forceUploadSelectedRows')
     .addSeparator()
-    .addSubMenu(SpreadsheetApp.getUi().createMenu('Setup')
+    .addSubMenu(ui.createMenu('Setup')
       .addItem('Set Shopify credentials', 'setCredentials')
       .addItem('Test connection', 'testConnection')
-      .addItem('Create metafield definitions', 'createMetafieldDefinitions'))
+      .addItem('Create metafield definitions', 'createMetafieldDefinitions')
+      .addItem('Check collection tag match', 'checkCollectionMatch'))
     .addToUi();
 }
 
@@ -104,34 +134,20 @@ function onOpen() {
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Editor-safe alternative to setCredentials().
- *
- * setCredentials() opens a popup, and popups only work when launched from the
- * spreadsheet's Bhoomija menu — pressing Run on it inside the Apps Script
- * editor hangs forever with no dialog. If that happens, use this instead:
- * fill in the two values below, press Run once, check the log says "Saved",
- * then blank them out again so the token isn't left sitting in the file.
+ * Editor-safe credential setup. setCredentials() opens a dialog, which only
+ * renders when launched from the sheet's menu — pressing Run on it inside the
+ * Apps Script editor hangs with no dialog. Fill these in, Run once, check the
+ * log, then blank them out again.
  */
 function setCredentialsDirect() {
-  var SHOP_DOMAIN = '';     // e.g. 'bhoomija.myshopify.com'
-
-  // ── Option A: Dev Dashboard app (what Shopify gives you from 2026 onward) ──
-  // dev.shopify.com/dashboard → your app → Settings → Client ID / Client secret.
-  // The script exchanges these for a 24h token and refreshes it automatically.
-  var CLIENT_ID     = '';
+  var SHOP_DOMAIN   = '';   // 'bhoomija-2.myshopify.com'
+  var CLIENT_ID     = '';   // Dev Dashboard → app → Settings
   var CLIENT_SECRET = '';
+  var ADMIN_TOKEN   = '';   // legacy shpat_ token instead, if you have one
 
-  // ── Option B: legacy custom app created in store admin before Jan 2026 ──
-  // A static token starting with shpat_. Leave blank if using Option A.
-  var ADMIN_TOKEN = '';
-
-  if (!SHOP_DOMAIN) {
-    Logger.log('Fill in SHOP_DOMAIN inside setCredentialsDirect() first.');
-    return;
-  }
+  if (!SHOP_DOMAIN) { Logger.log('Fill in SHOP_DOMAIN first.'); return; }
   if (!ADMIN_TOKEN && !(CLIENT_ID && CLIENT_SECRET)) {
-    Logger.log('Fill in either CLIENT_ID + CLIENT_SECRET (Dev Dashboard app) ' +
-               'or ADMIN_TOKEN (legacy shpat_ token).');
+    Logger.log('Fill in CLIENT_ID + CLIENT_SECRET, or ADMIN_TOKEN.');
     return;
   }
 
@@ -145,12 +161,10 @@ function setCredentialsDirect() {
   var store = PropertiesService.getScriptProperties();
   clearAuthProperties(store);
   store.setProperties(props);
-
-  Logger.log('Saved (%s). Now clear the values above, then run testConnectionDirect().',
+  Logger.log('Saved (%s). Clear the values above, then run testConnectionDirect().',
     ADMIN_TOKEN ? 'static token' : 'client credentials');
 }
 
-/** Editor-safe connection test — logs instead of opening a dialog. */
 function testConnectionDirect() {
   try {
     var r = gql('{ shop { name myshopifyDomain currencyCode } ' +
@@ -167,14 +181,12 @@ function setCredentials() {
   var ui = SpreadsheetApp.getUi();
 
   var d = ui.prompt('Shopify store domain',
-    'e.g. bhoomija.myshopify.com  (not bhoomija.in)', ui.ButtonSet.OK_CANCEL);
+    'e.g. bhoomija-2.myshopify.com', ui.ButtonSet.OK_CANCEL);
   if (d.getSelectedButton() !== ui.Button.OK) return;
 
   var id = ui.prompt('Client ID',
-    'dev.shopify.com/dashboard → your app → Settings → Client ID.\n\n' +
-    'If you have a legacy shpat_ token instead, leave this blank and paste the ' +
-    'token on the next screen.',
-    ui.ButtonSet.OK_CANCEL);
+    'Dev Dashboard → your app → Settings → Client ID.\n\n' +
+    'Leave blank if using a legacy shpat_ token.', ui.ButtonSet.OK_CANCEL);
   if (id.getSelectedButton() !== ui.Button.OK) return;
 
   var props = {
@@ -182,14 +194,14 @@ function setCredentials() {
   };
 
   if (id.getResponseText().trim()) {
-    var secret = ui.prompt('Client secret',
-      'Same page as the Client ID.', ui.ButtonSet.OK_CANCEL);
+    var secret = ui.prompt('Client secret', 'Same page as the Client ID.',
+      ui.ButtonSet.OK_CANCEL);
     if (secret.getSelectedButton() !== ui.Button.OK) return;
     props.CLIENT_ID = id.getResponseText().trim();
     props.CLIENT_SECRET = secret.getResponseText().trim();
   } else {
-    var t = ui.prompt('Admin API access token',
-      'Legacy custom app token, starts with shpat_', ui.ButtonSet.OK_CANCEL);
+    var t = ui.prompt('Admin API access token', 'Starts with shpat_',
+      ui.ButtonSet.OK_CANCEL);
     if (t.getSelectedButton() !== ui.Button.OK) return;
     if (!t.getResponseText().trim()) { ui.alert('Nothing entered — cancelled.'); return; }
     props.ADMIN_TOKEN = t.getResponseText().trim();
@@ -198,14 +210,12 @@ function setCredentials() {
   var store = PropertiesService.getScriptProperties();
   clearAuthProperties(store);
   store.setProperties(props);
-
   ui.alert('Saved. Now run Setup → Test connection.');
 }
 
 /**
- * Wipes every stored auth value before saving new ones, so switching between a
- * static shpat_ token and Dev Dashboard client credentials can't leave a stale
- * token behind that getAccessToken() would keep preferring.
+ * Wipes stored auth before saving new values, so switching between a static
+ * token and client credentials can't leave a stale token that keeps winning.
  */
 function clearAuthProperties(store) {
   ['ADMIN_TOKEN', 'CLIENT_ID', 'CLIENT_SECRET', 'CACHED_TOKEN', 'CACHED_TOKEN_EXPIRY']
@@ -217,18 +227,17 @@ function testConnection() {
     var r = gql('{ shop { name myshopifyDomain currencyCode } ' +
                 '  locations(first:1) { nodes { id name } } }', {});
     SpreadsheetApp.getUi().alert(
-      'Connected\n\n' +
-      'Shop: ' + r.shop.name + '\n' +
-      'Domain: ' + r.shop.myshopifyDomain + '\n' +
-      'Currency: ' + r.shop.currencyCode + '\n' +
-      'Location: ' + r.locations.nodes[0].name);
+      'Connected\n\nShop: ' + r.shop.name +
+      '\nDomain: ' + r.shop.myshopifyDomain +
+      '\nCurrency: ' + r.shop.currencyCode +
+      '\nLocation: ' + r.locations.nodes[0].name);
   } catch (e) {
     SpreadsheetApp.getUi().alert('Connection failed\n\n' + e.message);
   }
 }
 
 function createMetafieldDefinitions() {
-  var created = [], skipped = [];
+  var created = [], existed = [];
 
   METAFIELDS.forEach(function (m) {
     var res = gql(
@@ -247,23 +256,70 @@ function createMetafieldDefinitions() {
         } });
 
     var errs = res.metafieldDefinitionCreate.userErrors;
-    if (errs.length && errs[0].code === 'TAKEN') skipped.push(m.key);
-    else if (errs.length) skipped.push(m.key + ' (' + errs[0].message + ')');
+    if (errs.length && errs[0].code === 'TAKEN') existed.push(m.key);
+    else if (errs.length) existed.push(m.key + ' (' + errs[0].message + ')');
     else created.push(m.key);
   });
 
   SpreadsheetApp.getUi().alert(
-    'Metafield definitions\n\n' +
-    'Created: ' + (created.join(', ') || '—') + '\n' +
-    'Already existed: ' + (skipped.join(', ') || '—'));
+    'Metafield definitions\n\nCreated: ' + (created.join(', ') || '—') +
+    '\nAlready existed: ' + (existed.join(', ') || '—'));
+}
+
+/**
+ * Reports which Category/Sub Category pairs in the sheet will land in a
+ * matching smart collection, without touching Shopify. Catches spelling
+ * drift between the sheet and the collection rules before an upload.
+ */
+function checkCollectionMatch() {
+  var ctx = buildContext();
+  var last = ctx.sheet.getLastRow();
+  var values = ctx.sheet.getRange(CONFIG.FIRST_DATA_ROW, 1,
+    last - CONFIG.FIRST_DATA_ROW + 1, ctx.width).getValues();
+
+  var conditions = {};
+  gql('{ collections(first:250){ nodes { title ruleSet { rules { column condition } } } } }', {})
+    .collections.nodes.forEach(function (c) {
+      if (!c.ruleSet) return;
+      c.ruleSet.rules.forEach(function (r) {
+        if (r.column === 'TAG') conditions[r.condition] = true;
+      });
+    });
+
+  var pairs = {};
+  values.forEach(function (raw) {
+    var row = readRow(raw, ctx.cols);
+    if (!row.category || !row.subCategory) return;
+    var key = row.category + '|' + row.subCategory;
+    pairs[key] = (pairs[key] || 0) + 1;
+  });
+
+  var ok = 0, problems = [];
+  Object.keys(pairs).sort().forEach(function (key) {
+    var parts = key.split('|');
+    var tag = resolveSubCategory(parts[0], parts[1]);
+    var parentOk = conditions[parts[0]];
+    var subOk = conditions[tag];
+    if (parentOk && subOk) { ok += pairs[key]; return; }
+    problems.push('  ' + pairs[key] + '×  ' + parts[0] + ' / ' + parts[1] +
+      (tag !== parts[1] ? ' (→ "' + tag + '")' : '') +
+      '  — missing: ' + (!parentOk ? 'parent collection' : 'sub collection'));
+  });
+
+  SpreadsheetApp.getUi().alert(
+    'Collection tag match\n\n' +
+    'Products landing in parent + sub: ' + ok + '\n' +
+    (problems.length
+      ? '\nWill miss a collection:\n' + problems.join('\n')
+      : '\nEverything matches.'));
 }
 
 // ─────────────────────────────────────────────────────────────
 // Menu actions
 // ─────────────────────────────────────────────────────────────
 
-function previewSelectedRows() { runSelected(true,  false); }
-function uploadSelectedRows()  { runSelected(false, false); }
+function previewSelectedRows()     { runSelected(true,  false); }
+function uploadSelectedRows()      { runSelected(false, false); }
 function forceUploadSelectedRows() { runSelected(false, true); }
 
 function runSelected(dryRun, force) {
@@ -280,57 +336,68 @@ function runSelected(dryRun, force) {
   var rowNumbers = selectedDataRows(ctx.sheet);
   if (!rowNumbers.length) {
     ui.alert('Select some cells first.\n\n' +
-             'Any selection works — click a row number, or drag over a range. ' +
+             'Any selection works — click a row number or drag over a range. ' +
              'Every row you touch gets processed.');
     return;
   }
 
-  var products = [];
-  var problems = [];
+  var products = [], skipped = [];
 
   rowNumbers.forEach(function (rowNum) {
     var raw = ctx.sheet.getRange(rowNum, 1, 1, ctx.width).getValues()[0];
     var row = readRow(raw, ctx.cols);
-    if (!row.briefDescription && !row.title) return;   // blank row
+    row._rowNum = rowNum;
+    row._driveUrl = readDriveLink(ctx, rowNum);
+
+    if (!row.briefDescription && !row.title) return;            // blank row
+    if (String(row.briefDescription).trim() === 'Filled') return; // template row
 
     if (!force && String(row.status || '').toLowerCase().indexOf('uploaded') === 0) {
-      problems.push('Row ' + rowNum + ': already uploaded (skipped)');
+      skipped.push('Row ' + rowNum + ': already uploaded');
       return;
     }
 
     var issues = validate(row);
     if (issues.length) {
-      problems.push('Row ' + rowNum + ': ' + issues.join('; '));
+      skipped.push('Row ' + rowNum + ': ' + issues.join('; '));
       return;
     }
-    products.push({ rowNum: rowNum, row: row });
+    products.push(row);
   });
 
   if (dryRun) {
-    ui.alert(previewText(products, problems, ctx));
+    ui.alert(previewText(products, skipped, ctx));
     return;
   }
 
   if (!products.length) {
-    ui.alert('Nothing to upload.\n\n' + problems.join('\n'));
+    ui.alert('Nothing to upload.\n\n' + skipped.join('\n'));
     return;
   }
 
   var confirm = ui.alert(
     'Upload ' + products.length + ' product' + (products.length === 1 ? '' : 's') + '?',
+    'Store: ' + ctx.shopDomain + '\n' +
     'Status: ' + CONFIG.PRODUCT_STATUS + '\n' +
-    'Store: ' + ctx.shopDomain + '\n\n' +
-    (problems.length ? problems.length + ' row(s) will be skipped.\n\n' : '') +
-    'This writes to the live store.',
+    'Images pulled from Drive and uploaded to Shopify.\n' +
+    (skipped.length ? '\n' + skipped.length + ' row(s) will be skipped.\n' : '') +
+    '\nThis writes to the live store.',
     ui.ButtonSet.OK_CANCEL);
   if (confirm !== ui.Button.OK) return;
 
-  var ok = 0, failed = [];
+  var started = Date.now();
+  var ok = 0, failed = [], ranOutOfTime = false;
 
-  products.forEach(function (p, i) {
+  for (var i = 0; i < products.length; i++) {
+    if (Date.now() - started > CONFIG.TIME_BUDGET_MS) {
+      ranOutOfTime = true;
+      break;
+    }
+
+    var row = products[i];
     try {
-      var result = createProduct(p.row, ctx);
-      writeBack(ctx, p.rowNum, {
+      var result = createProduct(row, ctx);
+      writeBack(ctx, row._rowNum, {
         sku:    result.sku,
         handle: result.handle,
         status: 'Uploaded ' + new Date().toISOString().slice(0, 10),
@@ -338,19 +405,27 @@ function runSelected(dryRun, force) {
       });
       ok++;
     } catch (e) {
-      failed.push('Row ' + p.rowNum + ': ' + e.message);
-      writeBack(ctx, p.rowNum, { status: 'Failed', notes: String(e.message).slice(0, 300) });
+      failed.push('Row ' + row._rowNum + ': ' + e.message);
+      writeBack(ctx, row._rowNum,
+        { status: 'Failed', notes: String(e.message).slice(0, 400) });
     }
     if (i < products.length - 1) Utilities.sleep(CONFIG.THROTTLE_MS);
-  });
+  }
+
+  SpreadsheetApp.flush();
 
   ui.alert(
     'Done\n\n' +
     'Uploaded: ' + ok + '\n' +
     'Failed: ' + failed.length + '\n' +
-    'Skipped: ' + problems.length +
-    (failed.length ? '\n\n' + failed.join('\n') : '') +
-    (problems.length ? '\n\nSkipped:\n' + problems.join('\n') : ''));
+    'Skipped: ' + skipped.length +
+    (ranOutOfTime
+      ? '\n\nStopped at the Apps Script time limit with ' +
+        (products.length - ok - failed.length) + ' row(s) left. ' +
+        'Everything done so far is saved — select the remaining rows and run again.'
+      : '') +
+    (failed.length ? '\n\nFailures:\n' + failed.join('\n') : '') +
+    (skipped.length ? '\n\nSkipped:\n' + skipped.slice(0, 15).join('\n') : ''));
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -366,7 +441,7 @@ function buildContext() {
 
   var cols = {};
   headers.forEach(function (h, i) {
-    var key = COLUMN_MAP[normalizeHeader(h, headers)];
+    var key = COLUMN_MAP[normalizeHeader(h)];
     if (key) cols[key] = i;
   });
 
@@ -377,26 +452,24 @@ function buildContext() {
     }
   });
 
-  var props = PropertiesService.getScriptProperties();
-  var shopDomain = props.getProperty('SHOP_DOMAIN');
-  if (!shopDomain) throw new Error('Run Bhoomija → Setup → Set Shopify credentials first.');
+  var domain = PropertiesService.getScriptProperties().getProperty('SHOP_DOMAIN');
+  if (!domain) throw new Error('Run Bhoomija → Setup → Set Shopify credentials first.');
 
   return {
     sheet: sheet,
     width: width,
     cols: cols,
-    shopDomain: shopDomain,
-    locationId: null,     // resolved lazily on first upload
-    publicationId: null   // Online Store channel, resolved lazily
+    shopDomain: domain,
+    locationId: null,      // resolved lazily
+    publicationId: null,   // resolved lazily
+    folderCache: {}        // driveFolderId → { lowercaseFilename: fileId }
   };
 }
 
-/** Exact header match, falling back to a normalized comparison. */
-function normalizeHeader(h, allHeaders) {
+function normalizeHeader(h) {
   if (h === null || h === undefined) return '';
   var raw = String(h).trim();
   if (COLUMN_MAP[raw]) return raw;
-
   var squashed = raw.toLowerCase().replace(/\s+/g, ' ');
   for (var key in COLUMN_MAP) {
     if (key.toLowerCase().replace(/\s+/g, ' ') === squashed) return key;
@@ -405,16 +478,14 @@ function normalizeHeader(h, allHeaders) {
 }
 
 function selectedDataRows(sheet) {
-  var ranges = sheet.getActiveRangeList()
-    ? sheet.getActiveRangeList().getRanges()
-    : [sheet.getActiveRange()];
+  var list = sheet.getActiveRangeList();
+  var ranges = list ? list.getRanges() : [sheet.getActiveRange()];
 
   var seen = {}, out = [];
   ranges.forEach(function (r) {
     for (var i = 0; i < r.getNumRows(); i++) {
       var rowNum = r.getRow() + i;
-      if (rowNum < CONFIG.FIRST_DATA_ROW) continue;
-      if (seen[rowNum]) continue;
+      if (rowNum < CONFIG.FIRST_DATA_ROW || seen[rowNum]) continue;
       seen[rowNum] = true;
       out.push(rowNum);
     }
@@ -428,7 +499,34 @@ function readRow(raw, cols) {
     var v = raw[cols[key]];
     row[key] = (v === null || v === undefined) ? '' : String(v).trim();
   }
+  row._dimensions = buildDimensions(row);
   return row;
+}
+
+/**
+ * The Drive link lives in the cell to the right of the image-names column and
+ * carries no visible URL — the text reads "jpg" or a folder name. Pull the
+ * real target from the cell's rich-text link, falling back to a HYPERLINK()
+ * formula or a plain pasted URL.
+ */
+function readDriveLink(ctx, rowNum) {
+  if (ctx.cols.imageNames === undefined) return '';
+  var col = ctx.cols.imageNames + DRIVE_LINK_OFFSET + 1;   // 1-indexed
+  if (col > ctx.width) return '';
+
+  var cell = ctx.sheet.getRange(rowNum, col);
+
+  try {
+    var link = cell.getRichTextValue() && cell.getRichTextValue().getLinkUrl();
+    if (link) return link;
+  } catch (e) { /* cell has no rich text */ }
+
+  var formula = cell.getFormula();
+  var m = formula && formula.match(/HYPERLINK\(\s*"([^"]+)"/i);
+  if (m) return m[1];
+
+  var text = String(cell.getValue() || '');
+  return /^https?:\/\//i.test(text) ? text : '';
 }
 
 function validate(row) {
@@ -447,6 +545,18 @@ function buildTitle(row) {
   return row.title || row.briefDescription;
 }
 
+function buildDimensions(row) {
+  var parts = ['length', 'width', 'height']
+    .map(function (k) { return parseFloat(row[k]); })
+    .filter(function (n) { return !isNaN(n) && n > 0; });
+  return parts.length ? parts.join(' × ') + ' cm' : '';
+}
+
+/** Maps a sheet sub-category to the tag the smart collections match on. */
+function resolveSubCategory(category, subCategory) {
+  return SUBCATEGORY_ALIAS[category + '|' + subCategory] || subCategory;
+}
+
 function buildDescriptionHtml(row) {
   var parts = [];
   if (row.description) parts.push('<p>' + escapeHtml(row.description) + '</p>');
@@ -460,13 +570,14 @@ function buildDescriptionHtml(row) {
   }
 
   var spec = [];
-  if (row.craft)    spec.push('<strong>Craft:</strong> '    + escapeHtml(row.craft));
-  if (row.material) spec.push('<strong>Material:</strong> ' + escapeHtml(row.material));
-  if (row.region)   spec.push('<strong>Region:</strong> '   + escapeHtml(row.region));
+  if (row.craft)        spec.push('<strong>Craft:</strong> '    + escapeHtml(row.craft));
+  if (row.material)     spec.push('<strong>Material:</strong> ' + escapeHtml(row.material));
+  if (row.region)       spec.push('<strong>Region:</strong> '   + escapeHtml(row.region));
   if (row.artisan && row.artisan !== row.region) {
     spec.push('<strong>Artisan / Cluster:</strong> ' + escapeHtml(row.artisan));
   }
-  if (row.care)     spec.push('<strong>Care:</strong> '     + escapeHtml(row.care));
+  if (row._dimensions)  spec.push('<strong>Dimensions:</strong> ' + escapeHtml(row._dimensions));
+  if (row.care)         spec.push('<strong>Care:</strong> '     + escapeHtml(row.care));
   if (spec.length) parts.push('<p>' + spec.join('<br>') + '</p>');
 
   return parts.join('\n');
@@ -475,7 +586,7 @@ function buildDescriptionHtml(row) {
 function buildTags(row) {
   var tags = [];
   if (row.category)    tags.push(row.category);
-  if (row.subCategory) tags.push(row.subCategory);
+  if (row.subCategory) tags.push(resolveSubCategory(row.category, row.subCategory));
   if (row.region)      tags.push(row.region);
   if (row.craft)       tags.push(row.craft);
   if (row.keywords) {
@@ -484,7 +595,6 @@ function buildTags(row) {
       if (t) tags.push(t);
     });
   }
-  // de-dupe, preserve order
   var seen = {}, out = [];
   tags.forEach(function (t) {
     var k = t.toLowerCase();
@@ -493,31 +603,180 @@ function buildTags(row) {
   return out;
 }
 
+/**
+ * SKU from the sheet's own S. No. when it's a clean number, else the sheet row
+ * number. Row numbers are stable and unique, so a broken serial can never
+ * collide two products onto one SKU.
+ */
 function buildSku(row) {
   if (row.sku) return row.sku;
-  var n = String(row.serial || '').replace(/\D/g, '');
-  return n ? 'Bhoomija' + n : '';
+  var serial = String(row.serial || '').trim();
+  if (/^\d+(\.0+)?$/.test(serial)) return 'Bhoomija' + parseInt(serial, 10);
+  return 'Bhoomija-R' + row._rowNum;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Drive images
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Parses column AD into filenames. Entries often carry a trailing annotation
+ * ("_ANC2177.JPG - Red"), and a few are notes with no filename at all
+ * ("Strawberry motif") — those are reported rather than guessed at.
+ */
+function parseImageNames(raw) {
+  if (!raw) return { files: [], unusable: [] };
+
+  var files = [], unusable = [];
+  String(raw).split(/[,\n;]+/).forEach(function (entry) {
+    entry = entry.trim();
+    if (!entry) return;
+
+    var m = entry.match(/([^\s,][^,]*?\.(jpg|jpeg|png|webp|heic|gif|cr3|nef|arw|dng))\b/i);
+    if (!m) { unusable.push(entry); return; }
+
+    var name = m[1].trim();
+    var ext = name.split('.').pop().toLowerCase();
+    if (CONFIG.ACCEPTED_IMAGE_EXT.indexOf(ext) === -1) {
+      unusable.push(name + ' (' + ext.toUpperCase() + ' not supported by Shopify)');
+      return;
+    }
+    files.push(name);
+  });
+
+  return { files: files, unusable: unusable };
+}
+
+function extractDriveFolderId(url) {
+  if (!url) return null;
+  var folder = url.match(/\/folders\/([A-Za-z0-9_-]+)/);
+  if (folder) return { type: 'folder', id: folder[1] };
+  var file = url.match(/\/file\/d\/([A-Za-z0-9_-]+)/);
+  if (file) return { type: 'file', id: file[1] };
+  var open = url.match(/[?&]id=([A-Za-z0-9_-]+)/);
+  if (open) return { type: 'file', id: open[1] };
+  return null;
 }
 
 /**
- * Real image URLs from the sheet's optional "Image URLs" column.
- * Drive links are dropped — Shopify's media importer cannot fetch them.
+ * Builds { lowercaseFilename → fileId } for a Drive folder, cached per run.
+ * Thirty folders serve all 238 rows — one shared by 70 — so without this the
+ * same folder would be listed dozens of times.
  */
-function buildImageUrls(row) {
-  if (!row.imageUrls) return [];
-  return row.imageUrls.split(/[,\s]+/)
-    .map(function (u) { return u.trim(); })
-    .filter(function (u) { return /^https:\/\//i.test(u) && u.indexOf('drive.google.com') === -1; });
+function getFolderIndex(ctx, folderId) {
+  if (ctx.folderCache[folderId]) return ctx.folderCache[folderId];
+
+  var index = {};
+  var folder = DriveApp.getFolderById(folderId);
+  var files = folder.getFiles();
+  while (files.hasNext()) {
+    var f = files.next();
+    index[f.getName().toLowerCase()] = f.getId();
+  }
+
+  ctx.folderCache[folderId] = index;
+  return index;
 }
 
-/** What actually gets attached: real images, else the placeholder. */
-function resolveImageUrls(row) {
-  var real = buildImageUrls(row);
-  if (real.length) return { urls: real, isPlaceholder: false };
-  if (CONFIG.PLACEHOLDER_IMAGE_URL) {
-    return { urls: [CONFIG.PLACEHOLDER_IMAGE_URL], isPlaceholder: true };
+/**
+ * Resolves a row's filenames to Drive file IDs. Matches on the exact name
+ * first, then ignoring extension, so a ".JPG" in the sheet still finds a
+ * ".jpg" on Drive.
+ */
+function resolveDriveFiles(ctx, row) {
+  var parsed = parseImageNames(row.imageNames);
+  var result = { fileIds: [], matched: [], missing: [], unusable: parsed.unusable };
+
+  if (!parsed.files.length) return result;
+
+  var target = extractDriveFolderId(row._driveUrl);
+  if (!target) {
+    result.missing = parsed.files.slice();
+    result.folderError = 'no Drive link';
+    return result;
   }
-  return { urls: [], isPlaceholder: false };
+
+  // A link straight to a single file — take it and skip name matching.
+  if (target.type === 'file') {
+    result.fileIds.push(target.id);
+    result.matched.push('(direct link)');
+    return result;
+  }
+
+  var index;
+  try {
+    index = getFolderIndex(ctx, target.id);
+  } catch (e) {
+    result.missing = parsed.files.slice();
+    result.folderError = 'folder unreadable: ' + e.message;
+    return result;
+  }
+
+  parsed.files.forEach(function (name) {
+    if (result.fileIds.length >= CONFIG.MAX_IMAGES_PER_PRODUCT) return;
+
+    var key = name.toLowerCase();
+    var id = index[key];
+
+    if (!id) {
+      var base = key.replace(/\.[^.]+$/, '');
+      for (var candidate in index) {
+        if (candidate.replace(/\.[^.]+$/, '') === base) { id = index[candidate]; break; }
+      }
+    }
+
+    if (id) { result.fileIds.push(id); result.matched.push(name); }
+    else    { result.missing.push(name); }
+  });
+
+  return result;
+}
+
+/**
+ * Pushes a Drive file's bytes into Shopify and returns the resource URL to
+ * hand to productCreateMedia. Staged upload keeps Drive private — nothing is
+ * shared publicly.
+ */
+function stageDriveFile(fileId) {
+  var file = DriveApp.getFileById(fileId);
+  var blob = file.getBlob();
+  var name = file.getName();
+
+  var staged = gql(
+    'mutation($input: [StagedUploadInput!]!) {' +
+    '  stagedUploadsCreate(input:$input) {' +
+    '    stagedTargets { url resourceUrl parameters { name value } }' +
+    '    userErrors { field message }' +
+    '  } }',
+    { input: [{
+        resource: 'IMAGE',
+        filename: name,
+        mimeType: blob.getContentType(),
+        httpMethod: 'POST',
+        fileSize: String(blob.getBytes().length)
+      }] });
+
+  throwOnErrors(staged.stagedUploadsCreate.userErrors, 'stagedUploadsCreate');
+  var target = staged.stagedUploadsCreate.stagedTargets[0];
+  if (!target) throw new Error('no staged target returned');
+
+  var form = {};
+  target.parameters.forEach(function (p) { form[p.name] = p.value; });
+  form.file = blob;
+
+  var res = UrlFetchApp.fetch(target.url, {
+    method: 'post',
+    payload: form,
+    muteHttpExceptions: true
+  });
+
+  var code = res.getResponseCode();
+  if (code < 200 || code >= 300) {
+    throw new Error('staged upload HTTP ' + code + ': ' +
+                    res.getContentText().slice(0, 200));
+  }
+
+  return { resourceUrl: target.resourceUrl, name: name };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -528,7 +787,7 @@ function createProduct(row, ctx) {
   var title = buildTitle(row);
   var notes = [];
 
-  // 1. Create the product shell
+  // 1. Product shell
   var created = gql(
     'mutation($input: ProductInput!) {' +
     '  productCreate(input:$input) {' +
@@ -548,7 +807,7 @@ function createProduct(row, ctx) {
   var product = created.productCreate.product;
   var variant = product.variants.nodes[0];
 
-  // 2. Price + SKU + inventory tracking on the default variant
+  // 2. Price, SKU, weight
   var sku = buildSku(row);
   var variantInput = {
     id: variant.id,
@@ -556,7 +815,8 @@ function createProduct(row, ctx) {
     inventoryItem: { tracked: true }
   };
   if (sku) variantInput.inventoryItem.sku = sku;
-  if (row.mrp && !isNaN(parseFloat(row.mrp)) && parseFloat(row.mrp) > parseFloat(row.price)) {
+  if (row.mrp && !isNaN(parseFloat(row.mrp)) &&
+      parseFloat(row.mrp) > parseFloat(row.price)) {
     variantInput.compareAtPrice = String(parseFloat(row.mrp).toFixed(2));
   }
   if (row.weight && !isNaN(parseFloat(row.weight))) {
@@ -574,23 +834,12 @@ function createProduct(row, ctx) {
     { productId: product.id, variants: [variantInput] });
   throwOnErrors(variantUpdate.productVariantsBulkUpdate.userErrors, 'variant update');
 
-  // 3. Images — real URLs from the sheet, else the configured placeholder
-  var imageResult = resolveImageUrls(row);
-  if (imageResult.urls.length) {
-    var media = gql(
-      'mutation($productId: ID!, $media: [CreateMediaInput!]!) {' +
-      '  productCreateMedia(productId:$productId, media:$media) {' +
-      '    mediaUserErrors { field message }' +
-      '  } }',
-      { productId: product.id,
-        media: imageResult.urls.map(function (u) {
-          return { originalSource: u, alt: title, mediaContentType: 'IMAGE' };
-        }) });
-    var mediaErrs = media.productCreateMedia.mediaUserErrors;
-    if (mediaErrs.length) notes.push('image warning: ' + mediaErrs[0].message);
-    else if (imageResult.isPlaceholder) notes.push('placeholder image');
-  } else {
-    notes.push('no image');
+  // 3. Images from Drive
+  try {
+    var imageNote = attachImages(ctx, row, product.id, title);
+    if (imageNote) notes.push(imageNote);
+  } catch (e) {
+    notes.push('image error: ' + e.message);
   }
 
   // 4. Metafields
@@ -610,11 +859,12 @@ function createProduct(row, ctx) {
       'mutation($metafields: [MetafieldsSetInput!]!) {' +
       '  metafieldsSet(metafields:$metafields) { userErrors { field message } } }',
       { metafields: metafields });
-    var mfErrs = mf.metafieldsSet.userErrors;
-    if (mfErrs.length) notes.push('metafield warning: ' + mfErrs[0].message);
+    if (mf.metafieldsSet.userErrors.length) {
+      notes.push('metafield warning: ' + mf.metafieldsSet.userErrors[0].message);
+    }
   }
 
-  // 5. Inventory quantity
+  // 5. Inventory
   var qty = parseInt(row.quantity, 10);
   if (!isNaN(qty) && qty > 0) {
     try {
@@ -624,8 +874,7 @@ function createProduct(row, ctx) {
     }
   }
 
-  // 6. Publish to the Online Store sales channel. Without this a product is
-  //    invisible on the storefront no matter its status.
+  // 6. Publish — without this the product is invisible whatever its status
   if (CONFIG.PUBLISH_TO_ONLINE_STORE) {
     try {
       publishToOnlineStore(ctx, product.id);
@@ -637,22 +886,58 @@ function createProduct(row, ctx) {
   return { id: product.id, handle: product.handle, sku: sku, notes: notes.join('; ') };
 }
 
-function publishToOnlineStore(ctx, productId) {
-  if (!ctx.publicationId) {
-    var pubs = gql('{ publications(first: 25) { nodes { id name } } }', {});
-    var online = null;
-    pubs.publications.nodes.forEach(function (p) {
-      if (p.name === 'Online Store') online = p.id;
+/** Returns a short note describing what happened, or '' when all was clean. */
+function attachImages(ctx, row, productId, title) {
+  var resolved = resolveDriveFiles(ctx, row);
+  var notes = [];
+  var sources = [];
+
+  resolved.fileIds.forEach(function (fileId, i) {
+    try {
+      var staged = stageDriveFile(fileId);
+      sources.push({
+        originalSource: staged.resourceUrl,
+        alt: title,
+        mediaContentType: 'IMAGE'
+      });
+    } catch (e) {
+      notes.push('img ' + (resolved.matched[i] || fileId) + ' failed: ' + e.message);
+    }
+  });
+
+  if (!sources.length && CONFIG.PLACEHOLDER_IMAGE_URL) {
+    sources.push({
+      originalSource: CONFIG.PLACEHOLDER_IMAGE_URL,
+      alt: title,
+      mediaContentType: 'IMAGE'
     });
-    if (!online) throw new Error('Online Store channel not found');
-    ctx.publicationId = online;
+    notes.push('placeholder image');
   }
 
-  var res = gql(
-    'mutation($id: ID!, $input: [PublicationInput!]!) {' +
-    '  publishablePublish(id:$id, input:$input) { userErrors { field message } } }',
-    { id: productId, input: [{ publicationId: ctx.publicationId }] });
-  throwOnErrors(res.publishablePublish.userErrors, 'publish');
+  if (sources.length) {
+    var media = gql(
+      'mutation($productId: ID!, $media: [CreateMediaInput!]!) {' +
+      '  productCreateMedia(productId:$productId, media:$media) {' +
+      '    mediaUserErrors { field message }' +
+      '  } }',
+      { productId: productId, media: sources });
+    var errs = media.productCreateMedia.mediaUserErrors;
+    if (errs.length) notes.push('media warning: ' + errs[0].message);
+  }
+
+  if (resolved.matched.length && !notes.length) {
+    notes.push(resolved.matched.length + ' image' +
+               (resolved.matched.length === 1 ? '' : 's'));
+  }
+  if (resolved.folderError) notes.push(resolved.folderError);
+  if (resolved.missing.length) {
+    notes.push('not found in Drive: ' + resolved.missing.join(', '));
+  }
+  if (resolved.unusable.length) {
+    notes.push('skipped: ' + resolved.unusable.join(', '));
+  }
+
+  return notes.join('; ');
 }
 
 function setInventory(ctx, inventoryItemId, qty) {
@@ -678,6 +963,24 @@ function setInventory(ctx, inventoryItemId, qty) {
   throwOnErrors(res.inventorySetQuantities.userErrors, 'inventory');
 }
 
+function publishToOnlineStore(ctx, productId) {
+  if (!ctx.publicationId) {
+    var pubs = gql('{ publications(first: 25) { nodes { id name } } }', {});
+    var online = null;
+    pubs.publications.nodes.forEach(function (p) {
+      if (p.name === 'Online Store') online = p.id;
+    });
+    if (!online) throw new Error('Online Store channel not found');
+    ctx.publicationId = online;
+  }
+
+  var res = gql(
+    'mutation($id: ID!, $input: [PublicationInput!]!) {' +
+    '  publishablePublish(id:$id, input:$input) { userErrors { field message } } }',
+    { id: productId, input: [{ publicationId: ctx.publicationId }] });
+  throwOnErrors(res.publishablePublish.userErrors, 'publish');
+}
+
 // ─────────────────────────────────────────────────────────────
 // Write-back
 // ─────────────────────────────────────────────────────────────
@@ -688,8 +991,7 @@ function writeBack(ctx, rowNum, values) {
     if (col === undefined || !values[key]) return;
     var cell = ctx.sheet.getRange(rowNum, col + 1);
     if (key === 'handle') {
-      cell.setValue('https://' + ctx.shopDomain.replace('.myshopify.com', '') +
-                    '.myshopify.com/products/' + values[key]);
+      cell.setValue('https://' + ctx.shopDomain + '/products/' + values[key]);
     } else {
       cell.setValue(values[key]);
     }
@@ -700,51 +1002,55 @@ function writeBack(ctx, rowNum, values) {
 // Preview
 // ─────────────────────────────────────────────────────────────
 
-function previewText(products, problems, ctx) {
+function previewText(products, skipped, ctx) {
   var lines = ['PREVIEW — nothing was sent to Shopify', ''];
   lines.push('Store: ' + ctx.shopDomain);
-  lines.push('Status products would get: ' + CONFIG.PRODUCT_STATUS);
-  lines.push('Publish to Online Store: ' + (CONFIG.PUBLISH_TO_ONLINE_STORE ? 'yes' : 'no'));
-  lines.push('Ready to upload: ' + products.length);
+  lines.push('Status: ' + CONFIG.PRODUCT_STATUS +
+             '   Publish to Online Store: ' + (CONFIG.PUBLISH_TO_ONLINE_STORE ? 'yes' : 'no'));
+  lines.push('Ready: ' + products.length);
   lines.push('');
 
-  products.slice(0, 6).forEach(function (p) {
-    var r = p.row;
-    lines.push('Row ' + p.rowNum + ' — ' + buildTitle(r));
-    lines.push('   SKU: ' + (buildSku(r) || '(none)') +
-               '   Price: ₹' + r.price +
-               '   Qty: ' + (r.quantity || '0'));
+  products.slice(0, 5).forEach(function (r) {
+    var resolved = resolveDriveFiles(ctx, r);
+    lines.push('Row ' + r._rowNum + ' — ' + buildTitle(r));
+    lines.push('   SKU ' + buildSku(r) +
+               '   ₹' + r.price +
+               '   qty ' + (r.quantity || '0'));
     lines.push('   Vendor: ' + (r.region || 'Bhoomija') +
                '   Type: ' + (r.subCategory || r.category));
     lines.push('   Tags: ' + buildTags(r).join(', '));
-    var img = resolveImageUrls(r);
-    lines.push('   Images: ' + (img.urls.length
-      ? (img.isPlaceholder ? 'placeholder' : img.urls.length + ' from sheet')
-      : 'none'));
+    if (r._dimensions) lines.push('   Dimensions: ' + r._dimensions);
+
+    var img = [];
+    if (resolved.matched.length) img.push(resolved.matched.length + ' found');
+    if (resolved.missing.length) img.push(resolved.missing.length + ' MISSING');
+    if (resolved.unusable.length) img.push(resolved.unusable.length + ' unusable');
+    if (!img.length) img.push('none → placeholder');
+    lines.push('   Images: ' + img.join(', '));
+    if (resolved.folderError) lines.push('     ! ' + resolved.folderError);
+    if (resolved.missing.length) lines.push('     missing: ' + resolved.missing.join(', '));
+    if (resolved.unusable.length) lines.push('     unusable: ' + resolved.unusable.join(', '));
     lines.push('');
   });
-  if (products.length > 6) lines.push('...and ' + (products.length - 6) + ' more');
+  if (products.length > 5) lines.push('...and ' + (products.length - 5) + ' more');
 
-  if (problems.length) {
+  if (skipped.length) {
     lines.push('');
-    lines.push('WILL BE SKIPPED:');
-    problems.slice(0, 10).forEach(function (p) { lines.push('  ' + p); });
-    if (problems.length > 10) lines.push('  ...and ' + (problems.length - 10) + ' more');
+    lines.push('SKIPPED:');
+    skipped.slice(0, 10).forEach(function (p) { lines.push('  ' + p); });
+    if (skipped.length > 10) lines.push('  ...and ' + (skipped.length - 10) + ' more');
   }
   return lines.join('\n');
 }
 
 // ─────────────────────────────────────────────────────────────
-// Shopify GraphQL transport
+// Shopify transport
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Returns a usable Admin API access token.
- *
- * Legacy custom apps (created in store admin before Jan 2026) have a static
- * shpat_ token. Dev Dashboard apps instead hand you a client ID + secret, which
- * are exchanged here for a token that Shopify expires after 24 hours; the token
- * is cached in Script Properties and re-fetched a minute before it lapses.
+ * A legacy custom app has a static shpat_ token. A Dev Dashboard app instead
+ * exchanges client ID + secret for a token Shopify expires after 24 hours, so
+ * that one is cached and re-fetched a minute before it lapses.
  */
 function getAccessToken() {
   var props = PropertiesService.getScriptProperties();
@@ -816,9 +1122,7 @@ function gql(query, variables) {
       Utilities.sleep(1000 * Math.pow(2, attempt));
       continue;
     }
-    if (code !== 200) {
-      throw new Error('HTTP ' + code + ': ' + body.slice(0, 300));
-    }
+    if (code !== 200) throw new Error('HTTP ' + code + ': ' + body.slice(0, 300));
 
     var json = JSON.parse(body);
 

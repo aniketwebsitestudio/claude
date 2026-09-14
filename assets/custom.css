@@ -681,7 +681,8 @@ body[coretex-page="product"] .related .soldoutButton {
    (white text on black) from the global card setting. That reads over the
    dark imagery on the homepage and collection grids, but the overlaid
    meta is unreadable here — pin the title, vendor, subtitle and price to
-   black. Scoped to .related so the other grids keep their treatment. */
+   black. Superseded by the scrim block at the end of this file, which now
+   covers .related too; left as the fallback. */
 body[coretex-page="product"] .related product-card :is(.vendor, .title, .subtitle, .price),
 body[coretex-page="product"] .related product-card :is(.vendor, .title, .subtitle, .price) :is(a, span, h2, s, ins, del) {
   color: #000;
@@ -1210,9 +1211,9 @@ section.philosophy .philosophy__media img {
 
 /* Black meta on the collection grid and the "You'd also like" row.
 
-   NOTE: for .listing-page this is superseded by the scrim block at the
-   end of this file. .related keeps it — those cards sit on the light
-   product page and are not scrimmed. */
+   NOTE: superseded by the scrim block at the end of this file, which
+   covers both .listing-page and .related. Left in place as the fallback
+   if that block is ever removed. */
 :is(.listing-page, .related) .product-grid product-card :is(.title, .craft, .price),
 :is(.listing-page, .related) .product-grid product-card :is(.title, .craft, .price) :is(a, span, h2, s) {
   color: #000;
@@ -1298,7 +1299,7 @@ body[coretex-page="product"] .bullet-product-content section[id^="price-"] :is(s
   }
 }
 
-/* ===== Collection cards: legible meta over any photograph =====
+/* ===== Product cards: legible meta over any photograph =====
    MUST STAY LAST. Title, craft line and price sit on top of the product
    image, so no single text colour works across the catalogue — black
    vanishes on the dark Naga textiles, white vanishes on the white-ground
@@ -1307,16 +1308,20 @@ body[coretex-page="product"] .bullet-product-content section[id^="price-"] :is(s
    the real work on dark ones, and it keeps working for products shot
    later without anyone tagging them.
 
-   Scoped to the listing and search grids. The homepage Bestsellers row
-   and the product page's "You'd also like" row keep their own treatment. */
+   Covers the collection grid, search results, and the product page's
+   "You'd also like" row, which renders the same card over the same
+   unpredictable photography. The homepage Bestsellers row keeps its own
+   treatment — it is art-directed against chosen imagery. */
 
 .listing-page .product-grid product-card .media,
-.search-page .product-grid product-card .media {
+.search-page .product-grid product-card .media,
+.related .product-grid product-card .media {
   position: relative;
 }
 
 .listing-page .product-grid product-card .media::after,
-.search-page .product-grid product-card .media::after {
+.search-page .product-grid product-card .media::after,
+.related .product-grid product-card .media::after {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
@@ -1340,21 +1345,27 @@ body[coretex-page="product"] .bullet-product-content section[id^="price-"] :is(s
 
 /* Lift the meta above the scrim */
 .listing-page .product-grid product-card .meta,
-.search-page .product-grid product-card .meta {
+.search-page .product-grid product-card .meta,
+.related .product-grid product-card .meta {
   position: relative;
   z-index: 2;
 }
 
-/* .craft is the custom.craft_technique line under the title. It has to be
-   named explicitly — the Figma-layout block above pins
-   :is(.title, .craft, .price) to black for .listing-page, and without
-   naming .craft here that rule keeps winning and the line stays
-   unreadable on dark photography. */
+/* .craft is the custom.craft_technique line under the title. Both it and
+   the .related selectors have to be named explicitly: two earlier blocks
+   pin this meta to black — the Figma-layout rule for
+   :is(.listing-page, .related), and the product-page rule for
+   body[coretex-page="product"] .related — and without naming them here
+   those keep winning and the text stays unreadable on dark photography. */
 .listing-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
 .listing-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
 .listing-page .product-grid price-list,
 .listing-page .product-grid price-list *,
 .search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
-.search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del) {
+.search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
+.related .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
+.related .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
+.related .product-grid price-list,
+.related .product-grid price-list * {
   color: #fff !important;
 }

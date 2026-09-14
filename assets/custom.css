@@ -1,6 +1,3 @@
-
-
-
 /* ===== Global fonts / typography ===== */
 :root {
   /* --fontFamily: "ivypresto-display", serif; */
@@ -111,6 +108,24 @@ header#mainHeader #headerGrid {
   align-items: center;
   padding:0 48px;
 }
+/* Mobile header: the 48px desktop padding and the three equal-width
+   grid columns leave big empty gaps on a phone. Tighten the padding
+   and size the MENU/SEARCH columns to their content so the logo sits
+   left and menu + search sit together on the right. */
+@media (max-width: 777px) {
+  header#mainHeader #headerGrid {
+    padding: 0 20px;
+    grid-template-columns: 1fr auto auto;
+    column-gap: 24px;
+  }
+  header#mainHeader #headerGrid .hamburger {
+    justify-content: flex-end;
+  }
+  header#mainHeader #headerGrid ul.utility {
+    justify-content: flex-end;
+    gap: 0;
+  }
+}
 #shopify-section-sections--22254940717103__header {
   display: flex;
   align-items: center;
@@ -151,6 +166,240 @@ header#mainHeader #headerGrid {
   font-size: 16px;
   line-height: 1.2;
   margin: 0;
+}
+
+/* ===== Collection pages: match homepage Bestsellers ===== */
+
+/* Intro is a centered masthead, not the theme's 3-up boxed row. app.css
+   outlines every intro cell to draw that row; this page stacks instead,
+   so the cells lose their boxes and only the sort/filter strip keeps a
+   line. That strip's bottom line is drawn by the first card row's own
+   outline — one painter per line, as with the homepage grid above. */
+.listing-page .intro > x-grid { gap: 0; }
+.listing-page .intro > x-grid > x-cell {
+  outline: none;
+  padding: 0;
+}
+.listing-page .products .intro { border-block-end: none; }
+
+/* Collection title — Figma: IvyPresto Display Thin 104 / 100% / 0% */
+.listing-page .intro .collectionTitle {
+  padding: 69px var(--mardding) 0;
+  text-align: center;
+}
+.listing-page .intro h1 {
+  font-family: "ivypresto-display", serif;
+  font-weight: 100;
+  font-size: clamp(44px, 7.25vw, 104px);
+  line-height: 1;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #000;
+  margin: 0;
+}
+/* Without a description the title carries the full gap to the strip */
+.listing-page .intro .collectionTitle:not(:has(+ .collectionDescription)) {
+  padding-block-end: 80px;
+}
+
+/* Description — IBM Plex Sans 400 16 / 140%, centered on a 607px measure */
+.listing-page .intro .collectionDescription {
+  padding: 69px var(--mardding) 80px;
+  text-align: center;
+}
+.listing-page .intro .collectionDescription .rte {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: #000;
+  max-width: 607px;
+  margin-inline: auto;
+}
+.listing-page .intro .collectionDescription .rte > :first-child { margin-block-start: 0; }
+.listing-page .intro .collectionDescription .rte > :last-child { margin-block-end: 0; }
+
+@media (max-width: 777px) {
+  .listing-page .intro .collectionTitle { padding-top: 40px; }
+  .listing-page .intro .collectionDescription { padding: 32px var(--mardding) 40px; }
+  .listing-page .intro .collectionTitle:not(:has(+ .collectionDescription)) {
+    padding-block-end: 40px;
+  }
+}
+
+/* Product card title + vendor: same type as homepage cards */
+.listing-page .product-grid .title h2,
+.listing-page .product-grid .title a {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  margin: 0;
+}
+.listing-page .product-grid .vendor {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+/* Card grid lines black + red quick-buy bar, like Bestsellers */
+.listing-page .product-grid product-card {
+  --globalBorderColor: #000;
+}
+
+/* Overlaid card meta in black. The cards carry color-scheme="coretex-2"
+   (white on black) from the global card setting; this overrides it for
+   the collection grid, matching the "You'd also like" cards.
+
+   NOTE: superseded for the listing grid by the scrim block at the end of
+   this file, which sets the meta white over a gradient. Left in place
+   because it still governs grids the scrim does not cover. */
+.listing-page .product-grid product-card :is(.vendor, .title, .subtitle, .price),
+.listing-page .product-grid product-card :is(.vendor, .title, .subtitle, .price) :is(a, span, h2, s, ins, del) {
+  color: #000;
+}
+.listing-page .superQuickBuy .cardButton,
+.listing-page .soldoutButton {
+  background-color: #7F1416;
+  color: #fff;
+  border-block: var(--globalBorderWidth, 1px) solid var(--globalBorderColor, #000);
+  border-inline: none;
+}
+
+/* Mobile: the grid goes 2-up (set on the section), which leaves roughly a
+   187px card on a 375px screen. Pull the overlaid meta down so the title
+   and price still sit on one row instead of colliding. */
+@media (max-width: 777px) {
+  .listing-page .product-grid .title h2,
+  .listing-page .product-grid .title a {
+    font-size: 11px;
+  }
+  .listing-page .product-grid .vendor,
+  .listing-page .product-grid .price {
+    font-size: 11px;
+  }
+  .listing-page .product-grid .meta .header {
+    gap: 4px;
+  }
+  .listing-page .superQuickBuy .cardButton,
+  .listing-page .soldoutButton {
+    font-size: 11px;
+  }
+}
+
+/* --- Product media: 3:4, per the Figma card (479.5 x 639.3) --- */
+.listing-page .product-grid product-card .media :is(img, video, iframe, svg) {
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+}
+
+/* --- The strip: SORT BY on the left, FILTER on the right, 36px tall --- */
+:is(.listing-page, .search-page) .intro .filterBlock {
+  padding: 0;
+  min-height: 36px;
+  border-block-start: var(--globalBorderWidth, 1px) solid #000;
+}
+
+:is(.listing-page, .search-page) .intro .filterBar {
+  width: 100%;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* The two bar items sit at either end rather than filling the row */
+:is(.listing-page, .search-page) .intro .filterBar > details {
+  width: auto;
+  padding-inline: 0;
+  border-block-end: none;
+}
+
+/* Strip labels: vertically centered in the 36px band */
+:is(.listing-page, .search-page) .intro .filterBar > details > summary {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  min-height: 36px;
+  padding: 0 var(--mardding);
+}
+
+/* One type treatment for everything in the bar and both panels: the strip
+   labels, the facet rows, the sort rows and the clear/apply buttons. */
+:is(.listing-page, .search-page) .intro .filterBar :is(summary, label, .button, button, a) {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* Sort panel hangs off the left edge... */
+:is(.listing-page, .search-page) .intro .filterBar .sortBy > details-menu {
+  position: absolute;
+  z-index: 10;
+  inset-inline-start: 0;
+  inset-inline-end: auto;
+  width: min(320px, calc(100vw - (var(--mardding) * 2)));
+  padding: 0;
+  border: var(--globalBorder);
+  border-radius: var(--radius-2);
+  background: var(--bgColor);
+  box-shadow: var(--globalShadow);
+}
+
+:is(.listing-page, .search-page) .intro .filterBar .sortByBlock {
+  padding: 0;
+  margin: 0;
+}
+
+/* Sort rows carry the same dividing line the facet rows get from app.css
+   (`.intro form details`), so the two panels read as one component. */
+:is(.listing-page, .search-page) .intro .filterBar .sortByBlock > li {
+  border-block-end: var(--globalBorder);
+}
+:is(.listing-page, .search-page) .intro .filterBar .sortByBlock > li:last-child {
+  border-block-end: none;
+}
+
+:is(.listing-page, .search-page) .intro .filterBar .sortByBlock label {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--mardding);
+  cursor: pointer;
+}
+
+:is(.listing-page, .search-page) .intro .filterBar .sortByBlock label.active {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+:is(.listing-page, .search-page) .intro .filterBar .sortByBlock input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ...and the filter panel off the right. The drawer variant keeps the
+   fixed full-height positioning app.css gives it. */
+:is(.listing-page, .search-page)
+  .intro
+  .filterBar
+  .filter:not([detached="true"])
+  > #Details-FacetFiltersFormMobile {
+  inset-inline-end: 0;
+  inset-inline-start: auto;
+  width: min(420px, calc(100vw - (var(--mardding) * 2)));
+  margin-inline: 0;
+  margin-block-start: 0;
 }
 
 /* ===== Footer (Figma design) ===== */
@@ -258,6 +507,9 @@ sub-footer { font-size: 12px; }
 /* Sub-footer: payment icon badges */
 sub-footer .payment-icons img.payment-icon { width: 29px; height: 19px; border-radius: 0; }
 
+/* Cart page: payment icon badges (UPI / COD), same fix as sub-footer above */
+cart-footer img.payment-icon { width: auto; height: 22px; max-width: 60px; object-fit: contain; border-radius: 0; }
+
 /* Sub-footer: boxed country/language selectors */
 sub-footer .selectors .fake-select {
   border: var(--globalBorderWidth, 1px) solid #000000;
@@ -279,34 +531,60 @@ sub-footer .copyright a { text-transform: uppercase; }
 /* Content column spacing */
 body[coretex-page="product"] .bullet-product-content product-content { gap: 1.4rem; }
 
-/* Title: IvyPresto Display ~56px, subtitle italic same size right below */
+/* Breadcrumbs (Home > Collection > Product) are switched on in theme
+   settings, which renders them on every template. Only the product page
+   wants one right now — the collection and About layouts are built to a
+   Figma that has no breadcrumb above the masthead. Delete this rule to
+   show them site-wide. */
+body:not([coretex-page="product"]) .breadcrumb { display: none; }
+
+/* Same small-label type as the eyebrow strips elsewhere. app.css sets
+   these to capitalize, hence the override on the children too. */
+body[coretex-page="product"] .breadcrumb,
+body[coretex-page="product"] .breadcrumb :is(a, span) {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Title: IvyPresto Display Thin 74px / 100% / +2%, italic subtitle right below (Figma 341:1225) */
 body[coretex-page="product"] .bullet-product-content section.title h1 {
   font-family: "ivypresto-display", serif;
-  font-weight: 400;
-  font-size: clamp(2.2rem, 3.9vw, 56px);
-  line-height: 1.08;
-  letter-spacing: 0.01em;
+  font-weight: 100;
+  font-size: clamp(2.4rem, 5.14vw, 74px);
+  line-height: 1;
+  letter-spacing: 0.02em;
   margin: 0;
   text-transform: none;
 }
-body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -1rem; }
+body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -1.4rem; }
 body[coretex-page="product"] .bullet-product-content section.subtitle h3 {
   font-family: "ivypresto-display", serif;
-  font-weight: 400;
+  font-weight: 100;
   font-style: italic;
-  font-size: clamp(2rem, 3.9vw, 56px);
-  line-height: 1.08;
-  letter-spacing: 0.01em;
+  font-size: clamp(2.4rem, 5.14vw, 74px);
+  line-height: 1;
+  letter-spacing: 0.02em;
   margin: 0;
   text-transform: none;
 }
 
-/* Region link (vendor): brand red, uppercase, underlined */
+/* Figma rhythm: 44px title -> region -> first paragraph, ~107px before buttons */
+body[coretex-page="product"] .bullet-product-content product-content { gap: clamp(1.4rem, 3.05vw, 44px); }
+body[coretex-page="product"] .bullet-product-content .product-form {
+  margin-block-start: clamp(1.5rem, 4.4vw, 63px);
+}
+
+/* Region link (vendor): brand red, IBM Plex Sans Bold 20px, uppercase, underlined */
 body[coretex-page="product"] .bullet-product-content section.vendor a {
   color: #7F1416;
   font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: clamp(0.875rem, 1.39vw, 20px);
+  line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   text-decoration: underline;
@@ -314,23 +592,59 @@ body[coretex-page="product"] .bullet-product-content section.vendor a {
   text-decoration-thickness: 1px;
 }
 
-/* Description: justified paragraphs like the design */
+/* Description: IBM Plex Sans 16px / 140%, justified (Figma 341:1226) */
 body[coretex-page="product"] .bullet-product-content section.description .rte {
   font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 16px;
+  line-height: 1.4;
   text-align: justify;
 }
 body[coretex-page="product"] .bullet-product-content section.description .rte p { margin: 0 0 1.2em; }
 body[coretex-page="product"] .bullet-product-content section.description .rte p:last-child { margin-bottom: 0; }
 
-/* Buy buttons: ADD TO CART outlined, BUY NOW solid black, square corners */
+/* Title and price inherit white from the colour scheme and disappear
+   against the light content column. Pin them to black. Set on the
+   containers rather than each element so the price's nested spans and
+   <s> tags inherit it — nothing else colours them, so inheritance is
+   enough and any future sale styling can still override. */
+body[coretex-page="product"] .bullet-product-content section.title,
+body[coretex-page="product"] .bullet-product-content section.title :is(h1, h2, a),
+body[coretex-page="product"] .bullet-product-content section[id^="price-"],
+body[coretex-page="product"] .bullet-mobile-meta,
+body[coretex-page="product"] .bullet-mobile-meta :is(h2, a) {
+  color: #000;
+}
+
+/* The small-screen info bar at the top of the product page: same display
+   face as the title below it. The bar is .small-only, so it never shows
+   on desktop and needs no media query. */
+/* Matches the product title below it: same face, no uppercase (the h2
+   otherwise picks up --hTxTransform) and no link underline.
+   Weight is 300 rather than the title's 100 on purpose. IvyPresto is a
+   display face — at 100 its hairlines fall under a device pixel at this
+   size and anti-alias into grey mush. 300 renders crisply at 18px and
+   reads as the same weight as 100 does at 32px. */
+body[coretex-page="product"] .bullet-mobile-meta,
+body[coretex-page="product"] .bullet-mobile-meta :is(h2, a, coretex-price, price-regular, price-sale, price-unit, .price-item, .money, s, span) {
+  font-family: "ivypresto-display", serif;
+  font-weight: 300;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-decoration: none;
+}
+
+/* Buy buttons: 49px tall, 18px uppercase regular; ADD TO CART outlined,
+   BUY NOW solid black, square corners (Figma 341:1229/1231) */
 body[coretex-page="product"] .product-form .cartButton {
   border-radius: 0;
   text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  min-height: 48px;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
+  min-height: 49px;
 }
 body[coretex-page="product"] .product-form .cartButton.is-outline {
   border: 1px solid #000000;
@@ -342,13 +656,58 @@ body[coretex-page="product"] .product-form .shopify-payment-button__button--unbr
   color: #ffffff;
   border-radius: 0;
   text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  min-height: 48px;
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0;
+  min-height: 49px;
 }
 body[coretex-page="product"] .product-form .shopify-payment-button__more-options { display: none; }
 
+/* Related products quick-buy bar: cream like the Figma, not red */
+body[coretex-page="product"] .related .superQuickBuy .cardButton,
+body[coretex-page="product"] .related .soldoutButton {
+  background-color: #F8EFD2;
+  color: #000000;
+  text-transform: uppercase;
+  font-size: 18px;
+  font-weight: 400;
+  border-block: var(--globalBorderWidth, 1px) solid var(--globalBorderColor, #000);
+  border-inline: none;
+}
+
 /* "YOU'D ALSO LIKE" heading: centered eyebrow like homepage */
+/* "You'd also like" cards: product cards carry color-scheme="coretex-2"
+   (white text on black) from the global card setting. That reads over the
+   dark imagery on the homepage and collection grids, but the overlaid
+   meta is unreadable here — pin the title, vendor, subtitle and price to
+   black. Scoped to .related so the other grids keep their treatment. */
+body[coretex-page="product"] .related product-card :is(.vendor, .title, .subtitle, .price),
+body[coretex-page="product"] .related product-card :is(.vendor, .title, .subtitle, .price) :is(a, span, h2, s, ins, del) {
+  color: #000;
+}
+
+/* Card meta type: same treatment as the collection grid — IBM Plex Sans,
+   14px uppercase title over a 16px vendor. Price is left to the theme
+   default, which is what the collection grid does too. */
+body[coretex-page="product"] .related product-card .title h2,
+body[coretex-page="product"] .related product-card .title a {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  margin: 0;
+}
+body[coretex-page="product"] .related product-card .vendor {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.2;
+  margin: 0;
+}
+
 body[coretex-page="product"] .related .gs-title { justify-content: center; }
 body[coretex-page="product"] .related .gs-title h2 {
   font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
@@ -473,8 +832,10 @@ section.philosophy .philosophy__media img {
   }
 }
 
-	/* Product cards: smooth fade when swapping to secondary image on hover */
-	product-card :is(.onHover, .onHover-a, .onHover-m, .onHover-s) :is(.on, .off) {
+	/* Product cards: smooth fade when swapping to secondary image on hover,
+	   and when the quick-buy bar fades in. The class sits on <product-card>
+	   itself, so this has to be a compound selector, not a descendant one. */
+	product-card:is(.onHover, .onHover-a, .onHover-m, .onHover-s) :is(.on, .off) {
 		transition: opacity 0.45s ease;
 	}
 
@@ -508,30 +869,110 @@ section.philosophy .philosophy__media img {
 }
 
 @media (max-width: 777px) {
+  /* Mini section headers (OUR PHILOSOPHY, etc.): IBM Plex Sans 400 caps,
+     12px, letter-spacing 0 on mobile */
+  section.philosophy .philosophy__eyebrow,
+  section.our-values .our-values__eyebrow,
+  section.explore-region .explore-region__eyebrow,
+  footer #f-motto {
+    font-size: 12px;
+    letter-spacing: 0;
+  }
+
   /* Philosophy: header strip flush to the section top like every other
      grid header (the section adds 20px above it on mobile) */
   section.philosophy { padding-block: 0 32px; }
 
-  /* Philosophy: all text left-aligned; illustration right-aligned and
-     flush to the viewport edge (negative margin escapes the grid's
-     side padding) */
+  /* Philosophy mobile layout per Figma: heading and body centered,
+     illustration below them, centered and rotated */
   section.philosophy .philosophy__grid {
-    row-gap: 1.25rem !important;
-    padding: 1rem var(--mardding) 0.5rem;
+    row-gap: 2rem !important;
+    padding: 2.5rem var(--mardding) 1.5rem;
   }
-  section.philosophy .philosophy__heading .h2 { text-align: left; }
+  section.philosophy .philosophy__heading .h2 {
+    text-align: center;
+    font-size: 32px;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+  }
   section.philosophy .philosophy__text .rte {
-    text-align: left;
-    font-size: 15px;
-    line-height: 1.55;
+    text-align: center;
+    font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    max-width: 42ch;
+    margin-inline: auto;
   }
+  section.philosophy .philosophy__text .rte p { margin: 0 0 1.4em; }
+  section.philosophy .philosophy__text .rte p:last-child { margin: 0; }
   section.philosophy .philosophy__media {
-    order: -1;
-    justify-self: end;
-    width: min(62vw, 240px);
-    max-width: 240px;
-    margin: 0 calc(-1 * var(--mardding, 20px)) 0 auto;
+    order: 1;
+    justify-self: center;
+    width: min(60vw, 230px);
+    max-width: 230px;
+    margin: 1.5rem auto 1rem;
+    transform: scaleX(-1) scaleY(-1) rotate(-100deg);
   }
+
+  /* Big serif headings elsewhere (newsletter, our-values, taglines):
+     32px / 2% */
+  #f-newsletter p,
+  .our-values .our-values__heading,
+  .our-values .our-values__tagline,
+  .hero-text .cta,
+  body[coretex-page="product"] .hero-text .cta {
+    font-size: 32px !important;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+  }
+
+  /* Product page: title/subtitle 32px, region link 14px, description 12px,
+     buttons 14px — same mobile type scale as the homepage */
+  body[coretex-page="product"] .bullet-product-content section.title h1,
+  body[coretex-page="product"] .bullet-product-content section.subtitle h3 {
+    font-size: 32px;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+  }
+  body[coretex-page="product"] .bullet-product-content section.title { margin-block-end: -0.9rem; }
+  body[coretex-page="product"] .bullet-product-content section.vendor a {
+    font-size: 14px;
+  }
+  body[coretex-page="product"] .bullet-product-content section.description .rte {
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    text-align: left;
+  }
+  body[coretex-page="product"] .product-form .cartButton,
+  body[coretex-page="product"] .product-form .shopify-payment-button__button--unbranded,
+  body[coretex-page="product"] .related .superQuickBuy .cardButton,
+  body[coretex-page="product"] .related .soldoutButton {
+    font-size: 14px;
+  }
+
+  /* Hero banner heading: same 32px spec (overrides the 38px pin above) */
+  .hero x-cell.content h1 {
+    font-size: 32px !important;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+  }
+
+  /* Hero subheading + Our Values column text: IBM Plex Sans 400, 12px / 2% */
+  .hero x-cell.content p,
+  .our-values .our-values__text,
+  .our-values .our-values__text h3,
+  .our-values .our-values__text p {
+    font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+    font-size: 12px;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+  .our-values .our-values__text h3 { font-weight: 600; }
+  .our-values .our-values__text p { margin: 0 0 1.2em; }
+  .our-values .our-values__text p:last-child { margin: 0; }
 
   /* Footer menu: left-aligned */
   #f-links .f-links,
@@ -565,15 +1006,309 @@ section.philosophy .philosophy__media img {
     text-align: left !important;
   }
 }
+/* Mega menu — grid dividers, theme border token */
+[menu-type="mega"] [menu-list="2"] {
+  border-block-start: var(--globalBorder);
+}
+[menu-type="mega"] [menu-list="2"] > li {
+  padding-inline: 16px;
+  padding-block: 16px 20px;
+}
+[menu-type="mega"] [menu-list="2"] > li + li {
+  border-inline-start: var(--globalBorder);
+}
+[menu-type="mega"] [menu-list="2"] > li > a,
+[menu-type="mega"] [menu-list="2"] > li > details > summary {
+  padding-block-end: 12px;
+  margin-block-end: 8px;
+  border-block-end: var(--globalBorder);
+  font-weight: 500;
+}
+
+/* Mega menu — no horizontal scroll, no clipped labels.
+   The panel reuses .mob-scroller, which is a horizontal scroller
+   (white-space:nowrap + overflow-x:auto). That is right on mobile and
+   wrong here: it cuts long labels like "Embroidered Wall Hangers" and
+   puts a scrollbar inside the column. app.css also floors each column
+   at min-width:12cqi, and 7 of those plus padding exceeds the viewport,
+   which is the scrollbar along the bottom of the panel. */
+@media (min-width: 778px) {
+  [menu-type="mega"] .mob-scroller {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  /* Columns share the row and shrink rather than overflow */
+  [menu-type="mega"] [menu-list="2"] { flex-wrap: nowrap; }
+  [menu-type="mega"] [menu-list="2"] > li {
+    min-width: 0;
+    flex: 1 1 0;
+  }
+
+  /* Long labels wrap onto a second line instead of being cut */
+  [menu-type="mega"] [menu-list="3"] a {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+
+  /* Nothing may scroll sideways out of the panel itself */
+  [menu-type="mega"] details.dm.lv1 > details-menu { overflow-x: hidden; }
+
+  /* Slightly smaller type so 7 columns fit comfortably */
+  [menu-type="mega"] [menu-list="2"] > li > a,
+  [menu-type="mega"] [menu-list="2"] > li > details > summary {
+    font-size: 13px;
+  }
+  [menu-type="mega"] [menu-list="3"] a {
+    font-size: 11px;
+    padding-block: 6px;
+  }
+}
+
+/* Mega menu — alignment corrections */
+@media (min-width: 778px) {
+  /* The theme always emits a "grouped-links" <li> for level-2 items that
+     have no children. With none, it is empty but still takes an equal
+     flex share, shifting the whole grid right by one column. */
+  [menu-type="mega"] [menu-list="2"] > li[data-type="grouped-links"]:not(:has(a)) {
+    display: none;
+  }
+
+  /* .mob-scroller inherits justify-content:center from the header's
+     alignment setting, which centred wrapped labels. Columns read left. */
+  [menu-type="mega"] [menu-list="2"] .mob-scroller {
+    justify-content: flex-start;
+    text-align: start;
+  }
+
+  /* Heads and links carry class="button", and skelet.css gives that
+     display:inline-block plus text-align:center. Inline-block is why the
+     head's underline stopped short of the dividers, and the centring is
+     why a wrapped label ("...Wall / Hangers") centred its second line.
+     Make them full-width blocks that read from the start edge. */
+  [menu-type="mega"] [menu-list="2"] > li > a,
+  [menu-type="mega"] [menu-list="2"] > li > details > summary,
+  [menu-type="mega"] [menu-list="3"] a {
+    display: block;
+    width: auto;
+    text-align: start;
+    white-space: normal;
+  }
+
+  /* Rows span the full column so their text starts at the same edge */
+  [menu-type="mega"] [menu-list="3"] { align-items: stretch; }
+
+  /* Column-head rule meets the dividers on both sides. Done by moving the
+     16px inset off the column and onto its contents, rather than pulling
+     the head out with a negative margin — that overflowed the last column
+     past the panel edge and got clipped by overflow-x:hidden. */
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li { padding-inline: 0; }
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li > a,
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li > details > summary {
+    margin-inline: 0;
+    padding-inline: 16px;
+  }
+  #headerGrid [menu-type="mega"] [menu-list="3"] a { padding-inline: 16px; }
+
+  /* app.css scopes its menu rules under #headerGrid, so they carry ID
+     specificity. Match it or these lose. */
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li > a,
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li > details > summary,
+  #headerGrid [menu-type="mega"] [menu-list="3"] a {
+    display: block;
+    width: auto;
+    text-align: start;
+    white-space: normal;
+  }
+  #headerGrid [menu-type="mega"] [menu-list="2"] .mob-scroller {
+    justify-content: flex-start;
+    text-align: start;
+  }
+}
+
+/* Mega menu — final overrides */
+@media (min-width: 778px) {
+  /* The header already draws a bottom rule, the panel draws its own top
+     rule, and the column row adds a third. Keep only the header's. */
+  #headerGrid [menu-type="mega"] details.dm.lv1 > details-menu { border-block-start: none; }
+  #headerGrid [menu-type="mega"] [menu-list="2"] { border-block-start: none; }
+
+  /* Everything reads hard left. These fight two theme rules: app.css
+     scopes menu styling under #headerGrid, and skelet.css sets
+     display:inline-block + text-align:center on .button via :where().
+     Matching specificity was not landing reliably, so pin them. */
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li { padding-inline: 0 !important; }
+
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li > a,
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li > details > summary,
+  #headerGrid [menu-type="mega"] [menu-list="3"] a {
+    display: block !important;
+    width: auto !important;
+    text-align: left !important;
+    white-space: normal !important;
+    padding-inline: 16px !important;
+  }
+
+  #headerGrid [menu-type="mega"] [menu-list="2"] .mob-scroller {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  #headerGrid [menu-type="mega"] [menu-list="3"] { align-items: stretch !important; }
+}
+
+/* Mega menu — close the last column. The theme only draws dividers
+   between columns (li + li), so the right edge of the final column was
+   left open. */
+@media (min-width: 778px) {
+  #headerGrid [menu-type="mega"] [menu-list="2"] > li:last-child {
+    border-inline-end: var(--globalBorder);
+  }
+}
+
+/* ===== Product cards — Figma layout =====
+   Title on the left in sentence case, craft technique directly beneath it
+   in Light Italic, price on the right. The craft technique metafield
+   (custom.craft_technique) replaces the vendor line, so the vendor is
+   hidden. Figma: IBM Plex Sans, 14px, line-height 10.6, letter-spacing 0;
+   title Text (400), craft technique Light Italic (300). */
+:is(.featured-products, .listing-page, .related, .search-page) .product-grid product-card .vendor {
+  display: none !important;
+}
+
+:is(.featured-products, .listing-page, .related, .search-page) .product-grid product-card .title h2,
+:is(.featured-products, .listing-page, .related, .search-page) .product-grid product-card .title a {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none !important;
+  margin: 0;
+}
+
+:is(.featured-products, .listing-page, .related, .search-page) .product-grid product-card .craft,
+:is(.featured-products, .listing-page, .related, .search-page) .product-grid product-card .craft span {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 300;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-transform: none !important;
+  margin: 0;
+}
+
+:is(.featured-products, .listing-page, .related, .search-page) .product-grid product-card .price {
+  font-family: "IBM Plex Sans", var(--fontFamily), sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: right;
+}
+
+/* Black meta on the collection grid and the "You'd also like" row.
+
+   NOTE: for .listing-page this is superseded by the scrim block at the
+   end of this file. .related keeps it — those cards sit on the light
+   product page and are not scrimmed. */
+:is(.listing-page, .related) .product-grid product-card :is(.title, .craft, .price),
+:is(.listing-page, .related) .product-grid product-card :is(.title, .craft, .price) :is(a, span, h2, s) {
+  color: #000;
+}
+
+/* Quick-buy bar red across every card grid (theme primary). Note this
+   differs from the Figma, which shows a cream bar — red per instruction. */
+:is(.featured-products, .listing-page, .related, .search-page) .superQuickBuy .cardButton,
+:is(.featured-products, .listing-page, .related, .search-page) .soldoutButton,
+body[coretex-page="product"] .related .superQuickBuy .cardButton,
+body[coretex-page="product"] .related .soldoutButton {
+  background-color: #7F1416;
+  color: #fff;
+}
+
+/* BUY NOW red to match ADD TO CART's accent (was black) */
+body[coretex-page="product"] .product-form .shopify-payment-button__button--unbranded {
+  background: #7F1416;
+  color: #fff;
+}
+
+/* Vendor / region link: same weight as the header nav links (400, was 700) */
+body[coretex-page="product"] .bullet-product-content section.vendor a {
+  font-weight: 400;
+}
+
+/* Price larger on mobile, where the product title drops to 32px */
+@media (max-width: 777px) {
+  body[coretex-page="product"] .bullet-product-content section[id^="price-"],
+  body[coretex-page="product"] .bullet-product-content section[id^="price-"] :is(span, s) {
+    font-size: 20px;
+  }
+}
+
+/* Line between the sort/filter strip and the first row of cards. The
+   strip only had a top rule — the plan was for the first card row's own
+   outline to draw the bottom one, but it does not reach the grid's top
+   edge, so the grid opened without a line. */
+:is(.listing-page, .search-page) .intro .filterBlock {
+  border-block-end: var(--globalBorderWidth, 1px) solid #000;
+}
+
+/* The waitlist band's two edges.
+
+   Top: the section above it is the Hero text tagline, and s-sections.css
+   gives .hero-text a border-block-end. The waitlist's own
+   border-block-start then lands right under it, so the two 1px rules
+   stacked into a 2px line. Pulling the section up by one border width
+   overlaps them back into a single rule -- the same trick app.css uses on
+   main#mainContent when the header is boxed.
+
+   Bottom: the line has to read against the footer's newsletter cell, which
+   carries a dark background image, and so does the waitlist band directly
+   above it. A black rule between two dark bands is invisible, so this edge
+   is drawn light rather than in the grid's usual #000. */
+.bh-waitlist {
+  margin-block-start: calc(-1 * var(--globalBorderWidth, 1px));
+  border-block-end: var(--globalBorderWidth, 1px) solid rgba(255, 255, 255, 0.45);
+}
+
+/* BUY NOW. The button is rendered by Shopify's JS after hydration, so the
+   --unbranded class is not in the server HTML, and the placeholder ships
+   an inline background-color that a stylesheet rule cannot beat. Target
+   the button itself once it is live (skeleton is [disabled]) and force it. */
+body[coretex-page="product"] .product-form .shopify-payment-button__button:not([disabled]),
+body[coretex-page="product"] .product-form .shopify-payment-button__button--unbranded {
+  background: #7F1416 !important;
+  background-color: #7F1416 !important;
+  color: #fff !important;
+  border-color: #7F1416 !important;
+}
+
+/* Product page price — larger than the theme default at both sizes */
+body[coretex-page="product"] .bullet-product-content section[id^="price-"],
+body[coretex-page="product"] .bullet-product-content section[id^="price-"] :is(span, s, .price-item, .money) {
+  font-size: 24px;
+  line-height: 1.2;
+}
+@media (max-width: 777px) {
+  body[coretex-page="product"] .bullet-product-content section[id^="price-"],
+  body[coretex-page="product"] .bullet-product-content section[id^="price-"] :is(span, s, .price-item, .money) {
+    font-size: 20px;
+  }
+}
 
 /* ===== Collection cards: legible meta over any photograph =====
-   Title, vendor and price sit on top of the product image, so no single
-   text colour works across the catalogue — black vanishes on the dark
-   Naga textiles, white vanishes on the white-ground brass and basketry.
-   Lay a short gradient over the top of the media and set the meta white:
-   the scrim reads as a soft vignette on pale images and does the real
-   work on dark ones, and it keeps working for products shot later
-   without anyone tagging them. */
+   MUST STAY LAST. Title, craft line and price sit on top of the product
+   image, so no single text colour works across the catalogue — black
+   vanishes on the dark Naga textiles, white vanishes on the white-ground
+   brass and basketry. Lay a short gradient over the top of the media and
+   set the meta white: it reads as a soft vignette on pale images and does
+   the real work on dark ones, and it keeps working for products shot
+   later without anyone tagging them.
+
+   Scoped to the listing and search grids. The homepage Bestsellers row
+   and the product page's "You'd also like" row keep their own treatment. */
 
 .listing-page .product-grid product-card .media,
 .search-page .product-grid product-card .media {
@@ -588,9 +1323,9 @@ section.philosophy .philosophy__media img {
   height: 92px;           /* just clears the title + craft line */
 
   /* Six stops approximating an ease-out curve. A plain two-stop gradient
-     falls off linearly, which the eye reads as a hard grey band with a
-     visible edge partway down the photo; this fades fastest where the
-     text sits and trails to nothing, so the product itself stays clean. */
+     falls off linearly, which the eye reads as a grey band with a visible
+     edge partway down the photo; this fades fastest where the text sits
+     and trails to nothing, so the product itself stays clean. */
   background: linear-gradient(to bottom,
               rgba(0, 0, 0, 0.46) 0%,
               rgba(0, 0, 0, 0.37) 18%,
@@ -610,10 +1345,11 @@ section.philosophy .philosophy__media img {
   z-index: 2;
 }
 
-/* .craft is the custom.craft_technique line rendered under the title. It
-   has to be listed explicitly — an earlier rule pins :is(.title, .craft,
-   .price) to black for the listing grid, and without naming .craft here
-   that rule keeps winning and the line stays unreadable on dark photos. */
+/* .craft is the custom.craft_technique line under the title. It has to be
+   named explicitly — the Figma-layout block above pins
+   :is(.title, .craft, .price) to black for .listing-page, and without
+   naming .craft here that rule keeps winning and the line stays
+   unreadable on dark photography. */
 .listing-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
 .listing-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
 .listing-page .product-grid price-list,
@@ -621,175 +1357,4 @@ section.philosophy .philosophy__media img {
 .search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
 .search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del) {
   color: #fff !important;
-}
-
-/* The quick-buy bar sits at the card's foot, clear of the scrim, and keeps
-   its own red ground — leave its white label alone. */
-
-/* ===== Mega menu (hover panel under top nav) =====
-   Used by snippet 'mega-menu.liquid'. Fills the header row's dropdown
-   with a 3-column panel: sub-category list, editorial promo image,
-   and a live-updating featured product card. Editorial palette:
-   off-white ground, black type, brand red (#7F1416) accent. */
-
-.mm { position: relative; }
-.mm__top {
-  display: flex;
-  align-items: center;
-  gap: 36px;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.mm__item { position: static; }
-.mm__trigger {
-  display: inline-flex;
-  align-items: center;
-  height: 72px;
-  font-family: "IBM Plex Sans", sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-  color: #000;
-  text-decoration: none;
-}
-.mm__item--has-panel > .mm__trigger { position: relative; }
-.mm__item--has-panel > .mm__trigger::after {
-  content: "";
-  position: absolute;
-  left: 0; right: 0; bottom: -1px;
-  height: 1px;
-  background: #7F1416;
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 200ms ease;
-}
-.mm__item.is-open > .mm__trigger::after { transform: scaleX(1); }
-
-/* Panel: full-width strip flush under the header */
-.mm__panel {
-  position: absolute;
-  left: 0; right: 0;
-  top: 100%;
-  background: #FBF9F5;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  z-index: 60;
-  animation: mmFade 200ms ease;
-}
-.mm__panel[hidden] { display: none; }
-@keyframes mmFade { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
-
-.mm__panel-inner {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.1fr) minmax(280px, 1.1fr);
-  gap: 48px;
-  padding: 40px 48px;
-  max-width: 1440px;
-  margin: 0 auto;
-}
-
-/* Column 1: sub-category list */
-.mm__col--list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.mm__sub, .mm__all a {
-  display: flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 4px;
-  font-family: "IBM Plex Sans", sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.2;
-  letter-spacing: 0;
-  text-transform: uppercase;
-  color: #000;
-  text-decoration: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  transition: color 150ms ease;
-}
-.mm__sub:hover,
-.mm__sub:focus-visible,
-.mm__all a:hover {
-  color: #7F1416;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  text-decoration-thickness: 1px;
-}
-.mm__all { margin-top: 12px; border-top: 1px solid #000; padding-top: 8px; }
-.mm__all a { border-bottom: none; font-weight: 500; }
-
-/* Column 2: editorial promo tile */
-.mm__promo {
-  display: block;
-  position: relative;
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-  background: #EDE7DA;
-}
-.mm__promo img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 400ms ease;
-}
-.mm__promo:hover img { transform: scale(1.03); }
-.mm__promo-caption {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.9);
-  color: #000;
-  font-family: "IBM Plex Sans", sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.mm__promo--empty { background: #EDE7DA; aspect-ratio: 4 / 5; }
-
-/* Column 3: featured product card */
-.mm__feature {
-  display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 16px;
-  height: 100%;
-}
-.mm__feature-media {
-  aspect-ratio: 4 / 5;
-  overflow: hidden;
-  background: #EDE7DA;
-}
-.mm__feature-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.mm__feature-eyebrow {
-  margin: 0;
-  font-family: "IBM Plex Sans", sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #7F1416;
-}
-.mm__feature-name {
-  margin: 4px 0 0;
-  font-family: "ivypresto-display", serif;
-  font-size: 20px;
-  line-height: 1.1;
-  color: #000;
-}
-.mm__feature-price {
-  margin: 6px 0 0;
-  font-family: "IBM Plex Sans", sans-serif;
-  font-size: 13px;
-  color: #000;
-}
-
-/* Mobile: hide mega menu; site's existing drawer handles nav */
-@media (max-width: 900px) {
-  .mm { display: none; }
 }

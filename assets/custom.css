@@ -566,22 +566,52 @@ section.philosophy .philosophy__media img {
   }
 }
 
-/* ===== Collection page: force product card title, vendor + price to black =====
-   The collection template inherits a card color scheme whose text renders
-   white on the page background, making title/vendor/price unreadable in
-   the grid. The theme already scopes card typography under `.listing-page
-   .product-grid` — pin color on the same scope. */
-.listing-page .product-grid .title,
-.listing-page .product-grid .title a,
-.listing-page .product-grid .title h2,
-.listing-page .product-grid .vendor,
-.listing-page .product-grid .vendor a,
-.listing-page .product-grid .price,
-.listing-page .product-grid .price *,
-.listing-page .product-grid price-list,
-.listing-page .product-grid price-list * {
-  color: #000 !important;
+/* ===== Collection cards: legible meta over any photograph =====
+   Title, vendor and price sit on top of the product image, so no single
+   text colour works across the catalogue — black vanishes on the dark
+   Naga textiles, white vanishes on the white-ground brass and basketry.
+   Lay a short gradient over the top of the media and set the meta white:
+   the scrim reads as a soft vignette on pale images and does the real
+   work on dark ones, and it keeps working for products shot later
+   without anyone tagging them. */
+
+.listing-page .product-grid product-card .media,
+.search-page .product-grid product-card .media {
+  position: relative;
 }
+
+.listing-page .product-grid product-card .media::after,
+.search-page .product-grid product-card .media::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 120px;
+  background: linear-gradient(to bottom,
+              rgba(0, 0, 0, 0.55) 0%,
+              rgba(0, 0, 0, 0.25) 55%,
+              rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;   /* must not swallow the card's click target */
+  z-index: 1;
+}
+
+/* Lift the meta above the scrim */
+.listing-page .product-grid product-card .meta,
+.search-page .product-grid product-card .meta {
+  position: relative;
+  z-index: 2;
+}
+
+.listing-page .product-grid :is(.title, .vendor, .subtitle, .price),
+.listing-page .product-grid :is(.title, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
+.listing-page .product-grid price-list,
+.listing-page .product-grid price-list *,
+.search-page .product-grid :is(.title, .vendor, .subtitle, .price),
+.search-page .product-grid :is(.title, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del) {
+  color: #fff !important;
+}
+
+/* The quick-buy bar sits at the card's foot, clear of the scrim, and keeps
+   its own red ground — leave its white label alone. */
 
 /* ===== Mega menu (hover panel under top nav) =====
    Used by snippet 'mega-menu.liquid'. Fills the header row's dropdown

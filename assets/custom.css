@@ -585,11 +585,20 @@ section.philosophy .philosophy__media img {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 120px;
+  height: 92px;           /* just clears the title + craft line */
+
+  /* Six stops approximating an ease-out curve. A plain two-stop gradient
+     falls off linearly, which the eye reads as a hard grey band with a
+     visible edge partway down the photo; this fades fastest where the
+     text sits and trails to nothing, so the product itself stays clean. */
   background: linear-gradient(to bottom,
-              rgba(0, 0, 0, 0.55) 0%,
-              rgba(0, 0, 0, 0.25) 55%,
-              rgba(0, 0, 0, 0) 100%);
+              rgba(0, 0, 0, 0.46) 0%,
+              rgba(0, 0, 0, 0.37) 18%,
+              rgba(0, 0, 0, 0.25) 38%,
+              rgba(0, 0, 0, 0.13) 60%,
+              rgba(0, 0, 0, 0.05) 80%,
+              rgba(0, 0, 0, 0)    100%);
+
   pointer-events: none;   /* must not swallow the card's click target */
   z-index: 1;
 }
@@ -601,12 +610,16 @@ section.philosophy .philosophy__media img {
   z-index: 2;
 }
 
-.listing-page .product-grid :is(.title, .vendor, .subtitle, .price),
-.listing-page .product-grid :is(.title, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
+/* .craft is the custom.craft_technique line rendered under the title. It
+   has to be listed explicitly — an earlier rule pins :is(.title, .craft,
+   .price) to black for the listing grid, and without naming .craft here
+   that rule keeps winning and the line stays unreadable on dark photos. */
+.listing-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
+.listing-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del),
 .listing-page .product-grid price-list,
 .listing-page .product-grid price-list *,
-.search-page .product-grid :is(.title, .vendor, .subtitle, .price),
-.search-page .product-grid :is(.title, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del) {
+.search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price),
+.search-page .product-grid :is(.title, .craft, .vendor, .subtitle, .price) :is(a, span, h2, s, ins, del) {
   color: #fff !important;
 }
 

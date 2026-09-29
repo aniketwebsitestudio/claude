@@ -70,6 +70,10 @@ QUALITY = 88
 MAX_PIXELS = 25_000_000
 MAX_BYTES = 20 * 1024 * 1024
 
+# Matches MAX_IMAGES_PER_PRODUCT in the Apps Script. Uploading more than the
+# uploader will read just wastes bandwidth and Drive quota.
+MAX_IMAGES = 10
+
 NEW_COLUMN_HEADER = "Processed Images - Drive folder link"
 
 RAW_EXT = {".cr3", ".cr2", ".crw", ".nef", ".nrw", ".arw", ".srf", ".sr2",
@@ -376,16 +380,21 @@ def parse_image_names(raw: str) -> tuple[list[str], list[str]]:
         return [], []
     known = "|".join(e.lstrip(".") for e in sorted(NATIVE_EXT | RAW_EXT))
     pattern = re.compile(r"([^\s,][^,]*?\.(?:%s))\b" % known, re.I)
-    files, unusable = [], []
+    files, unusable, seen = [], [], set()
     for entry in re.split(r"[,\n;]+", str(raw)):
         entry = entry.strip()
         if not entry:
             continue
         m = pattern.search(entry)
-        if m:
-            files.append(m.group(1).strip())
-        else:
+        if not m:
             unusable.append(entry)
+            continue
+        name = m.group(1).strip()
+        # A few rows list the same file twice; Shopify would show it twice too.
+        if name.lower() in seen:
+            continue
+        seen.add(name.lower())
+        files.append(name)
     return files, unusable
 
 
@@ -433,6 +442,9 @@ def main() -> int:
     ap.add_argument("--rows", help="only these sheet rows, e.g. 4-20 or 4,7,9")
     ap.add_argument("--tab", default=SHEET_NAME, help="worksheet name")
     ap.add_argument("--long-edge", type=int, default=LONG_EDGE)
+    ap.add_argument("--max-images", type=int, default=MAX_IMAGES,
+                    help="images per product (default %d, matching the Apps "
+                         "Script)" % MAX_IMAGES)
     ap.add_argument("--dry-run", action="store_true",
                     help="assign SKUs and report the plan; touch nothing")
     ap.add_argument("--no-upload", action="store_true",
@@ -525,6 +537,17 @@ def main() -> int:
 
         names, unusable = parse_image_names(ws.cell(row, col_names).value)
         folder_id = extract_folder_id(cell_link(ws, row, col_link))
+
+        if len(names) > args.max_images:
+            problems.append("Row %d (%s): %d images listed, keeping the first %d"
+                            % (row, sku, len(names), args.max_images))
+            names = names[:args.max_images]
+
+        # A failed sheet formula leaves its source text in the cell, which
+        # would otherwise become the product title in Shopify.
+        if "__xludf" in title or title.startswith("="):
+            problems.append("Row %d (%s): title is a broken formula, fix the "
+                            "sheet" % (row, sku))
 
         print("[row %d] %s  %s" % (row, sku, title[:50]))
 

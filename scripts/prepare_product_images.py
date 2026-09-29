@@ -519,6 +519,18 @@ def main() -> int:
             print("Parent folder: %s\n  https://drive.google.com/drive/folders/%s\n"
                   % (args.create_parent, parent_id))
 
+    out = Path(args.out) if args.out else src.with_name(src.stem + "-processed.xlsx")
+
+    def save_progress():
+        """Write the sheet now, so a crash or a dropped connection cannot
+        lose links for products that are already uploaded."""
+        if args.dry_run:
+            return
+        try:
+            wb.save(out)
+        except PermissionError:
+            print("    (could not save %s — is it open in Excel?)" % out.name)
+
     alloc = SkuAllocator()
     folder_index: dict[str, dict] = {}
 
@@ -645,21 +657,31 @@ def main() -> int:
             continue
 
         target_name = "%s_%s" % (sku, sanitize(title, 40))
-        drive_folder = find_or_create_folder(service, target_name, parent_id)
-        already = list_folder(service, drive_folder)
-        for f in produced:
-            if f.name.lower() in already:
-                continue
-            upload_jpeg(service, f, drive_folder)
+        try:
+            drive_folder = find_or_create_folder(service, target_name, parent_id)
+            already = list_folder(service, drive_folder)
+            for f in produced:
+                if f.name.lower() in already:
+                    continue
+                upload_jpeg(service, f, drive_folder)
+        except Exception as exc:
+            # Usually the connection dropping. The converted files are on disk
+            # and whatever reached Drive stays there, so a re-run picks this
+            # row up where it stopped.
+            skipped += 1
+            problems.append("Row %d (%s): upload failed: %s: %s"
+                            % (row, sku, type(exc).__name__, exc))
+            print("    X upload failed: %s: %s" % (type(exc).__name__, exc))
+            save_progress()
+            continue
 
         url = "https://drive.google.com/drive/folders/%s" % drive_folder
         ws.cell(row, col_new, url)
         print("    -> %s" % url)
         done += 1
+        save_progress()
 
-    out = Path(args.out) if args.out else src.with_name(src.stem + "-processed.xlsx")
-    if not args.dry_run:
-        wb.save(out)
+    save_progress()
 
     print("\n" + "=" * 62)
     print("Rows processed   : %d" % done)

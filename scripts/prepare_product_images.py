@@ -30,9 +30,20 @@ other Drive scripts. token.json is created on first run.
 
 Usage
 -----
+    python3 prepare_product_images.py sheet.xlsx --create-parent "Bhoomija Shopify Images"
     python3 prepare_product_images.py sheet.xlsx --parent <DRIVE_FOLDER_ID>
     python3 prepare_product_images.py sheet.xlsx --parent <ID> --rows 4-20
-    python3 prepare_product_images.py sheet.xlsx --parent <ID> --dry-run
+    python3 prepare_product_images.py sheet.xlsx --dry-run
+
+Drive layout it produces:
+
+    <parent>/
+      ACC-JHL-0001_Naga Jhola Bag/
+        ACC-JHL-0001_01.jpg
+        ACC-JHL-0001_02.jpg
+      WEA-DUP-0001_Teal green handwoven cotton.../
+        WEA-DUP-0001_01.jpg
+        ...
 """
 
 from __future__ import annotations
@@ -411,8 +422,13 @@ def main() -> int:
         description="Resize, convert and re-upload product images, and write "
                     "SKUs plus processed-folder links back into the sheet.")
     ap.add_argument("sheet", help="the .xlsx product sheet")
-    ap.add_argument("--parent", help="Drive folder ID to create the processed "
-                                     "product folders inside")
+    ap.add_argument("--parent", help="ID of an existing Drive folder to create "
+                                     "the per-product folders inside")
+    ap.add_argument("--create-parent", metavar="NAME",
+                    help="make the parent folder instead of passing an ID. "
+                         "Created at your Drive root, or inside --parent when "
+                         "both are given. Re-used if a folder of that name is "
+                         "already there.")
     ap.add_argument("--out", help="output .xlsx (default: <sheet>-processed.xlsx)")
     ap.add_argument("--rows", help="only these sheet rows, e.g. 4-20 or 4,7,9")
     ap.add_argument("--tab", default=SHEET_NAME, help="worksheet name")
@@ -430,8 +446,9 @@ def main() -> int:
     src = Path(args.sheet)
     if not src.exists():
         sys.exit("No such sheet: %s" % src)
-    if not (args.dry_run or args.no_upload or args.parent):
-        sys.exit("--parent is required unless you pass --dry-run or --no-upload.")
+    if not (args.dry_run or args.no_upload or args.parent or args.create_parent):
+        sys.exit("Pass --parent <FOLDER_ID> or --create-parent <NAME> "
+                 "(or --dry-run / --no-upload).")
 
     wb = openpyxl.load_workbook(src)
     if args.tab not in wb.sheetnames:
@@ -462,9 +479,16 @@ def main() -> int:
     wanted = parse_rows_arg(args.rows, FIRST_DATA_ROW, last) if args.rows else None
 
     service = None
+    parent_id = args.parent
     if not (args.dry_run or args.no_upload):
         print("Authenticating with Google Drive...")
         service = get_drive_service()
+
+        if args.create_parent:
+            parent_id = find_or_create_folder(
+                service, args.create_parent, args.parent or "root")
+            print("Parent folder: %s\n  https://drive.google.com/drive/folders/%s\n"
+                  % (args.create_parent, parent_id))
 
     alloc = SkuAllocator()
     folder_index: dict[str, dict] = {}
@@ -581,7 +605,7 @@ def main() -> int:
             continue
 
         target_name = "%s_%s" % (sku, sanitize(title, 40))
-        drive_folder = find_or_create_folder(service, target_name, args.parent)
+        drive_folder = find_or_create_folder(service, target_name, parent_id)
         already = list_folder(service, drive_folder)
         for f in produced:
             if f.name.lower() in already:

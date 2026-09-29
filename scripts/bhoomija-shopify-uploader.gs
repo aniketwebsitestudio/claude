@@ -86,6 +86,7 @@ var COLUMN_MAP = {
   'Width (cm)':                                               'width',
   'Height (cm)':                                              'height',
   'Product Images - Drive folder link':                       'imageNames',
+  'Processed Images - Drive folder link':                     'processedFolder',
   'SKU Code':                                                 'sku',
   'Shopify Handle / URL':                                     'handle',
   'Listing Status':                                           'status',
@@ -798,6 +799,37 @@ function getFolderIndex(ctx, folderId) {
  * ".jpg" on Drive.
  */
 function resolveDriveFiles(ctx, row) {
+  // When prepare_product_images.py has been run, the row points at a folder
+  // holding nothing but finished JPEGs named <SKU>_01.jpg, <SKU>_02.jpg...
+  // There is nothing left to match or convert — take them all, in order.
+  if (row.processedFolder) {
+    var ready = { fileIds: [], matched: [], missing: [], unusable: [] };
+    var t = extractDriveFolderId(row.processedFolder);
+    if (!t || t.type !== 'folder') {
+      ready.folderError = 'processed folder link not understood';
+      return ready;
+    }
+
+    var idx;
+    try { idx = getFolderIndex(ctx, t.id); }
+    catch (e) {
+      ready.folderError = 'processed folder unreadable: ' + e.message;
+      return ready;
+    }
+
+    Object.keys(idx).filter(function (n) {
+      return CONFIG.ACCEPTED_IMAGE_EXT.indexOf(String(n.split('.').pop())
+                                               .toLowerCase()) !== -1;
+    }).sort().forEach(function (n) {
+      if (ready.fileIds.length >= CONFIG.MAX_IMAGES_PER_PRODUCT) return;
+      ready.fileIds.push(idx[n]);
+      ready.matched.push(n);
+    });
+
+    if (!ready.fileIds.length) ready.folderError = 'processed folder is empty';
+    return ready;
+  }
+
   var parsed = parseImageNames(row.imageNames);
   var result = { fileIds: [], matched: [], missing: [], unusable: parsed.unusable };
 

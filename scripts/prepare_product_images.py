@@ -256,18 +256,35 @@ def get_drive_service():
     build, _M, _D, InstalledAppFlow, Request, Credentials = _import_google()
     creds = None
     if TOKEN_FILE.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+        try:
+            creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
+        except Exception:
+            creds = None   # unreadable or from a different client
+
+    if creds and not creds.valid and creds.expired and creds.refresh_token:
+        try:
             creds.refresh(Request())
-        else:
-            if not CREDENTIALS_FILE.exists():
-                sys.exit("ERROR: %s not found next to the script."
-                         % CREDENTIALS_FILE.name)
-            flow = InstalledAppFlow.from_client_secrets_file(
-                str(CREDENTIALS_FILE), SCOPES)
-            creds = flow.run_local_server(port=0)
-        TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
+        except Exception as exc:
+            # The saved refresh token is dead — revoked, expired, or issued by
+            # an OAuth client that no longer exists. Log in again rather than
+            # dying, which is what "invalid_grant: Bad Request" means.
+            print("Saved login is no longer valid (%s). Signing in again..."
+                  % type(exc).__name__)
+            try:
+                TOKEN_FILE.unlink()
+            except OSError:
+                pass
+            creds = None
+
+    if not creds or not creds.valid:
+        if not CREDENTIALS_FILE.exists():
+            sys.exit("ERROR: %s not found next to the script."
+                     % CREDENTIALS_FILE.name)
+        flow = InstalledAppFlow.from_client_secrets_file(
+            str(CREDENTIALS_FILE), SCOPES)
+        creds = flow.run_local_server(port=0)
+
+    TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
     return build("drive", "v3", credentials=creds, cache_discovery=False)
 
 

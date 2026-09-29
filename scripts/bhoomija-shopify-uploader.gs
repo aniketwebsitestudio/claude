@@ -87,6 +87,8 @@ var COLUMN_MAP = {
   'Height (cm)':                                              'height',
   'Product Images - Drive folder link':                       'imageNames',
   'Processed Images - Drive folder link':                     'processedFolder',
+  'Variant Option':                                           'variantOption',
+  'Variant Values':                                           'variantValues',
   'SKU Code':                                                 'sku',
   'Shopify Handle / URL':                                     'handle',
   'Listing Status':                                           'status',
@@ -722,6 +724,33 @@ function buildTags(row) {
  * number. Row numbers are stable and unique, so a broken serial can never
  * collide two products onto one SKU.
  */
+/**
+ * Reads the "Variant Values" cell, which prepare_product_images.py writes as
+ * SLUG=Label pairs: "RED=Red|TAUPE=Taupe|MOSSGREEN=Moss Green".
+ *
+ * The slug is the suffix on the processed filenames (GHA-RUN-0001-RED_01.jpg),
+ * so it is how an image finds its variant. The label is what shoppers see.
+ */
+function parseVariantValues(raw) {
+  if (!raw) return [];
+  return String(raw).split('|').map(function (pair) {
+    var i = pair.indexOf('=');
+    if (i === -1) return null;
+    var slug = pair.slice(0, i).trim();
+    var label = pair.slice(i + 1).trim();
+    return (slug && label) ? { slug: slug, label: label } : null;
+  }).filter(function (v) { return v; });
+}
+
+/** Which variant a processed filename belongs to: SKU-SLUG_01.jpg → SLUG. */
+function variantSlugOf(filename, sku) {
+  var base = String(filename).replace(/\.[^.]+$/, '');
+  var m = base.match(/^(.*)_\d+$/);
+  if (m) base = m[1];
+  if (sku && base.indexOf(sku + '-') === 0) return base.slice(sku.length + 1);
+  return null;
+}
+
 function buildSku(row) {
   if (row.sku) return row.sku;
   var serial = String(row.serial || '').trim();
@@ -1094,6 +1123,25 @@ function stageDriveFile(fileId, declaredName) {
 function createProduct(row, ctx) {
   var title = buildTitle(row);
   var notes = [];
+  var sku = buildSku(row);
+  var variantValues = parseVariantValues(row.variantValues);
+  var optionName = String(row.variantOption || 'Colour').trim() || 'Colour';
+
+  var productInput = {
+    title: title,
+    descriptionHtml: buildDescriptionHtml(row),
+    vendor: row.region || 'Bhoomija',
+    productType: row.subCategory || row.category,
+    tags: buildTags(row),
+    status: CONFIG.PRODUCT_STATUS
+  };
+
+  if (variantValues.length > 1) {
+    productInput.productOptions = [{
+      name: optionName,
+      values: variantValues.map(function (v) { return { name: v.label }; })
+    }];
+  }
 
   // 1. Product shell
   var created = gql(
@@ -1102,21 +1150,13 @@ function createProduct(row, ctx) {
     '    product { id handle variants(first:1){nodes{id inventoryItem{id}}} }' +
     '    userErrors { field message }' +
     '  } }',
-    { input: {
-        title: title,
-        descriptionHtml: buildDescriptionHtml(row),
-        vendor: row.region || 'Bhoomija',
-        productType: row.subCategory || row.category,
-        tags: buildTags(row),
-        status: CONFIG.PRODUCT_STATUS
-      } });
+    { input: productInput });
 
   throwOnErrors(created.productCreate.userErrors, 'productCreate');
   var product = created.productCreate.product;
   var variant = product.variants.nodes[0];
 
   // 2. Price, SKU, weight
-  var sku = buildSku(row);
   var variantInput = {
     id: variant.id,
     price: String(parseFloat(row.price).toFixed(2)),
@@ -1133,21 +1173,30 @@ function createProduct(row, ctx) {
     };
   }
 
-  var variantUpdate = gql(
-    'mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {' +
-    '  productVariantsBulkUpdate(productId:$productId, variants:$variants) {' +
-    '    productVariants { id sku }' +
-    '    userErrors { field message }' +
-    '  } }',
-    { productId: product.id, variants: [variantInput] });
-  throwOnErrors(variantUpdate.productVariantsBulkUpdate.userErrors, 'variant update');
-
-  // 3. Images from Drive
+  // 3. Images from Drive. Done before variants so each variant can be given
+  // the media id of its own photo.
+  var uploaded = [];
   try {
-    var imageNote = attachImages(ctx, row, product.id, title);
-    if (imageNote) notes.push(imageNote);
+    var attached = attachImages(ctx, row, product.id, title);
+    if (attached.note) notes.push(attached.note);
+    uploaded = attached.media;
   } catch (e) {
     notes.push('image error: ' + e.message);
+  }
+
+  if (variantValues.length > 1) {
+    notes.push(buildVariants(ctx, row, product, variantValues, optionName,
+                             sku, variantInput, uploaded));
+  } else {
+    var variantUpdate = gql(
+      'mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {' +
+      '  productVariantsBulkUpdate(productId:$productId, variants:$variants) {' +
+      '    productVariants { id sku }' +
+      '    userErrors { field message }' +
+      '  } }',
+      { productId: product.id, variants: [variantInput] });
+    throwOnErrors(variantUpdate.productVariantsBulkUpdate.userErrors,
+                  'variant update');
   }
 
   // 4. Metafields
@@ -1172,9 +1221,10 @@ function createProduct(row, ctx) {
     }
   }
 
-  // 5. Inventory
+  // 5. Inventory. Variant products stocked each variant in buildVariants;
+  // the standalone variant this refers to no longer exists there.
   var qty = parseInt(row.quantity, 10);
-  if (!isNaN(qty) && qty > 0) {
+  if (variantValues.length <= 1 && !isNaN(qty) && qty > 0) {
     try {
       setInventory(ctx, variant.inventoryItem.id, qty);
     } catch (e) {
@@ -1194,11 +1244,15 @@ function createProduct(row, ctx) {
   return { id: product.id, handle: product.handle, sku: sku, notes: notes.join('; ') };
 }
 
-/** Returns a short note describing what happened, or '' when all was clean. */
+/**
+ * Uploads a row's images and returns { note, media }, where media is
+ * [{ name, id }] in upload order so a variant can be pointed at its own photo.
+ */
 function attachImages(ctx, row, productId, title) {
   var resolved = resolveDriveFiles(ctx, row);
   var notes = [];
   var sources = [];
+  var created = [];
 
   var converted = 0, resizedCount = 0;
 
@@ -1230,11 +1284,18 @@ function attachImages(ctx, row, productId, title) {
     var media = gql(
       'mutation($productId: ID!, $media: [CreateMediaInput!]!) {' +
       '  productCreateMedia(productId:$productId, media:$media) {' +
+      '    media { id }' +
       '    mediaUserErrors { field message }' +
       '  } }',
       { productId: productId, media: sources });
     var errs = media.productCreateMedia.mediaUserErrors;
     if (errs.length) notes.push('media warning: ' + errs[0].message);
+
+    // Media come back in the order submitted, which is the order of
+    // resolved.matched, so filename and media id line up by index.
+    (media.productCreateMedia.media || []).forEach(function (mm, i) {
+      if (mm && mm.id) created.push({ name: resolved.matched[i] || '', id: mm.id });
+    });
   }
 
   if (sources.length && resolved.matched.length && !notes.length) {
@@ -1250,7 +1311,70 @@ function attachImages(ctx, row, productId, title) {
     notes.push('skipped: ' + resolved.unusable.join(', '));
   }
 
-  return notes.join('; ');
+  return { note: notes.join('; '), media: created };
+}
+
+/**
+ * Turns one sheet row into a product with several variants.
+ *
+ * Each value gets its own SKU suffix (WEA-DUP-0021-PINKSHIBORI) and is pointed
+ * at the media uploaded from its own photo, so choosing a colour on the
+ * storefront swaps the image.
+ *
+ * Returns a short note for the sheet.
+ */
+function buildVariants(ctx, row, product, values, optionName, sku,
+                       template, uploaded) {
+  // First photo per slug wins — later ones stay as gallery images.
+  var mediaBySlug = {};
+  uploaded.forEach(function (m) {
+    var slug = variantSlugOf(m.name, sku);
+    if (slug && !mediaBySlug[slug]) mediaBySlug[slug] = m.id;
+  });
+
+  var qty = parseInt(row.quantity, 10);
+  var withMedia = 0;
+
+  var inputs = values.map(function (v) {
+    var input = {
+      optionValues: [{ optionName: optionName, name: v.label }],
+      price: template.price,
+      inventoryItem: { tracked: true }
+    };
+    if (sku) input.inventoryItem.sku = sku + '-' + v.slug;
+    if (template.compareAtPrice) input.compareAtPrice = template.compareAtPrice;
+    if (template.inventoryItem && template.inventoryItem.measurement) {
+      input.inventoryItem.measurement = template.inventoryItem.measurement;
+    }
+    if (mediaBySlug[v.slug]) {
+      input.mediaId = mediaBySlug[v.slug];
+      withMedia++;
+    }
+    return input;
+  });
+
+  var res = gql(
+    'mutation($productId: ID!, $variants: [ProductVariantsBulkInput!]!,' +
+    '         $strategy: ProductVariantsBulkCreateStrategy) {' +
+    '  productVariantsBulkCreate(productId:$productId, variants:$variants,' +
+    '                            strategy:$strategy) {' +
+    '    productVariants { id sku inventoryItem { id } }' +
+    '    userErrors { field message }' +
+    '  } }',
+    { productId: product.id, variants: inputs,
+      strategy: 'REMOVE_STANDALONE_VARIANT' });
+
+  throwOnErrors(res.productVariantsBulkCreate.userErrors, 'variant create');
+  var made = res.productVariantsBulkCreate.productVariants || [];
+
+  if (!isNaN(qty) && qty > 0) {
+    made.forEach(function (v) {
+      try { setInventory(ctx, v.inventoryItem.id, qty); } catch (e) { /* reported below */ }
+    });
+  }
+
+  return made.length + ' ' + optionName.toLowerCase() + ' variants (' +
+         withMedia + ' with own image)';
 }
 
 function setInventory(ctx, inventoryItemId, qty) {

@@ -75,6 +75,17 @@ MAX_BYTES = 20 * 1024 * 1024
 MAX_IMAGES = 10
 
 NEW_COLUMN_HEADER = "Processed Images - Drive folder link"
+VARIANT_OPTION_HEADER = "Variant Option"
+VARIANT_VALUES_HEADER = "Variant Values"
+
+# Labels that name a place rather than a colour, so the option reads
+# "State: Mizoram" instead of "Colour: Mizoram".
+STATE_WORDS = {
+    "mizoram", "manipur", "tripura", "meghalaya", "nagaland", "sikkim",
+    "assam", "arunachal", "pradesh", "bengal", "bihar", "odisha", "assamese",
+}
+STOP_WORDS = {"with", "and", "on", "the", "a", "of", "in", "base", "design",
+              "motif", "border", "borders", "sides", "stripes", "stripe"}
 
 RAW_EXT = {".cr3", ".cr2", ".crw", ".nef", ".nrw", ".arw", ".srf", ".sr2",
            ".dng", ".raf", ".orf", ".rw2", ".pef", ".kdc", ".dcr", ".x3f"}
@@ -415,6 +426,59 @@ def parse_image_names(raw: str) -> tuple[list[str], list[str]]:
     return files, unusable
 
 
+FILE_RE = re.compile(
+    r'([^\s,;]+?(?:\s-\sCopy)?\.(?:jpg|jpeg|png|webp|heic|gif|cr3|nef|arw|dng))'
+    r'(?=\s|,|;|$)', re.I)
+
+
+def parse_variant_groups(raw):
+    """
+    Splits column AD into [(label, [files])] using the " - Label" markers the
+    sheet already uses: "_ANC2177.JPG - Red, _ANC2181.JPG - Taupe".
+
+    Files before an unlabelled end are returned under label None. Filenames
+    that genuinely contain " - Copy" are kept whole.
+    """
+    txt = re.sub(r"\s+", " ", str(raw or "")).strip()
+    if not txt:
+        return []
+    matches = list(FILE_RE.finditer(txt))
+    if not matches:
+        return []
+
+    groups, pending = [], []
+    for i, mt in enumerate(matches):
+        pending.append(mt.group(1))
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(txt)
+        tail = txt[mt.end():end].strip()
+        if tail.startswith("-"):
+            groups.append((tail.lstrip("- ").strip(" ,;"), pending))
+            pending = []
+    if pending:
+        groups.append((None, pending))
+    return groups
+
+
+def slug_variant(label, taken):
+    """Short uppercase token for the SKU suffix, unique within the product."""
+    words = [w for w in re.findall(r"[A-Za-z0-9]+", label)
+             if w.lower() not in STOP_WORDS]
+    slug = "".join(words[:2]).upper()[:14] or "VAR"
+    base, n = slug, 2
+    while slug in taken:
+        slug = "%s%d" % (base[:12], n)
+        n += 1
+    taken.add(slug)
+    return slug
+
+
+def option_name_for(labels):
+    hits = sum(1 for l in labels
+               for w in re.findall(r"[A-Za-z]+", l)
+               if w.lower() in STATE_WORDS)
+    return "State" if hits >= len(labels) else "Colour"
+
+
 def column_indexes(ws):
     """{header text: 1-based column} from the header row."""
     cols = {}
@@ -498,11 +562,20 @@ def main() -> int:
     col_link = col_names + 1          # column AE, as in the Apps Script
     col_sku = cols["SKU Code"]
 
-    col_new = cols.get(NEW_COLUMN_HEADER)
-    if not col_new:
-        col_new = max(cols.values()) + 1
-        ws.cell(HEADER_ROW, col_new, NEW_COLUMN_HEADER)
-        print("Added column %d: %s\n" % (col_new, NEW_COLUMN_HEADER))
+    def ensure_column(header):
+        c = cols.get(header)
+        if c:
+            return c
+        c = max(cols.values()) + 1
+        ws.cell(HEADER_ROW, c, header)
+        cols[header] = c
+        print("Added column %d: %s" % (c, header))
+        return c
+
+    col_new = ensure_column(NEW_COLUMN_HEADER)
+    col_vopt = ensure_column(VARIANT_OPTION_HEADER)
+    col_vval = ensure_column(VARIANT_VALUES_HEADER)
+    print("")
 
     last = ws.max_row
     wanted = parse_rows_arg(args.rows, FIRST_DATA_ROW, last) if args.rows else None
@@ -567,6 +640,23 @@ def main() -> int:
         names, unusable = parse_image_names(ws.cell(row, col_names).value)
         folder_id = extract_folder_id(cell_link(ws, row, col_link))
 
+        # Variant labels, where the row carries more than one.
+        groups = parse_variant_groups(ws.cell(row, col_names).value)
+        labelled = [g for g in groups if g[0]]
+        variants = None
+        if len({g[0] for g in labelled}) > 1:
+            taken, variants = set(), []
+            for label, files in labelled:
+                variants.append((slug_variant(label, taken), label, files))
+            opt = option_name_for([lbl for _, lbl, _ in variants])
+            ws.cell(row, col_vopt, opt)
+            ws.cell(row, col_vval,
+                    "|".join("%s=%s" % (sl, lbl) for sl, lbl, _ in variants))
+            print("[row %d] %s  %s" % (row, sku, title[:50]))
+            print("    %d %s variants: %s"
+                  % (len(variants), opt,
+                     ", ".join(lbl for _, lbl, _ in variants)[:90]))
+
         if len(names) > args.max_images:
             problems.append("Row %d (%s): %d images listed, keeping the first %d"
                             % (row, sku, len(names), args.max_images))
@@ -578,7 +668,8 @@ def main() -> int:
             problems.append("Row %d (%s): title is a broken formula, fix the "
                             "sheet" % (row, sku))
 
-        print("[row %d] %s  %s" % (row, sku, title[:50]))
+        if not variants:
+            print("[row %d] %s  %s" % (row, sku, title[:50]))
 
         if not names:
             skipped += 1
@@ -631,7 +722,14 @@ def main() -> int:
                 print("    X %s  not found in Drive" % name)
                 continue
 
-            dest = out_dir / ("%s_%02d.jpg" % (sku, i))
+            stem, seq = sku, i
+            if variants:
+                for slug, _lbl, files in variants:
+                    if any(f.lower() == name.lower() for f in files):
+                        stem = "%s-%s" % (sku, slug)
+                        seq = [f.lower() for f in files].index(name.lower()) + 1
+                        break
+            dest = out_dir / ("%s_%02d.jpg" % (stem, seq))
             if dest.exists():
                 produced.append(dest)
                 print("    - %s  already converted" % dest.name)

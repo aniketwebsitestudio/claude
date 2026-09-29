@@ -35,9 +35,22 @@ var CONFIG = {
   PLACEHOLDER_IMAGE_URL:
     'https://cdn.shopify.com/s/files/1/0774/6987/6271/files/dummy_630x840_ffffff_cccccc.png?v=1788714657',
 
-  // Shopify's media pipeline accepts these. RAW camera files (.CR3/.NEF) are
-  // rejected, so they're skipped and reported rather than failing the row.
+  // Shopify's media pipeline takes these as-is.
   ACCEPTED_IMAGE_EXT: ['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'],
+
+  // RAW camera files. Shopify rejects all of them, so they're re-rendered to
+  // JPEG through Drive before upload (see prepareImageBlob).
+  RAW_IMAGE_EXT: ['cr3', 'cr2', 'crw', 'nef', 'nrw', 'arw', 'srf', 'sr2',
+                  'dng', 'raf', 'orf', 'rw2', 'pef', 'kdc', 'dcr', 'x3f'],
+
+  // Shopify caps product images at 25 megapixels and 20 MB, independently.
+  // Anything over either goes through the same Drive re-render.
+  MAX_PIXELS: 25 * 1000 * 1000,
+  MAX_FILE_BYTES: 20 * 1024 * 1024,
+
+  // Long edge Drive is asked for when re-rendering. 2048 is Shopify's own
+  // recommendation for product photography (4 MP, well under both caps).
+  RESIZE_LONG_EDGE: 2048,
 
   MAX_IMAGES_PER_PRODUCT: 10,
 
@@ -125,7 +138,8 @@ function onOpen() {
       .addItem('Set Shopify credentials', 'setCredentials')
       .addItem('Test connection', 'testConnection')
       .addItem('Create metafield definitions', 'createMetafieldDefinitions')
-      .addItem('Check collection tag match', 'checkCollectionMatch'))
+      .addItem('Check collection tag match', 'checkCollectionMatch')
+      .addItem('Check images for selected rows', 'checkImagesForSelectedRows'))
     .addToUi();
 }
 
@@ -317,6 +331,56 @@ function checkCollectionMatch() {
 // ─────────────────────────────────────────────────────────────
 // Menu actions
 // ─────────────────────────────────────────────────────────────
+
+/**
+ * Dry-run over the selected rows' images: resolves each filename in Drive and
+ * asks whether Shopify would take it, converting or resizing where needed —
+ * without creating a single product.
+ *
+ * Use this before an upload to find out exactly which files need a JPEG export
+ * from the photographer.
+ */
+function checkImagesForSelectedRows() {
+  var ctx = buildContext();
+  var rows = selectedDataRows(ctx.sheet);
+  if (!rows.length) { ctx.ui.alert('Select some product rows first.'); return; }
+
+  var lines = [], ok = 0, fixed = 0, bad = 0;
+
+  rows.forEach(function (entry) {
+    var row = readRow(entry.values, ctx.cols);
+    row._driveUrl = readDriveLink(ctx, entry.rowNum);
+
+    var resolved = resolveDriveFiles(ctx, row);
+    var label = 'Row ' + entry.rowNum + '  ' + (buildTitle(row) || '(untitled)');
+
+    if (resolved.folderError) { lines.push(label + '\n   ! ' + resolved.folderError); bad++; return; }
+
+    var parts = [];
+    resolved.fileIds.forEach(function (fileId, i) {
+      var name = resolved.matched[i] || fileId;
+      try {
+        var prepared = prepareImageBlob(fileId, name);
+        var mb = (prepared.blob.getBytes().length / 1048576).toFixed(1);
+        if (prepared.note) { fixed++; parts.push('   ~ ' + name + '  ' + prepared.note + '  (' + mb + ' MB)'); }
+        else               { ok++;    parts.push('   . ' + name + '  ok  (' + mb + ' MB)'); }
+      } catch (e) {
+        bad++;
+        parts.push('   X ' + name + '  ' + e.message);
+      }
+    });
+
+    resolved.missing.forEach(function (n) { bad++; parts.push('   X ' + n + '  not found in Drive'); });
+    resolved.unusable.forEach(function (n) { parts.push('   - ' + n + '  (no filename)'); });
+
+    if (!parts.length) parts.push('   - no images listed');
+    lines.push(label + '\n' + parts.join('\n'));
+  });
+
+  var summary = ok + ' ready, ' + fixed + ' converted or resized, ' + bad + ' need attention';
+  Logger.log(summary + '\n\n' + lines.join('\n\n'));
+  ctx.ui.alert('Image check', summary + '\n\n' + lines.join('\n\n').slice(0, 8000), ctx.ui.ButtonSet.OK);
+}
 
 function previewSelectedRows()     { runSelected(true,  false); }
 function uploadSelectedRows()      { runSelected(false, false); }
@@ -623,25 +687,26 @@ function buildSku(row) {
  * Parses column AD into filenames. Entries often carry a trailing annotation
  * ("_ANC2177.JPG - Red"), and a few are notes with no filename at all
  * ("Strawberry motif") — those are reported rather than guessed at.
+ *
+ * RAW names (.CR3/.NEF/...) are kept here; whether they can actually be used
+ * is decided later by prepareImageBlob, which re-renders them through Drive.
  */
 function parseImageNames(raw) {
   if (!raw) return { files: [], unusable: [] };
 
   var files = [], unusable = [];
+  var known = CONFIG.ACCEPTED_IMAGE_EXT.concat(CONFIG.RAW_IMAGE_EXT).join('|');
+  var pattern = new RegExp('([^\\s,][^,]*?\\.(' + known + '))\\b', 'i');
+
   String(raw).split(/[,\n;]+/).forEach(function (entry) {
     entry = entry.trim();
     if (!entry) return;
 
-    var m = entry.match(/([^\s,][^,]*?\.(jpg|jpeg|png|webp|heic|gif|cr3|nef|arw|dng))\b/i);
+    var m = entry.match(pattern);
     if (!m) { unusable.push(entry); return; }
 
-    var name = m[1].trim();
-    var ext = name.split('.').pop().toLowerCase();
-    if (CONFIG.ACCEPTED_IMAGE_EXT.indexOf(ext) === -1) {
-      unusable.push(name + ' (' + ext.toUpperCase() + ' not supported by Shopify)');
-      return;
-    }
-    files.push(name);
+    // RAW files are kept — prepareImageBlob re-renders them to JPEG.
+    files.push(m[1].trim());
   });
 
   return { files: files, unusable: unusable };
@@ -733,14 +798,166 @@ function resolveDriveFiles(ctx, row) {
 }
 
 /**
+ * Asks Drive to re-render a file as a JPEG no larger than `longEdge` on its
+ * longest side, and returns the bytes.
+ *
+ * This is the only image processing available to Apps Script — there is no
+ * Sharp, no ImageMagick, no Canvas, and the one library people point at
+ * (tanaikech/ImgApp) is a thin wrapper around this same endpoint. Drive does
+ * the decode and the resize on its own servers, so it costs us one HTTP call
+ * and no execution time.
+ *
+ * Returns null when Drive has no preview for the file — which is the answer
+ * for Canon CR3 specifically. Callers must handle null.
+ */
+function driveRenderBlob(fileId, longEdge) {
+  var url = 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(fileId) +
+            '&sz=w' + (longEdge || CONFIG.RESIZE_LONG_EDGE);
+
+  var res;
+  try {
+    res = UrlFetchApp.fetch(url, {
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      followRedirects: true,
+      muteHttpExceptions: true
+    });
+  } catch (e) {
+    return null;
+  }
+
+  if (res.getResponseCode() !== 200) return null;
+
+  var blob = res.getBlob();
+  if (String(blob.getContentType() || '').indexOf('image/') !== 0) return null;
+
+  // Drive answers "no preview available" with a tiny generic icon rather than
+  // an error, so anything under a couple of KB is not our photo.
+  if (blob.getBytes().length < 2048) return null;
+
+  return blob;
+}
+
+/** Reads width/height straight out of the file header. No decode, no library. */
+function imageDimensions(bytes, ext) {
+  function u8(i)  { return bytes[i] & 0xFF; }
+  function be16(i) { return (u8(i) << 8) | u8(i + 1); }
+  function be32(i) { return (u8(i) << 24) | (u8(i + 1) << 16) | (u8(i + 2) << 8) | u8(i + 3); }
+  function le32(i) { return (u8(i + 3) << 24) | (u8(i + 2) << 16) | (u8(i + 1) << 8) | u8(i); }
+
+  try {
+    // PNG: IHDR is always the first chunk.
+    if (bytes.length > 24 && u8(0) === 0x89 && u8(1) === 0x50) {
+      return { w: be32(16), h: be32(20) };
+    }
+
+    // GIF: little-endian in the 6-byte header.
+    if (bytes.length > 10 && u8(0) === 0x47 && u8(1) === 0x49 && u8(2) === 0x46) {
+      return { w: u8(7) * 256 + u8(6), h: u8(9) * 256 + u8(8) };
+    }
+
+    // WEBP: VP8X carries the canvas size as two 24-bit minus-one values.
+    if (bytes.length > 30 && u8(0) === 0x52 && u8(8) === 0x57 && u8(9) === 0x45) {
+      if (u8(12) === 0x56 && u8(13) === 0x50 && u8(15) === 0x58) {
+        var vw = (u8(26) << 16 | u8(25) << 8 | u8(24)) + 1;
+        var vh = (u8(29) << 16 | u8(28) << 8 | u8(27)) + 1;
+        return { w: vw, h: vh };
+      }
+      // VP8 lossy: 14-bit dimensions after the 3-byte start code.
+      if (u8(12) === 0x56 && u8(13) === 0x50 && u8(15) === 0x20) {
+        return { w: (u8(27) << 8 | u8(26)) & 0x3FFF, h: (u8(29) << 8 | u8(28)) & 0x3FFF };
+      }
+      // VP8L lossless: 14 bits each, minus one, packed little-endian.
+      if (u8(12) === 0x56 && u8(13) === 0x50 && u8(15) === 0x4C) {
+        var bits = le32(21);
+        return { w: (bits & 0x3FFF) + 1, h: ((bits >> 14) & 0x3FFF) + 1 };
+      }
+      return null;
+    }
+
+    // JPEG: walk the segment chain to the start-of-frame marker.
+    if (bytes.length > 4 && u8(0) === 0xFF && u8(1) === 0xD8) {
+      var i = 2;
+      while (i + 9 < bytes.length) {
+        if (u8(i) !== 0xFF) { i++; continue; }
+        var marker = u8(i + 1);
+        if (marker === 0xD8 || marker === 0x01 || (marker >= 0xD0 && marker <= 0xD7)) {
+          i += 2; continue;
+        }
+        var len = be16(i + 2);
+        // SOF0..SOF15, skipping the four that aren't frame headers.
+        if (marker >= 0xC0 && marker <= 0xCF &&
+            marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+          return { h: be16(i + 5), w: be16(i + 7) };
+        }
+        if (len < 2) return null;
+        i += 2 + len;
+      }
+    }
+  } catch (e) { /* unreadable header — fall through */ }
+
+  return null;
+}
+
+function toJpgName(name) {
+  return String(name).replace(/\.[^.]+$/, '') + '.jpg';
+}
+
+/**
+ * Returns bytes Shopify will actually accept, re-rendering through Drive when
+ * the original is RAW, over 25 megapixels, or over 20 MB.
+ *
+ * Throws with a readable reason when nothing usable can be produced — that is
+ * the CR3 case, and the row falls back to the placeholder rather than failing.
+ */
+function prepareImageBlob(fileId, declaredName) {
+  var file = DriveApp.getFileById(fileId);
+  var name = declaredName || file.getName();
+  var ext  = String(name.split('.').pop() || '').toLowerCase();
+
+  if (CONFIG.RAW_IMAGE_EXT.indexOf(ext) !== -1) {
+    var converted = driveRenderBlob(fileId, CONFIG.RESIZE_LONG_EDGE);
+    if (!converted) {
+      throw new Error(ext.toUpperCase() + ' — Shopify rejects it and Drive has ' +
+                      'no preview to convert from; needs a JPEG export');
+    }
+    return {
+      blob: converted.setName(toJpgName(name)),
+      name: toJpgName(name),
+      note: ext.toUpperCase() + '\u2192JPEG'
+    };
+  }
+
+  var blob = file.getBlob();
+  var bytes = blob.getBytes();
+  var dim = imageDimensions(bytes, ext);
+
+  var overPixels = dim && (dim.w * dim.h) > CONFIG.MAX_PIXELS;
+  var overBytes  = bytes.length > CONFIG.MAX_FILE_BYTES;
+  if (!overPixels && !overBytes) return { blob: blob, name: name, note: '' };
+
+  var why = overPixels
+    ? (dim.w + '\u00d7' + dim.h + ', ' + (dim.w * dim.h / 1e6).toFixed(1) + ' MP')
+    : (bytes.length / 1048576).toFixed(1) + ' MB';
+
+  var resized = driveRenderBlob(fileId, CONFIG.RESIZE_LONG_EDGE);
+  if (!resized) throw new Error('too large (' + why + ') and Drive returned no resized copy');
+
+  return {
+    blob: resized.setName(toJpgName(name)),
+    name: toJpgName(name),
+    note: 'resized from ' + why
+  };
+}
+
+/**
  * Pushes a Drive file's bytes into Shopify and returns the resource URL to
  * hand to productCreateMedia. Staged upload keeps Drive private — nothing is
  * shared publicly.
  */
-function stageDriveFile(fileId) {
-  var file = DriveApp.getFileById(fileId);
-  var blob = file.getBlob();
-  var name = file.getName();
+function stageDriveFile(fileId, declaredName) {
+  var prepared = prepareImageBlob(fileId, declaredName);
+  var blob = prepared.blob;
+  var name = prepared.name;
 
   var staged = gql(
     'mutation($input: [StagedUploadInput!]!) {' +
@@ -776,7 +993,7 @@ function stageDriveFile(fileId) {
                     res.getContentText().slice(0, 200));
   }
 
-  return { resourceUrl: target.resourceUrl, name: name };
+  return { resourceUrl: target.resourceUrl, name: name, note: prepared.note };
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -892,9 +1109,13 @@ function attachImages(ctx, row, productId, title) {
   var notes = [];
   var sources = [];
 
+  var converted = 0, resizedCount = 0;
+
   resolved.fileIds.forEach(function (fileId, i) {
     try {
-      var staged = stageDriveFile(fileId);
+      var staged = stageDriveFile(fileId, resolved.matched[i]);
+      if (staged.note.indexOf('JPEG') !== -1) converted++;
+      else if (staged.note.indexOf('resized') !== -1) resizedCount++;
       sources.push({
         originalSource: staged.resourceUrl,
         alt: title,
@@ -925,10 +1146,11 @@ function attachImages(ctx, row, productId, title) {
     if (errs.length) notes.push('media warning: ' + errs[0].message);
   }
 
-  if (resolved.matched.length && !notes.length) {
-    notes.push(resolved.matched.length + ' image' +
-               (resolved.matched.length === 1 ? '' : 's'));
+  if (sources.length && resolved.matched.length && !notes.length) {
+    notes.push(sources.length + ' image' + (sources.length === 1 ? '' : 's'));
   }
+  if (converted)    notes.push(converted + ' RAW converted');
+  if (resizedCount) notes.push(resizedCount + ' resized');
   if (resolved.folderError) notes.push(resolved.folderError);
   if (resolved.missing.length) {
     notes.push('not found in Drive: ' + resolved.missing.join(', '));

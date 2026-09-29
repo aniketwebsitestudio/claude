@@ -108,7 +108,9 @@ var DRIVE_LINK_OFFSET = 1;
  */
 var SUBCATEGORY_ALIAS = {
   'Home|Durrie':                      'Durrie / Throw',
+  'Home|Fabric Throw':                'Durrie / Throw',
   'Wearables|Mekhela Chador':         'Mekhla Chador',
+  'Wearables|Wrapper':                'Mekhla Wrapper',
   'Wall Art Forms|Wall Hanger':       'Embroidered Wall Hanger'
 };
 
@@ -138,6 +140,7 @@ function onOpen() {
       .addItem('Set Shopify credentials', 'setCredentials')
       .addItem('Test connection', 'testConnection')
       .addItem('Create metafield definitions', 'createMetafieldDefinitions')
+      .addItem('Use this sheet', 'bindActiveSheet')
       .addItem('Check collection tag match', 'checkCollectionMatch')
       .addItem('Check images for selected rows', 'checkImagesForSelectedRows'))
     .addToUi();
@@ -333,53 +336,96 @@ function checkCollectionMatch() {
 // ─────────────────────────────────────────────────────────────
 
 /**
+ * Points the script at whichever tab is open right now. Copying this script
+ * into a new sheet normally means editing CONFIG.SHEET_NAME; this stores the
+ * name instead, so a renamed or duplicated sheet just needs one menu click.
+ */
+function bindActiveSheet() {
+  var ui = SpreadsheetApp.getUi();
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  PropertiesService.getScriptProperties().setProperty('SHEET_NAME', sheet.getName());
+
+  try {
+    var ctx = buildContext();
+    var found = Object.keys(ctx.cols).length;
+    ui.alert('Bound to "' + sheet.getName() + '".\n\n' +
+             found + ' known columns matched in row ' + CONFIG.HEADER_ROW + '.');
+  } catch (e) {
+    ui.alert('Bound to "' + sheet.getName() + '", but: ' + e.message);
+  }
+}
+
+/**
  * Dry-run over the selected rows' images: resolves each filename in Drive and
  * asks whether Shopify would take it, converting or resizing where needed —
  * without creating a single product.
  *
- * Use this before an upload to find out exactly which files need a JPEG export
- * from the photographer.
+ * Run this before an upload to find out exactly which files need a JPEG
+ * export from the photographer.
  */
 function checkImagesForSelectedRows() {
-  var ctx = buildContext();
-  var rows = selectedDataRows(ctx.sheet);
-  if (!rows.length) { ctx.ui.alert('Select some product rows first.'); return; }
+  var ui = SpreadsheetApp.getUi();
+  var ctx;
+  try { ctx = buildContext(); } catch (e) { ui.alert(e.message); return; }
+
+  var rowNumbers = selectedDataRows(ctx.sheet);
+  if (!rowNumbers.length) { ui.alert('Select some product rows first.'); return; }
 
   var lines = [], ok = 0, fixed = 0, bad = 0;
+  var started = Date.now();
 
-  rows.forEach(function (entry) {
-    var row = readRow(entry.values, ctx.cols);
-    row._driveUrl = readDriveLink(ctx, entry.rowNum);
+  rowNumbers.forEach(function (rowNum) {
+    if (Date.now() - started > CONFIG.TIME_BUDGET_MS) return;
 
+    var raw = ctx.sheet.getRange(rowNum, 1, 1, ctx.width).getValues()[0];
+    var row = readRow(raw, ctx.cols);
+    row._driveUrl = readDriveLink(ctx, rowNum);
+
+    if (!row.briefDescription && !row.title) return;
+    if (String(row.briefDescription).trim() === 'Filled') return;
+
+    var label = 'Row ' + rowNum + '  ' + (buildTitle(row) || '(untitled)');
     var resolved = resolveDriveFiles(ctx, row);
-    var label = 'Row ' + entry.rowNum + '  ' + (buildTitle(row) || '(untitled)');
-
-    if (resolved.folderError) { lines.push(label + '\n   ! ' + resolved.folderError); bad++; return; }
-
     var parts = [];
-    resolved.fileIds.forEach(function (fileId, i) {
-      var name = resolved.matched[i] || fileId;
-      try {
-        var prepared = prepareImageBlob(fileId, name);
-        var mb = (prepared.blob.getBytes().length / 1048576).toFixed(1);
-        if (prepared.note) { fixed++; parts.push('   ~ ' + name + '  ' + prepared.note + '  (' + mb + ' MB)'); }
-        else               { ok++;    parts.push('   . ' + name + '  ok  (' + mb + ' MB)'); }
-      } catch (e) {
+
+    if (resolved.folderError) {
+      bad++;
+      parts.push('   X ' + resolved.folderError);
+    } else {
+      resolved.fileIds.forEach(function (fileId, i) {
+        var name = resolved.matched[i] || fileId;
+        try {
+          var prepared = prepareImageBlob(fileId, name);
+          var mb = (prepared.blob.getBytes().length / 1048576).toFixed(1);
+          if (prepared.note) {
+            fixed++;
+            parts.push('   ~ ' + name + '  ' + prepared.note + '  (' + mb + ' MB)');
+          } else {
+            ok++;
+            parts.push('   . ' + name + '  ok  (' + mb + ' MB)');
+          }
+        } catch (e) {
+          bad++;
+          parts.push('   X ' + name + '  ' + e.message);
+        }
+      });
+      resolved.missing.forEach(function (n) {
         bad++;
-        parts.push('   X ' + name + '  ' + e.message);
-      }
-    });
+        parts.push('   X ' + n + '  not found in Drive');
+      });
+    }
 
-    resolved.missing.forEach(function (n) { bad++; parts.push('   X ' + n + '  not found in Drive'); });
     resolved.unusable.forEach(function (n) { parts.push('   - ' + n + '  (no filename)'); });
-
     if (!parts.length) parts.push('   - no images listed');
+
     lines.push(label + '\n' + parts.join('\n'));
   });
 
   var summary = ok + ' ready, ' + fixed + ' converted or resized, ' + bad + ' need attention';
-  Logger.log(summary + '\n\n' + lines.join('\n\n'));
-  ctx.ui.alert('Image check', summary + '\n\n' + lines.join('\n\n').slice(0, 8000), ctx.ui.ButtonSet.OK);
+  var body = summary + '\n\n' + lines.join('\n\n');
+
+  Logger.log(body);
+  ui.alert('Image check', body.slice(0, 8000), ui.ButtonSet.OK);
 }
 
 function previewSelectedRows()     { runSelected(true,  false); }
@@ -498,7 +544,10 @@ function runSelected(dryRun, force) {
 
 function buildContext() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(CONFIG.SHEET_NAME) || ss.getActiveSheet();
+  var bound = PropertiesService.getScriptProperties().getProperty('SHEET_NAME');
+  var sheet = (bound && ss.getSheetByName(bound)) ||
+              ss.getSheetByName(CONFIG.SHEET_NAME) ||
+              ss.getActiveSheet();
 
   var width = sheet.getLastColumn();
   var headers = sheet.getRange(CONFIG.HEADER_ROW, 1, 1, width).getValues()[0];
@@ -781,16 +830,26 @@ function resolveDriveFiles(ctx, row) {
     if (result.fileIds.length >= CONFIG.MAX_IMAGES_PER_PRODUCT) return;
 
     var key = name.toLowerCase();
-    var id = index[key];
+    var base = key.replace(/\.[^.]+$/, '');
+    var id = null, used = name;
+
+    // A JPEG sibling always wins over the RAW original, so dropping converted
+    // files next to the .CR3s in Drive is enough — the sheet needs no edit.
+    for (var c in index) {
+      if (c.replace(/\.[^.]+$/, '') !== base) continue;
+      var cext = String(c.split('.').pop()).toLowerCase();
+      if (CONFIG.ACCEPTED_IMAGE_EXT.indexOf(cext) !== -1) { id = index[c]; used = c; break; }
+    }
+
+    if (!id && index[key]) { id = index[key]; used = name; }
 
     if (!id) {
-      var base = key.replace(/\.[^.]+$/, '');
-      for (var candidate in index) {
-        if (candidate.replace(/\.[^.]+$/, '') === base) { id = index[candidate]; break; }
+      for (var c2 in index) {
+        if (c2.replace(/\.[^.]+$/, '') === base) { id = index[c2]; used = c2; break; }
       }
     }
 
-    if (id) { result.fileIds.push(id); result.matched.push(name); }
+    if (id) { result.fileIds.push(id); result.matched.push(used); }
     else    { result.missing.push(name); }
   });
 

@@ -54,6 +54,10 @@ var CONFIG = {
 
   MAX_IMAGES_PER_PRODUCT: 10,
 
+  // Two-letter ISO code stamped on every variant's inventory item. Every
+  // product in this sheet is Indian-made.
+  COUNTRY_OF_ORIGIN: 'IN',
+
   // Apps Script kills a run at 6 minutes. Stop cleanly at 4.5 so the rows
   // already done get written back to the sheet.
   TIME_BUDGET_MS: 4.5 * 60 * 1000,
@@ -1168,10 +1172,20 @@ function createProduct(row, ctx) {
       parseFloat(row.mrp) > parseFloat(row.price)) {
     variantInput.compareAtPrice = String(parseFloat(row.mrp).toFixed(2));
   }
+  // Many rows hold "-" rather than a number; parseFloat weeds those out, and
+  // the preview reports them so the gap is visible before upload.
   if (row.weight && !isNaN(parseFloat(row.weight))) {
     variantInput.inventoryItem.measurement = {
       weight: { value: parseFloat(row.weight), unit: 'GRAMS' }
     };
+  } else {
+    notes.push('no weight in sheet');
+  }
+  if (CONFIG.COUNTRY_OF_ORIGIN) {
+    variantInput.inventoryItem.countryCodeOfOrigin = CONFIG.COUNTRY_OF_ORIGIN;
+  }
+  if (row.hsn && String(row.hsn).trim()) {
+    variantInput.inventoryItem.harmonizedSystemCode = String(row.hsn).trim();
   }
 
   // 3. Images from Drive. Done before variants so each variant can be given
@@ -1351,9 +1365,12 @@ function buildVariants(ctx, row, product, values, optionName, sku,
     };
     if (sku) input.inventoryItem.sku = sku + '-' + v.slug;
     if (template.compareAtPrice) input.compareAtPrice = template.compareAtPrice;
-    if (template.inventoryItem && template.inventoryItem.measurement) {
-      input.inventoryItem.measurement = template.inventoryItem.measurement;
-    }
+    ['measurement', 'countryCodeOfOrigin', 'harmonizedSystemCode']
+      .forEach(function (f) {
+        if (template.inventoryItem && template.inventoryItem[f] !== undefined) {
+          input.inventoryItem[f] = template.inventoryItem[f];
+        }
+      });
     if (mediaBySlug[v.slug]) {
       input.mediaId = mediaBySlug[v.slug];
       withMedia++;

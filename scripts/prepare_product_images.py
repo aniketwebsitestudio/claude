@@ -315,16 +315,54 @@ def cell_link(ws, row: int, col: int):
     return value if value.startswith("http") else ""
 
 
-def extract_folder_id(url: str):
+def extract_drive_target(url: str):
+    """
+    Returns {"kind": "folder"|"file", "id": ...}, or None.
+
+    Column AE is not always a folder: a fair few rows link straight to one
+    image with /file/d/<id>. Listing children of a file id returns nothing,
+    which is why those rows reported every name as missing.
+    """
     if not url:
         return None
-    for pattern in (r"/folders/([A-Za-z0-9_-]+)",
-                    r"/file/d/([A-Za-z0-9_-]+)",
-                    r"[?&]id=([A-Za-z0-9_-]+)"):
-        m = re.search(pattern, str(url))
-        if m:
-            return m.group(1)
+    text = str(url)
+    m = re.search(r"/folders/([A-Za-z0-9_-]+)", text)
+    if m:
+        return {"kind": "folder", "id": m.group(1)}
+    m = re.search(r"/file/d/([A-Za-z0-9_-]+)", text)
+    if m:
+        return {"kind": "file", "id": m.group(1)}
+    m = re.search(r"[?&]id=([A-Za-z0-9_-]+)", text)
+    if m:
+        return {"kind": "file", "id": m.group(1)}
     return None
+
+
+def get_file_meta(service, file_id: str):
+    f = service.files().get(fileId=file_id, fields="id, name, mimeType",
+                            supportsAllDrives=True).execute()
+    return {"id": f["id"], "name": f["name"]}
+
+
+def find_anywhere(service, name: str):
+    """
+    Last resort: look the filename up across the whole Drive.
+
+    Several rows name a file that lives in a different shoot folder from the
+    one their link points at — _DSC8657.NEF is listed on row 81 but sits in
+    row 80's folder. The file is there, the link just points elsewhere.
+    """
+    safe = name.replace("\\", "\\\\").replace("'", "\\'")
+    try:
+        res = service.files().list(
+            q="name = '%s' and trashed = false" % safe,
+            fields="files(id, name)", pageSize=5,
+            supportsAllDrives=True, includeItemsFromAllDrives=True,
+        ).execute()
+    except Exception:
+        return None
+    files = res.get("files", [])
+    return {"id": files[0]["id"], "name": files[0]["name"]} if files else None
 
 
 def list_folder(service, folder_id: str) -> dict[str, dict]:
@@ -638,7 +676,7 @@ def main() -> int:
         ws.cell(row, col_sku, sku)
 
         names, unusable = parse_image_names(ws.cell(row, col_names).value)
-        folder_id = extract_folder_id(cell_link(ws, row, col_link))
+        target = extract_drive_target(cell_link(ws, row, col_link))
 
         # Variant labels, where the row carries more than one.
         groups = parse_variant_groups(ws.cell(row, col_names).value)
@@ -676,10 +714,10 @@ def main() -> int:
             problems.append("Row %d (%s): no image filenames" % (row, sku))
             print("    - no image filenames")
             continue
-        if not folder_id:
+        if not target:
             skipped += 1
-            problems.append("Row %d (%s): no Drive folder link" % (row, sku))
-            print("    - no Drive folder link")
+            problems.append("Row %d (%s): no Drive link" % (row, sku))
+            print("    - no Drive link")
             continue
 
         if args.dry_run:
@@ -690,17 +728,25 @@ def main() -> int:
         out_dir = Path("_processed") / ("%s_%s" % (sku, sanitize(title, 40)))
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        if folder_id not in folder_index:
+        key = target["kind"] + ":" + target["id"]
+        if key not in folder_index:
             try:
-                folder_index[folder_id] = list_folder(service, folder_id) \
-                    if service else {}
+                if target["kind"] == "file":
+                    meta = get_file_meta(service, target["id"])
+                    folder_index[key] = {meta["name"].lower(): meta}
+                else:
+                    folder_index[key] = list_folder(service, target["id"])
             except Exception as exc:
-                problems.append("Row %d (%s): folder unreadable: %s"
+                problems.append("Row %d (%s): Drive link unreadable: %s"
                                 % (row, sku, exc))
-                print("    X folder unreadable: %s" % exc)
+                print("    X Drive link unreadable: %s" % exc)
                 skipped += 1
                 continue
-        index = folder_index[folder_id]
+        index = folder_index[key]
+
+        # A link to a single file names that file, whatever column AD says.
+        if target["kind"] == "file" and len(names) == 1:
+            names = [list(index.values())[0]["name"]]
 
         produced: list[Path] = []
         for i, name in enumerate(names, start=1):
@@ -717,9 +763,14 @@ def main() -> int:
                         break
                     entry = entry or meta
             if not entry:
+                entry = find_anywhere(service, name)
+                if entry:
+                    print("    ~ %s  found outside the linked folder" % name)
+            if not entry:
                 failed_images += 1
-                problems.append("Row %d (%s): %s not in Drive" % (row, sku, name))
-                print("    X %s  not found in Drive" % name)
+                problems.append("Row %d (%s): %s not anywhere in Drive"
+                                % (row, sku, name))
+                print("    X %s  not found anywhere in Drive" % name)
                 continue
 
             stem, seq = sku, i

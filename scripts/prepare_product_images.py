@@ -420,9 +420,20 @@ def find_or_create_folder(service, name: str, parent_id: str) -> str:
     return created["id"]
 
 
-def upload_jpeg(service, local: Path, parent_id: str) -> None:
+def upload_jpeg(service, local: Path, parent_id: str, replace_id=None) -> None:
+    """Uploads local as a new file, or replaces the bytes of replace_id.
+
+    Drive happily keeps two files with the same name in one folder, so a
+    re-upload has to update in place or the folder ends up with duplicates.
+    """
     _b, MediaFileUpload, *_ = _import_google()
     media = MediaFileUpload(str(local), mimetype="image/jpeg", resumable=True)
+    if replace_id:
+        service.files().update(
+            fileId=replace_id, media_body=media, fields="id",
+            supportsAllDrives=True,
+        ).execute()
+        return
     service.files().create(
         body={"name": local.name, "parents": [parent_id]},
         media_body=media, fields="id", supportsAllDrives=True,
@@ -564,6 +575,9 @@ def main() -> int:
     ap.add_argument("--max-images", type=int, default=MAX_IMAGES,
                     help="images per product (default %d, matching the Apps "
                          "Script)" % MAX_IMAGES)
+    ap.add_argument("--force", action="store_true",
+                    help="re-convert images already in ./_processed and replace "
+                         "the copies on Drive, instead of skipping them")
     ap.add_argument("--dry-run", action="store_true",
                     help="assign SKUs and report the plan; touch nothing")
     ap.add_argument("--no-upload", action="store_true",
@@ -781,7 +795,7 @@ def main() -> int:
                         seq = [f.lower() for f in files].index(name.lower()) + 1
                         break
             dest = out_dir / ("%s_%02d.jpg" % (stem, seq))
-            if dest.exists():
+            if dest.exists() and not args.force:
                 produced.append(dest)
                 print("    - %s  already converted" % dest.name)
                 continue
@@ -810,9 +824,11 @@ def main() -> int:
             drive_folder = find_or_create_folder(service, target_name, parent_id)
             already = list_folder(service, drive_folder)
             for f in produced:
-                if f.name.lower() in already:
+                existing = already.get(f.name.lower())
+                if existing and not args.force:
                     continue
-                upload_jpeg(service, f, drive_folder)
+                upload_jpeg(service, f, drive_folder,
+                            replace_id=existing["id"] if existing else None)
         except Exception as exc:
             # Usually the connection dropping. The converted files are on disk
             # and whatever reached Drive stays there, so a re-run picks this

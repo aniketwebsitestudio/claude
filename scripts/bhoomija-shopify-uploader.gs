@@ -1257,6 +1257,11 @@ function attachImages(ctx, row, productId, title) {
 
   var converted = 0, resizedCount = 0;
 
+  // Names are collected alongside sources, never re-derived by index: a file
+  // that fails to stage, or the placeholder below, shifts sources out of step
+  // with resolved.matched, and a variant would then get another colour's photo.
+  var sourceNames = [];
+
   resolved.fileIds.forEach(function (fileId, i) {
     try {
       var staged = stageDriveFile(fileId, resolved.matched[i]);
@@ -1267,6 +1272,7 @@ function attachImages(ctx, row, productId, title) {
         alt: title,
         mediaContentType: 'IMAGE'
       });
+      sourceNames.push(resolved.matched[i] || '');
     } catch (e) {
       notes.push('img ' + (resolved.matched[i] || fileId) + ' failed: ' + e.message);
     }
@@ -1278,6 +1284,7 @@ function attachImages(ctx, row, productId, title) {
       alt: title,
       mediaContentType: 'IMAGE'
     });
+    sourceNames.push('');
     notes.push('placeholder image');
   }
 
@@ -1295,7 +1302,7 @@ function attachImages(ctx, row, productId, title) {
     // Media come back in the order submitted, which is the order of
     // resolved.matched, so filename and media id line up by index.
     (media.productCreateMedia.media || []).forEach(function (mm, i) {
-      if (mm && mm.id) created.push({ name: resolved.matched[i] || '', id: mm.id });
+      if (mm && mm.id) created.push({ name: sourceNames[i] || '', id: mm.id });
     });
   }
 

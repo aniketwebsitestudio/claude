@@ -87,6 +87,7 @@ var COLUMN_MAP = {
   'Height (cm)':                                              'height',
   'Product Images - Drive folder link':                       'imageNames',
   'Processed Images - Drive folder link':                     'processedFolder',
+  'Resized Aniket':                                           'processedFolder',
   'Variant Option':                                           'variantOption',
   'Variant Values':                                           'variantValues',
   'SKU Code':                                                 'sku',
